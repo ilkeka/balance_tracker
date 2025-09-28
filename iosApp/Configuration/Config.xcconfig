@@ -1,0 +1,7 @@
+TEAM_ID=
+
+PRODUCT_NAME=balance_tracker
+PRODUCT_BUNDLE_IDENTIFIER=me.ilker.balance_tracker.balance_tracker$(TEAM_ID)
+
+CURRENT_PROJECT_VERSION=1
+MARKETING_VERSION=1.0
