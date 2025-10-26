@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,18 +27,18 @@ fun RootScreen() {
                 .safeContentPadding()
                 .background(MaterialTheme.colorScheme.onError)
         ) {
-//            items(currentState.transactions) { transaction ->
-//                Card(
-//                    modifier = Modifier.fillMaxWidth(),
-//                    onClick = {}
-//                ) {
-//                    Text(
-//                        modifier = Modifier.fillMaxWidth(),
-//                        text = transaction.amount.toString()
-//                    )
-//                }
-//
-//            }
+            items(currentState.transactions) { transaction ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {}
+                ) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = transaction.amount.toString()
+                    )
+                }
+
+            }
         }
     }
 }

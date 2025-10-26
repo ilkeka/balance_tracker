@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinxSerialization)
@@ -31,9 +32,9 @@ kotlin {
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     dependencies {
-        api(project(":transaction"))
-
         implementation(platform(libs.androidx.compose.bom))
+
+        implementation(project(":transaction"))
 
         implementation(libs.androidx.navigation)
         implementation(libs.jetbrains.compose.material3)

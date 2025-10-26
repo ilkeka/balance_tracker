@@ -1,6 +1,9 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
+    alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.kotlinMultiplatform)
 }
 
@@ -15,14 +18,14 @@ kotlin {
         browser()
     }
 
-    sourceSets {
-        commonMain.dependencies {
-            implementation(libs.kotlinx.coroutines)
-            api(project(":core"))
-        }
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    dependencies {
+        implementation(platform(libs.androidx.compose.bom))
 
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-        }
+        implementation(project(":core"))
+
+        implementation(libs.jetbrains.compose.material3)
+        implementation(libs.kotlinx.coroutines)
+        testImplementation(libs.kotlin.test)
     }
 }

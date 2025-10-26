@@ -6,20 +6,22 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import kotlinx.serialization.Serializable
+import me.ilker.core.Route
+import me.ilker.transaction.add.AddTransactionScreen
 
 @Composable
-fun App() {
+fun CommonApp() {
     MaterialTheme {
         val navController: NavHostController = rememberNavController()
 
-        NavHost(navController = navController, startDestination = Root) {
-            composable<Root> {
+        NavHost(navController = navController, startDestination = Route.Root) {
+            composable<Route.Root> {
                 RootScreen()
+            }
+
+            composable<Route.Add> {
+                AddTransactionScreen()
             }
         }
     }
 }
-
-@Serializable
-object Root
