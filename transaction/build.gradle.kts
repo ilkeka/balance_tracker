@@ -25,6 +25,7 @@ kotlin {
         implementation(project(":core"))
 
         implementation(libs.jetbrains.compose.material3)
+        implementation(libs.jetbrains.lifecycle.runtime.compose)
         implementation(libs.kotlinx.coroutines)
         testImplementation(libs.kotlin.test)
     }

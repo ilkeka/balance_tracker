@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.androidLibrary
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -16,6 +17,10 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_21)
         }
     }
+
+//    androidLibrary {
+//        androidResources.enable = true
+//    }
     
     iosArm64()
     iosSimulatorArm64()
@@ -34,10 +39,12 @@ kotlin {
     dependencies {
         implementation(platform(libs.androidx.compose.bom))
 
+        implementation(project(":core"))
         implementation(project(":transaction"))
 
         implementation(libs.androidx.navigation)
         implementation(libs.jetbrains.compose.material3)
+        implementation(libs.jetbrains.compose.component.resources)
         implementation(libs.kotlinx.coroutines)
         testImplementation(libs.kotlin.test)
     }

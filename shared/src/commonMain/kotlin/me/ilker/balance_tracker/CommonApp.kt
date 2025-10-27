@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import me.ilker.core.Route
 import me.ilker.transaction.add.AddTransactionScreen
+import me.ilker.transaction.transactions.TransactionsScreen
 
 @Composable
 fun CommonApp() {
@@ -16,7 +17,11 @@ fun CommonApp() {
 
         NavHost(navController = navController, startDestination = Route.Root) {
             composable<Route.Root> {
-                RootScreen()
+                TransactionsScreen(
+                    add = {
+                        navController.navigate(Route.Add)
+                    }
+                )
             }
 
             composable<Route.Add> {
