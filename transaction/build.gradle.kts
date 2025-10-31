@@ -23,7 +23,9 @@ kotlin {
         implementation(platform(libs.androidx.compose.bom))
 
         implementation(project(":core"))
+        implementation(project(":resources"))
 
+        implementation(libs.jetbrains.compose.component.resources)
         implementation(libs.jetbrains.compose.material3)
         implementation(libs.jetbrains.lifecycle.runtime.compose)
         implementation(libs.kotlinx.coroutines)

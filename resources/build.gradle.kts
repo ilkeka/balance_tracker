@@ -1,5 +1,3 @@
-
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -8,7 +6,6 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.kotlinxSerialization)
 }
 
 kotlin {
@@ -30,21 +27,6 @@ kotlin {
             freeCompilerArgs.add("-Xwasm-kclass-fqn")
         }
     }
-
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
-    dependencies {
-        implementation(platform(libs.androidx.compose.bom))
-
-        implementation(project(":core"))
-        implementation(project(":resources"))
-        implementation(project(":transaction"))
-
-        implementation(libs.androidx.navigation)
-        implementation(libs.jetbrains.compose.component.resources)
-        implementation(libs.jetbrains.compose.material3)
-        implementation(libs.kotlinx.coroutines)
-        testImplementation(libs.kotlin.test)
-    }
 }
 
 android {
@@ -57,4 +39,10 @@ android {
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
+}
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "me.ilker.balance_tracker.resources"
+    generateResClass = always
 }

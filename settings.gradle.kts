@@ -33,4 +33,5 @@ include(":server")
 include(":shared")
 
 include(":core")
+include(":resources")
 include(":transaction")

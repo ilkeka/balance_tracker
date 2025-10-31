@@ -30,7 +30,7 @@ internal fun TransactionsLoadedView(
             IconButton(
                 onClick = add,
                 content = {
-
+//                    Text(Res)
                 }
             )
         }
