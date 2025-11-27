@@ -14,7 +14,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import me.ilker.balance_tracker.resources.Res
+import me.ilker.balance_tracker.resources.app_name
 import me.ilker.transaction.transactions.TransactionDomainModel
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun TransactionsLoadedView(
@@ -30,14 +33,13 @@ internal fun TransactionsLoadedView(
             IconButton(
                 onClick = add,
                 content = {
-//                    Text(Res)
+                    Text(stringResource(Res.string.app_name))
                 }
             )
         }
     ) {
         LazyColumn(
             modifier = Modifier
-                .safeContentPadding()
                 .background(MaterialTheme.colorScheme.onError)
         ) {
             items(transactions) { transaction ->

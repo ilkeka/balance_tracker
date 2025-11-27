@@ -1,7 +1,18 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
+    alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+}
+
+kotlin {
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+        }
+    }
 }
 
 android {
@@ -32,7 +43,9 @@ android {
 }
 
 dependencies {
-    implementation(project(":transaction"))
+    implementation(projects.shared)
+    implementation(projects.transaction)
+
     implementation(libs.androidx.activity.compose)
 
     debugImplementation(libs.jetbrains.compose.ui.preview)

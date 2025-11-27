@@ -37,9 +37,9 @@ kotlin {
     dependencies {
         implementation(platform(libs.androidx.compose.bom))
 
-        implementation(project(":core"))
-        implementation(project(":resources"))
-        implementation(project(":transaction"))
+        implementation(projects.core)
+        implementation(projects.resources)
+        implementation(projects.transaction)
 
         implementation(libs.androidx.navigation)
         implementation(libs.jetbrains.compose.material3)
