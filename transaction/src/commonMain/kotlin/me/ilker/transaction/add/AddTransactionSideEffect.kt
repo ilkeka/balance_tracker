@@ -2,5 +2,8 @@ package me.ilker.transaction.add
 
 import me.ilker.core.SideEffect
 
-class AddTransactionSideEffect : SideEffect {
+sealed class AddTransactionSideEffect : SideEffect {
+    data class Feedback(
+        val text: String
+    ): AddTransactionSideEffect()
 }

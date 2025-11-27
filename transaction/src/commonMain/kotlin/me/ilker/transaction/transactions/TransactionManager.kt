@@ -1,5 +1,6 @@
 package me.ilker.transaction.transactions
 
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,4 +30,6 @@ class TransactionManager : Manager<TransactionState, TransactionIntent, Transact
         )
     )
     override val state: StateFlow<TransactionState> = managerState.asStateFlow()
+
+    override val sideEffect: Channel<TransactionSideEffect> = Channel()
 }
