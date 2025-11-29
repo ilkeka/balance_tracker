@@ -44,9 +44,9 @@ android {
 
 dependencies {
     implementation(projects.shared)
-    implementation(projects.transaction)
 
     implementation(libs.androidx.activity.compose)
+    implementation(libs.koin.compose)
 
     debugImplementation(libs.jetbrains.compose.ui.preview)
 }

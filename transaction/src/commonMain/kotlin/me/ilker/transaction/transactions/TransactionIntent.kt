@@ -2,5 +2,8 @@ package me.ilker.transaction.transactions
 
 import me.ilker.core.Intent
 
-class TransactionIntent : Intent {
+sealed interface TransactionIntent : Intent {
+    data class Add(
+        val amount: Double
+    ): TransactionIntent
 }

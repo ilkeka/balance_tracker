@@ -24,7 +24,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun AddTransactionInitialView(
     snackbarHostState: SnackbarHostState,
-    add: (amount: Double) -> Unit
+    onAdd: (amount: Double) -> Unit
 ) {
     val inputState = rememberTextFieldState()
 
@@ -48,7 +48,7 @@ internal fun AddTransactionInitialView(
                     .padding(horizontal = 12.dp, vertical = 16.dp),
                 onClick = {
                     inputState.text.toString().toDoubleOrNull()?.let { amount ->
-                        add(amount)
+                        onAdd(amount)
                     }
                 },
                 enabled = inputState.text.isNotBlank(),

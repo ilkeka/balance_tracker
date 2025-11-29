@@ -6,17 +6,20 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import me.ilker.transaction.add.views.AddTransactionInitialView
 
 @Composable
-fun AddTransactionScreen() {
-    val manager = remember { AddTransactionManager() }
-    val state: State<AddTransactionState> = manager.state.collectAsStateWithLifecycle()
+fun AddTransactionScreen(
+    state: State<AddTransactionState>,
+    sideEffects: Flow<AddTransactionSideEffect>,
+    onAdd: (amount: Double, dateTime: String) -> Unit
+) {
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(manager.sideEffect) {
-        val sideEffects = manager.sideEffect.receiveCatching()
-        sideEffects.getOrNull()?.let { effect ->
+    LaunchedEffect(sideEffects) {
+        sideEffects.collectLatest { effect ->
             when (effect) {
                 is AddTransactionSideEffect.Feedback -> snackbarHostState.showSnackbar(message = effect.text)
             }
@@ -26,7 +29,7 @@ fun AddTransactionScreen() {
     when (val currentState = state.value) {
         AddTransactionState.InitialState -> AddTransactionInitialView(
             snackbarHostState = snackbarHostState,
-            add = { amount -> manager.sendIntent(AddTransactionIntent.Add(amount)) }
+            onAdd = { amount -> onAdd(amount, "") }
         )
     }
 }
