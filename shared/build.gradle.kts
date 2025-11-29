@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinxSerialization)
+    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -18,6 +19,21 @@ kotlin {
 
         namespace = "me.ilker.balance_tracker.shared"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
+    }
+
+    sourceSets {
+        androidMain {
+            dependencies {
+                implementation(libs.koin.compose)
+                implementation(libs.sqldelight.android.driver)
+            }
+        }
+
+        iosMain {
+            dependencies {
+                implementation(libs.sqldelight.native.driver)
+            }
+        }
     }
 
     iosArm64()
@@ -43,7 +59,20 @@ kotlin {
 
         implementation(libs.androidx.navigation)
         implementation(libs.jetbrains.compose.material3)
+        implementation(libs.koin.compose)
         implementation(libs.kotlinx.coroutines)
+        implementation(libs.kotlinx.serialization.json)
+        implementation(libs.sqldelight.coroutines.extensions)
+        implementation(libs.sqldelight.runtime)
+
         testImplementation(libs.kotlin.test)
+    }
+}
+
+sqldelight {
+    databases {
+        create("Database") {
+            packageName.set("me.ilker.balance_tracker")
+        }
     }
 }
