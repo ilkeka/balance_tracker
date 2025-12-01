@@ -1,5 +1,10 @@
 <resources>
-    <string name="app_name">Balance Tracker</string>
     <string name="add">Add</string>
+    <string name="app_name">Balance Tracker</string>
+    <string name="amount">Amount</string>
+    <string name="date">Date</string>
+    <string name="expense">Expense</string>
+    <string name="income">Income</string>
     <string name="new_transaction">New Transaction</string>
+    <string name="transaction_type">Transaction type</string>
 </resources>
