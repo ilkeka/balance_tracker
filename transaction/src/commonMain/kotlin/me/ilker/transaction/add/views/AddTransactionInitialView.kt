@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -51,10 +52,11 @@ import me.ilker.balance_tracker.resources.new_transaction
 import me.ilker.balance_tracker.resources.transaction_type
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun AddTransactionInitialView(
     snackbarHostState: SnackbarHostState,
-    onAdd: (amount: Double) -> Unit
+    onAdd: (amount: Double) -> Unit,
 ) {
     val amountInputState = rememberTextFieldState()
     val expenseTypeInputState = rememberTextFieldState()

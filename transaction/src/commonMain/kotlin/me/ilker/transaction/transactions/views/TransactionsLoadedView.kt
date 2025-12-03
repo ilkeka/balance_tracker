@@ -13,6 +13,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.add
@@ -31,7 +33,8 @@ internal fun TransactionsLoadedView(
             Row(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     modifier = Modifier.padding(12.dp),
-                    text = stringResource(Res.string.app_name)
+                    text = stringResource(Res.string.app_name),
+                    fontSize = TextUnit(value = 18f, type = TextUnitType.Sp)
                 )
             }
         },
