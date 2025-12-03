@@ -9,6 +9,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import me.ilker.balance_tracker.managers.AddTransactionManager
@@ -16,6 +19,7 @@ import me.ilker.balance_tracker.managers.TransactionManager
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.core.Route
 import me.ilker.transaction.add.AddTransactionIntent
+import me.ilker.transaction.add.AddTransactionNavigationEventInfo
 import me.ilker.transaction.add.AddTransactionScreen
 import me.ilker.transaction.add.AddTransactionSideEffect
 import me.ilker.transaction.add.AddTransactionState
@@ -40,10 +44,20 @@ fun CommonApp() {
                 )
             }
 
-            composable<Route.Add> {
+            composable<Route.Add> { navBackStackEntry ->
+                val route = navBackStackEntry.toRoute<Route.Add>()
                 val manager = remember { AddTransactionManager(sdk = sdk) }
                 val state: State<AddTransactionState> = manager.state.collectAsStateWithLifecycle()
                 val sideEffects: Flow<AddTransactionSideEffect> = manager.sideEffect.receiveAsFlow()
+                val navEventState = rememberNavigationEventState(
+                    currentInfo = AddTransactionNavigationEventInfo(route = route),
+                )
+
+                NavigationBackHandler(
+                    state = navEventState,
+                    isBackEnabled = true,
+                    onBackCompleted = { navController.popBackStack() }
+                )
 
                 AddTransactionScreen(
                     state = state,

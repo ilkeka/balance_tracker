@@ -16,6 +16,9 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_21)
         }
 
+        // https://kotlinlang.org/docs/multiplatform/whats-new-compose-180.html#support-for-multiplatform-resources-in-the-androidlibrary-target
+        androidResources.enable = true
+
         namespace = "me.ilker.balance_tracker.resources"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
     }
@@ -35,8 +38,7 @@ kotlin {
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     dependencies {
-        implementation(platform(libs.androidx.compose.bom))
-        implementation(libs.androidx.compose.runtime)
+        implementation(libs.jetbrains.compose.runtime)
         implementation(libs.jetbrains.compose.component.resources)
     }
 }

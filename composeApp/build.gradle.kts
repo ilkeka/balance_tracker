@@ -47,6 +47,5 @@ dependencies {
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.koin.compose)
-
-    debugImplementation(libs.jetbrains.compose.ui.preview)
+    implementation(libs.jetbrains.compose.ui)
 }

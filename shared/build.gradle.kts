@@ -22,6 +22,12 @@ kotlin {
     }
 
     sourceSets {
+        commonMain {
+            dependencies {
+
+            }
+        }
+
         androidMain {
             dependencies {
                 implementation(libs.koin.compose)
@@ -51,16 +57,16 @@ kotlin {
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     dependencies {
-        implementation(platform(libs.androidx.compose.bom))
-
         implementation(projects.core)
         implementation(projects.resources)
         implementation(projects.transaction)
 
-        implementation(libs.androidx.navigation)
         implementation(libs.jetbrains.compose.material3)
+        implementation(libs.jetbrains.compose.navigation)
+        implementation(libs.jetbrains.compose.navigationevent)
         implementation(libs.koin.compose)
         implementation(libs.kotlinx.coroutines)
+        implementation(libs.kotlinx.datetime)
         implementation(libs.kotlinx.serialization.json)
         implementation(libs.sqldelight.coroutines.extensions)
         implementation(libs.sqldelight.runtime)
