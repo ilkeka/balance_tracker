@@ -3,6 +3,7 @@ package me.ilker.balance_tracker.managers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,6 +42,8 @@ class AddTransactionManager(
 
             result.getOrNull()?.let {
                 sideEffect.trySend(AddTransactionSideEffect.Feedback("Added transaction with id: $it"))
+                delay(500)
+                sideEffect.trySend(AddTransactionSideEffect.Back)
             }
         }
     }

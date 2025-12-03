@@ -51,24 +51,38 @@ import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.new_transaction
 import me.ilker.balance_tracker.resources.transaction_type
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Clock
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun AddTransactionInitialView(
     snackbarHostState: SnackbarHostState,
-    onAdd: (amount: Double) -> Unit,
+    onAdd: (amount: Double, dateTime: String) -> Unit,
 ) {
     val amountInputState = rememberTextFieldState()
     val expenseTypeInputState = rememberTextFieldState()
     var expanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
-    val dateState by remember(datePickerState.selectedDateMillis) {
+    val selectedDateState by remember(datePickerState.selectedDateMillis) {
+        mutableStateOf(
+            datePickerState
+                .selectedDateMillis
+                ?.let { millis ->
+                    Instant
+                        .fromEpochMilliseconds(millis)
+                        .toLocalDateTime(TimeZone.currentSystemDefault())
+                } ?: Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        )
+    }
+    val dateState by remember(selectedDateState) {
+        mutableStateOf(
+        TextFieldState(selectedDateState.date.toString())
+        )
+    }
+    val submitEnabledState by remember(amountInputState, expenseTypeInputState, dateState) {
         derivedStateOf {
-            TextFieldState(initialText = datePickerState.selectedDateMillis?.let { millis ->
-                val localDateTime = Instant.fromEpochMilliseconds(millis).toLocalDateTime(TimeZone.currentSystemDefault())
-                localDateTime.date.toString()
-            } ?: "")
+            amountInputState.text.isNotBlank() && expenseTypeInputState.text.isNotBlank() && dateState.text.isNotBlank()
         }
     }
 
@@ -136,10 +150,10 @@ internal fun AddTransactionInitialView(
                     .padding(horizontal = 12.dp, vertical = 16.dp),
                 onClick = {
                     amountInputState.text.toString().toDoubleOrNull()?.let { amount ->
-                        onAdd(amount)
+                        onAdd(amount, datePickerState.toString())
                     }
                 },
-                enabled = amountInputState.text.isNotBlank(),
+                enabled = submitEnabledState,
                 content = {
                     Text(stringResource(Res.string.add))
                 }

@@ -13,7 +13,8 @@ import me.ilker.transaction.add.views.AddTransactionInitialView
 fun AddTransactionScreen(
     state: State<AddTransactionState>,
     sideEffects: Flow<AddTransactionSideEffect>,
-    onAdd: (amount: Double, dateTime: String) -> Unit
+    onAdd: (amount: Double, dateTime: String) -> Unit,
+    onBack: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -21,14 +22,15 @@ fun AddTransactionScreen(
         sideEffects.collectLatest { effect ->
             when (effect) {
                 is AddTransactionSideEffect.Feedback -> snackbarHostState.showSnackbar(message = effect.text)
+                AddTransactionSideEffect.Back -> onBack()
             }
         }
     }
 
-    when (val currentState = state.value) {
+    when (state.value) {
         AddTransactionState.InitialState -> AddTransactionInitialView(
             snackbarHostState = snackbarHostState,
-            onAdd = { amount -> onAdd(amount, "") }
+            onAdd = { amount, dateTime -> onAdd(amount, dateTime) }
         )
     }
 }

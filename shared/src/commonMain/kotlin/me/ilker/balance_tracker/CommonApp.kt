@@ -64,7 +64,8 @@ fun CommonApp() {
                     sideEffects = sideEffects,
                     onAdd = { amount, dateTime ->
                         manager.sendIntent(AddTransactionIntent.Add(amount = amount, dateTime = dateTime))
-                    }
+                    },
+                    onBack = { navController.popBackStack() }
                 )
             }
         }
