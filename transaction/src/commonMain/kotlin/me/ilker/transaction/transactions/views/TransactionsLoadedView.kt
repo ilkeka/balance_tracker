@@ -27,6 +27,8 @@ import me.ilker.balance_tracker.resources.add
 import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.app_name
 import me.ilker.balance_tracker.resources.date
+import me.ilker.balance_tracker.resources.nothing_yet
+import me.ilker.balance_tracker.resources.start_create_transaction
 import me.ilker.balance_tracker.resources.transaction_type
 import me.ilker.transaction.transactions.TransactionDomainModel
 import org.jetbrains.compose.resources.stringResource
@@ -66,49 +68,74 @@ internal fun TransactionsLoadedView(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(paddingValues),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(transactions) { transaction ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF88CC),
-                        contentColor = Color.Black,
-                        disabledContainerColor = Color.Transparent,
-                        disabledContentColor = Color.Black
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+        transactions.takeUnless { it.isEmpty() }?.let {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(paddingValues),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(transactions) { transaction ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFF88CC),
+                            contentColor = Color.Black,
+                            disabledContainerColor = Color.Transparent,
+                            disabledContentColor = Color.Black
+                        )
                     ) {
-                        val amountString = stringResource(Res.string.amount)
-                        val dateString = stringResource(Res.string.date)
-                        val transactionType = stringResource(Res.string.transaction_type)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                        ) {
+                            val amountString = stringResource(Res.string.amount)
+                            val dateString = stringResource(Res.string.date)
+                            val transactionType = stringResource(Res.string.transaction_type)
 
-                        Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = "$amountString: ${transaction.amount}",
-                        )
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = "$amountString: ${transaction.amount}",
+                            )
 
-                        Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = "$dateString: ${transaction.dateTime}",
-                        )
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = "$dateString: ${transaction.dateTime}",
+                            )
 
-                        Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = "$transactionType: ${transaction.type.name}",
-                        )
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = "$transactionType: ${transaction.type.name}",
+                            )
+                        }
                     }
-                }
 
-                HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 2.dp)
+                    HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 2.dp)
+                }
             }
         }
+            ?:  Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(paddingValues)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp)),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(Res.string.nothing_yet),
+                        fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(Res.string.start_create_transaction),
+                        fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                    )
+                }
+            }
     }
 }
