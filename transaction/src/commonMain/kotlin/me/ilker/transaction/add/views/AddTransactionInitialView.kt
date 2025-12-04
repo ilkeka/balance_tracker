@@ -17,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
@@ -33,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -155,6 +157,12 @@ internal fun AddTransactionInitialView(
                         onAdd(amount, selectedDateState.date.toString(), expenseTypeState.value)
                     }
                 },
+                colors = ButtonColors(
+                    contentColor = Color(0xD0FFFFFF),
+                    containerColor = Color(0xD0EC5050),
+                    disabledContentColor = Color(0xD0FFFFFF),
+                    disabledContainerColor = Color(0x1A884DFA),
+                ),
                 enabled = submitEnabledState,
                 content = {
                     Text(stringResource(Res.string.add))
