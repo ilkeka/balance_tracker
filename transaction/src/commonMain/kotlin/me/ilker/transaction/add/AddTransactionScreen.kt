@@ -8,12 +8,13 @@ import androidx.compose.runtime.remember
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import me.ilker.transaction.add.views.AddTransactionInitialView
+import me.ilker.transaction.transactions.TransactionType
 
 @Composable
 fun AddTransactionScreen(
     state: State<AddTransactionState>,
     sideEffects: Flow<AddTransactionSideEffect>,
-    onAdd: (amount: Double, dateTime: String) -> Unit,
+    onAdd: (amount: Double, dateTime: String, type: TransactionType) -> Unit,
     onBack: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -30,7 +31,7 @@ fun AddTransactionScreen(
     when (state.value) {
         AddTransactionState.InitialState -> AddTransactionInitialView(
             snackbarHostState = snackbarHostState,
-            onAdd = { amount, dateTime -> onAdd(amount, dateTime) }
+            onAdd = { amount, dateTime, type -> onAdd(amount, dateTime, type) }
         )
     }
 }

@@ -4,6 +4,8 @@ import me.ilker.core.Intent
 
 sealed interface TransactionIntent : Intent {
     data class Add(
-        val amount: Double
+        val amount: Double,
+        val dateTime: String,
+        val type: TransactionType
     ): TransactionIntent
 }

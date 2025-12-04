@@ -8,6 +8,7 @@ import me.ilker.balance_tracker.database.DB
 import me.ilker.balance_tracker.database.DatabaseDriverFactory
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.transaction.transactions.TransactionDomainModel
+import me.ilker.transaction.transactions.TransactionType
 
 class BalanceTrackerSDKImpl(
     driverFactory: DatabaseDriverFactory
@@ -26,11 +27,13 @@ class BalanceTrackerSDKImpl(
 
     override suspend fun addTransaction(
         amount: Double,
-        dateTime: String
+        dateTime: String,
+        type: TransactionType
     ) = database
         .addTransaction(
             amount = amount,
-            dateTime = dateTime
+            dateTime = dateTime,
+            type = type
         )
         .await()
 }

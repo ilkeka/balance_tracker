@@ -50,6 +50,7 @@ import me.ilker.balance_tracker.resources.expense
 import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.new_transaction
 import me.ilker.balance_tracker.resources.transaction_type
+import me.ilker.transaction.transactions.TransactionType
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
 
@@ -57,10 +58,11 @@ import kotlin.time.Clock
 @Composable
 internal fun AddTransactionInitialView(
     snackbarHostState: SnackbarHostState,
-    onAdd: (amount: Double, dateTime: String) -> Unit,
+    onAdd: (amount: Double, dateTime: String, type: TransactionType) -> Unit,
 ) {
     val amountInputState = rememberTextFieldState()
-    val expenseTypeInputState = rememberTextFieldState()
+    val expenseTypeState = remember { mutableStateOf(TransactionType.Expense) }
+    val expenseTypeInputState = remember(expenseTypeState.value) { TextFieldState(expenseTypeState.value.name) }
     var expanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
@@ -80,9 +82,9 @@ internal fun AddTransactionInitialView(
         TextFieldState(selectedDateState.date.toString())
         )
     }
-    val submitEnabledState by remember(amountInputState, expenseTypeInputState, dateState) {
+    val submitEnabledState by remember(amountInputState) {
         derivedStateOf {
-            amountInputState.text.isNotBlank() && expenseTypeInputState.text.isNotBlank() && dateState.text.isNotBlank()
+            amountInputState.text.isNotBlank()
         }
     }
 
@@ -150,7 +152,7 @@ internal fun AddTransactionInitialView(
                     .padding(horizontal = 12.dp, vertical = 16.dp),
                 onClick = {
                     amountInputState.text.toString().toDoubleOrNull()?.let { amount ->
-                        onAdd(amount, datePickerState.toString())
+                        onAdd(amount, selectedDateState.date.toString(), expenseTypeState.value)
                     }
                 },
                 enabled = submitEnabledState,
@@ -242,9 +244,7 @@ internal fun AddTransactionInitialView(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        expenseTypeInputState.edit {
-                                            this.replace(0, this.length, this@with)
-                                        }
+                                        expenseTypeState.value = TransactionType.Expense
                                         expanded = !expanded
                                     },
                                 text = this@with,
@@ -259,9 +259,7 @@ internal fun AddTransactionInitialView(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        expenseTypeInputState.edit {
-                                            this.replace(0, this.length, this@with)
-                                        }
+                                        expenseTypeState.value = TransactionType.Income
                                         expanded = !expanded
                                     },
                                 text = this@with,

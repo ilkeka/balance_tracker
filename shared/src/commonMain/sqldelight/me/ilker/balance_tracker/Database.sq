@@ -1,12 +1,15 @@
+import me.ilker.transaction.transactions.TransactionType;
+
 CREATE TABLE Transactions (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     amount REAL NOT NULL,
-    dateTime TEXT NOT NULL
+    dateTime TEXT NOT NULL,
+    type TEXT AS TransactionType NOT NULL
 );
 
 insertTransaction:
-INSERT INTO Transactions(amount, dateTime)
-VALUES(?, ?);
+INSERT INTO Transactions(amount, dateTime, type)
+VALUES(?,?,?);
 
 getTransactions:
 SELECT * FROM Transactions;

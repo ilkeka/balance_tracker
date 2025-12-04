@@ -13,6 +13,7 @@ import me.ilker.core.Manager
 import me.ilker.transaction.add.AddTransactionIntent
 import me.ilker.transaction.add.AddTransactionSideEffect
 import me.ilker.transaction.add.AddTransactionState
+import me.ilker.transaction.transactions.TransactionType
 import kotlin.coroutines.EmptyCoroutineContext
 
 class AddTransactionManager(
@@ -24,7 +25,8 @@ class AddTransactionManager(
         when (intent) {
             is AddTransactionIntent.Add -> addTransaction(
                 amount = intent.amount,
-                dateTime = intent.dateTime
+                dateTime = intent.dateTime,
+                type = intent.type
             )
         }
     }
@@ -34,14 +36,18 @@ class AddTransactionManager(
 
     override val sideEffect: Channel<AddTransactionSideEffect> = Channel()
 
-    private fun addTransaction(amount: Double, dateTime: String) {
+    private fun addTransaction(
+        amount: Double,
+        dateTime: String,
+        type: TransactionType
+    ) {
         scope.launch {
             val result = runCatching {
-                sdk.addTransaction(amount = amount, dateTime = dateTime)
+                sdk.addTransaction(amount = amount, dateTime = dateTime, type = type)
             }
 
             result.getOrNull()?.let {
-                sideEffect.trySend(AddTransactionSideEffect.Feedback("Added transaction with id: $it"))
+                sideEffect.trySend(AddTransactionSideEffect.Feedback("Added transaction successfully!"))
                 delay(500)
                 sideEffect.trySend(AddTransactionSideEffect.Back)
             }

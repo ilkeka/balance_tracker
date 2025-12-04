@@ -62,8 +62,14 @@ fun CommonApp() {
                 AddTransactionScreen(
                     state = state,
                     sideEffects = sideEffects,
-                    onAdd = { amount, dateTime ->
-                        manager.sendIntent(AddTransactionIntent.Add(amount = amount, dateTime = dateTime))
+                    onAdd = { amount, dateTime, type ->
+                        manager.sendIntent(
+                            AddTransactionIntent.Add(
+                                amount = amount,
+                                dateTime = dateTime,
+                                type = type
+                            )
+                        )
                     },
                     onBack = { navController.popBackStack() }
                 )
