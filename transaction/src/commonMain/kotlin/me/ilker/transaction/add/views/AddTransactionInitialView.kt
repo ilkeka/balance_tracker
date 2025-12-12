@@ -54,6 +54,7 @@ import me.ilker.balance_tracker.resources.new_transaction
 import me.ilker.balance_tracker.resources.transaction_type
 import me.ilker.transaction.transactions.TransactionType
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.round
 import kotlin.time.Clock
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -153,7 +154,7 @@ internal fun AddTransactionInitialView(
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp, vertical = 16.dp),
                 onClick = {
-                    amountInputState.text.toString().toDoubleOrNull()?.let { amount ->
+                    amountInputState.text.toString().toDoubleOrNull()?.round(2)?.let { amount ->
                         onAdd(amount, selectedDateState.date.toString(), expenseTypeState.value)
                     }
                 },
@@ -279,4 +280,10 @@ internal fun AddTransactionInitialView(
             }
         }
     }
+}
+
+fun Double.round(decimals: Int): Double {
+    var multiplier = 1.0
+    repeat(decimals) { multiplier *= 10 }
+    return round(this * multiplier) / multiplier
 }

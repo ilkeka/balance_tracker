@@ -64,6 +64,7 @@ kotlin {
         implementation(libs.jetbrains.compose.material3)
         implementation(libs.jetbrains.compose.navigation)
         implementation(libs.jetbrains.compose.navigationevent)
+        implementation(libs.jetbrains.lifecycle.runtime.compose)
         implementation(libs.koin.compose)
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)
