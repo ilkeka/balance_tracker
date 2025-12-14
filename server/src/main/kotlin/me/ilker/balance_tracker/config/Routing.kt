@@ -8,7 +8,9 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import me.ilker.balance_tracker.Greeting
 import me.ilker.balance_tracker.route.registration
+import kotlin.uuid.ExperimentalUuidApi
 
+@ExperimentalUuidApi
 internal fun Application.configRouting() {
     install(Resources)
 

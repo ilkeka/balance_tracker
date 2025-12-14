@@ -6,10 +6,15 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
 import io.ktor.util.logging.error
 
 internal fun Application.configStatusPages() {
     install(StatusPages) {
+        status(HttpStatusCode.Created) { call, status ->
+            call.respondText(text = "Created successfully.", status = status)
+        }
+
 //        exception<AuthenticationException> { call, _ ->
 //            call.respond(HttpStatusCode.Unauthorized)
 //        }

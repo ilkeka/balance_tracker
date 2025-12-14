@@ -9,7 +9,9 @@ import me.ilker.balance_tracker.config.configRouting
 import me.ilker.balance_tracker.config.configSerialization
 import me.ilker.balance_tracker.config.configStatusPages
 import org.koin.core.context.startKoin
+import kotlin.uuid.ExperimentalUuidApi
 
+@ExperimentalUuidApi
 fun main() {
     startKoin {
         modules(serverModule)
@@ -24,6 +26,7 @@ fun main() {
         .start(wait = true)
 }
 
+@ExperimentalUuidApi
 fun Application.module() {
     configHttp()
     configAuth()

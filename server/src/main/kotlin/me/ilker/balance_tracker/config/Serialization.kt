@@ -10,8 +10,10 @@ internal fun Application.configSerialization() {
     install(ContentNegotiation) {
         json(
             Json {
-                ignoreUnknownKeys = true
                 encodeDefaults = true
+                ignoreUnknownKeys = true
+                isLenient = true
+                prettyPrint = true
             },
         )
     }
