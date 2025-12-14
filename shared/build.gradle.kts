@@ -21,13 +21,12 @@ kotlin {
         compileSdk = libs.versions.android.compileSdk.get().toInt()
     }
 
+    iosArm64()
+    iosSimulatorArm64()
+
+    jvm()
+
     sourceSets {
-        commonMain {
-            dependencies {
-
-            }
-        }
-
         androidMain {
             dependencies {
                 implementation(libs.koin.compose)
@@ -35,17 +34,14 @@ kotlin {
             }
         }
 
-        iosMain {
-            dependencies {
-                implementation(libs.sqldelight.native.driver)
-            }
+        iosMain.dependencies {
+            implementation(libs.sqldelight.native.driver)
+        }
+
+        jvmMain.dependencies {
+            implementation(libs.sqldelight.sqlite.driver)
         }
     }
-
-    iosArm64()
-    iosSimulatorArm64()
-    
-    jvm()
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
@@ -64,6 +60,7 @@ kotlin {
         implementation(libs.jetbrains.compose.material3)
         implementation(libs.jetbrains.compose.navigation)
         implementation(libs.jetbrains.compose.navigationevent)
+        implementation(libs.jetbrains.lifecycle.runtime.compose)
         implementation(libs.koin.compose)
         implementation(libs.kotlinx.coroutines)
         implementation(libs.kotlinx.datetime)
@@ -72,6 +69,10 @@ kotlin {
         implementation(libs.sqldelight.runtime)
 
         testImplementation(libs.kotlin.test)
+    }
+
+    compilerOptions {
+        freeCompilerArgs.add("-Xreturn-value-checker=full")
     }
 }
 

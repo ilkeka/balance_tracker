@@ -1,0 +1,19 @@
+CREATE TABLE User (
+    id TEXT NOT NULL PRIMARY KEY,
+    email TEXT NOT NULL,
+    password TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+);
+
+insertUser:
+INSERT INTO User(id, email, password, createdAt)
+VALUES(?,?,?, ?);
+
+getUsers:
+SELECT * FROM User;
+
+getUser:
+SELECT * FROM User WHERE id = ?;
+
+getUserByEmail:
+SELECT * FROM User WHERE email = ?;

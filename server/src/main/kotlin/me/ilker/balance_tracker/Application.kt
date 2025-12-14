@@ -3,18 +3,34 @@ package me.ilker.balance_tracker
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import me.ilker.balance_tracker.config.configAuth
+import me.ilker.balance_tracker.config.configHttp
+import me.ilker.balance_tracker.config.configRouting
+import me.ilker.balance_tracker.config.configSerialization
+import me.ilker.balance_tracker.config.configStatusPages
+import org.koin.core.context.startKoin
+import kotlin.uuid.ExperimentalUuidApi
 
+@ExperimentalUuidApi
 fun main() {
-    embeddedServer(Netty, port = SERVER_PORT, host = "0.0.0.0", module = Application::module)
+    startKoin {
+        modules(serverModule)
+    }
+
+    embeddedServer(
+        factory = Netty,
+        port = SERVER_PORT,
+        host = "0.0.0.0",
+        module = Application::module
+    )
         .start(wait = true)
 }
 
+@ExperimentalUuidApi
 fun Application.module() {
-    routing {
-        get("/") {
-            call.respondText("Ktor: ${Greeting().greet()}")
-        }
-    }
+    configHttp()
+    configAuth()
+    configSerialization()
+    configStatusPages()
+    configRouting()
 }
