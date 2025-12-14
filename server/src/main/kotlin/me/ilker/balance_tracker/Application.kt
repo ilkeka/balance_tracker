@@ -8,8 +8,13 @@ import me.ilker.balance_tracker.config.configHttp
 import me.ilker.balance_tracker.config.configRouting
 import me.ilker.balance_tracker.config.configSerialization
 import me.ilker.balance_tracker.config.configStatusPages
+import org.koin.core.context.startKoin
 
 fun main() {
+    startKoin {
+        modules(serverModule)
+    }
+
     embeddedServer(
         factory = Netty,
         port = SERVER_PORT,
