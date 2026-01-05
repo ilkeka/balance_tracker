@@ -27,10 +27,14 @@ import me.ilker.balance_tracker.resources.add
 import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.app_name
 import me.ilker.balance_tracker.resources.date
+import me.ilker.balance_tracker.resources.expense_total
+import me.ilker.balance_tracker.resources.income_total
 import me.ilker.balance_tracker.resources.nothing_yet
 import me.ilker.balance_tracker.resources.start_create_transaction
 import me.ilker.balance_tracker.resources.transaction_type
+import me.ilker.transaction.add.views.round
 import me.ilker.transaction.transactions.TransactionDomainModel
+import me.ilker.transaction.transactions.TransactionType
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -57,7 +61,7 @@ internal fun TransactionsLoadedView(
                     .padding(horizontal = 12.dp, vertical = 16.dp),
                 onClick = add,
                 colors = ButtonColors(
-                    contentColor = Color(0xD0FFFFFF),
+                    contentColor = Color(0xFF767697),
                     containerColor = Color(0xD0EC5050),
                     disabledContentColor = Color(0xD0FFFFFF),
                     disabledContainerColor = Color(0x1A884DFA),
@@ -74,6 +78,40 @@ internal fun TransactionsLoadedView(
                     .padding(paddingValues),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                stickyHeader { i ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFFF88CC),
+                            contentColor = Color.Black,
+                            disabledContainerColor = Color.Transparent,
+                            disabledContentColor = Color.Black
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                        ) {
+                            val (expense, income) = with(transactions.partition { it.type == TransactionType.Expense }) {
+                                this.first.sumOf { transaction -> transaction.amount }.round(2) to
+                                this.second.sumOf { transaction -> transaction.amount }.round(2)
+                            }
+
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = "${stringResource(Res.string.expense_total)}: $expense",
+                            )
+
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = "${stringResource(Res.string.income_total)}: $income",
+                            )
+                        }
+                    }
+                }
+
                 items(transactions) { transaction ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),

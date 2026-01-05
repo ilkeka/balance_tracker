@@ -47,6 +47,7 @@ import kotlinx.datetime.toLocalDateTime
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.add
 import me.ilker.balance_tracker.resources.amount
+import me.ilker.balance_tracker.resources.amount_format
 import me.ilker.balance_tracker.resources.date
 import me.ilker.balance_tracker.resources.expense
 import me.ilker.balance_tracker.resources.income
@@ -87,7 +88,7 @@ internal fun AddTransactionInitialView(
     }
     val submitEnabledState by remember(amountInputState) {
         derivedStateOf {
-            amountInputState.text.isNotBlank()
+            amountInputState.text.isNotBlank() && amountInputState.text.toString().toDoubleOrNull() != null
         }
     }
 
@@ -190,7 +191,15 @@ internal fun AddTransactionInitialView(
                     },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal
-                    )
+                    ),
+                    supportingText = {
+                        Text(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = stringResource(Res.string.amount_format),
+                            fontStyle = FontStyle.Normal,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 )
             }
 
