@@ -1,5 +1,7 @@
 package me.ilker.balance_tracker.config
 
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.resources.Resources
@@ -16,7 +18,17 @@ internal fun Application.configRouting() {
 
     routing {
         get("/") {
-            call.respondText("Ktor: ${Greeting().greet()}")
+            call.respondText(
+                contentType = ContentType.parse("text/html"),
+                text = """
+                    <h3>Balance Tracker</h3>
+                    <ul>
+                        <li>Powered by Ktor</li>
+                    </ul>
+                    """
+                    .trimIndent(),
+                status = HttpStatusCode.OK
+            )
         }
         registration()
     }
