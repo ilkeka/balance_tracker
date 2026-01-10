@@ -30,5 +30,9 @@ jobs:
       - name: Export display for firefox
         run: export DISPLAY=:0
 
+      - name: Setup firefox
+        id: setup-firefox
+        uses: browser-actions/setup-firefox@v1
+
       - name: Build
         run: ./gradlew build
