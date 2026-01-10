@@ -6,6 +6,7 @@
     <string name="date">Date</string>
     <string name="expense">Expense</string>
     <string name="expense_total">Total expense</string>
+    <string name="description">Description</string>
     <string name="income">Income</string>
     <string name="income_total">Total income</string>
     <string name="new_transaction">New Transaction</string>

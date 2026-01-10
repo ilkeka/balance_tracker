@@ -49,6 +49,7 @@ import me.ilker.balance_tracker.resources.add
 import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.amount_format
 import me.ilker.balance_tracker.resources.date
+import me.ilker.balance_tracker.resources.description
 import me.ilker.balance_tracker.resources.expense
 import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.new_transaction
@@ -62,7 +63,12 @@ import kotlin.time.Clock
 @Composable
 internal fun AddTransactionInitialView(
     snackbarHostState: SnackbarHostState,
-    onAdd: (amount: Double, dateTime: String, type: TransactionType) -> Unit,
+    onAdd: (
+        amount: Double,
+        dateTime: String,
+        type: TransactionType,
+        description: String?
+    ) -> Unit,
 ) {
     val amountInputState = rememberTextFieldState()
     val expenseTypeState = remember { mutableStateOf(TransactionType.Expense) }
@@ -70,6 +76,7 @@ internal fun AddTransactionInitialView(
     var expanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
+    val descriptionState = rememberTextFieldState()
     val selectedDateState by remember(datePickerState.selectedDateMillis) {
         mutableStateOf(
             datePickerState
@@ -156,7 +163,12 @@ internal fun AddTransactionInitialView(
                     .padding(horizontal = 12.dp, vertical = 16.dp),
                 onClick = {
                     amountInputState.text.toString().toDoubleOrNull()?.round(2)?.let { amount ->
-                        onAdd(amount, selectedDateState.date.toString(), expenseTypeState.value)
+                        onAdd(
+                            amount,
+                            selectedDateState.date.toString(),
+                            expenseTypeState.value,
+                            descriptionState.text.toString()
+                        )
                     }
                 },
                 colors = ButtonColors(
@@ -286,6 +298,23 @@ internal fun AddTransactionInitialView(
                         }
                     }
                 }
+            }
+
+            item {
+                TextField(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                    state = descriptionState,
+                    placeholder = {
+                        Text(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = stringResource(Res.string.description),
+                            fontStyle = FontStyle.Italic
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text
+                    )
+                )
             }
         }
     }

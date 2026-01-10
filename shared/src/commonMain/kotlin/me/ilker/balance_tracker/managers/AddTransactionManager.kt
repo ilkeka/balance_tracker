@@ -26,7 +26,8 @@ class AddTransactionManager(
             is AddTransactionIntent.Add -> addTransaction(
                 amount = intent.amount,
                 dateTime = intent.dateTime,
-                type = intent.type
+                type = intent.type,
+                description = intent.description
             )
         }
     }
@@ -39,11 +40,17 @@ class AddTransactionManager(
     private fun addTransaction(
         amount: Double,
         dateTime: String,
-        type: TransactionType
+        type: TransactionType,
+        description: String?
     ) {
         scope.launch {
             val result = runCatching {
-                sdk.addTransaction(amount = amount, dateTime = dateTime, type = type)
+                sdk.addTransaction(
+                    amount = amount,
+                    dateTime = dateTime,
+                    type = type,
+                    description = description
+                )
             }
 
             result.getOrNull()?.let {

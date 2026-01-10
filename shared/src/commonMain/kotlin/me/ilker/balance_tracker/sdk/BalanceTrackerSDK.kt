@@ -14,6 +14,7 @@ interface BalanceTrackerSDK {
     suspend fun addTransaction(
         amount: Double,
         dateTime: String,
-        type: TransactionType
+        type: TransactionType,
+        description: String?
     ): Long
 }
