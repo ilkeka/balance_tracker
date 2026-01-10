@@ -7,6 +7,7 @@ sealed class AddTransactionIntent : Intent {
     data class Add(
         val amount: Double,
         val dateTime: String,
-        val type: TransactionType
+        val type: TransactionType,
+        val description: String?
     ): AddTransactionIntent()
 }

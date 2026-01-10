@@ -28,12 +28,14 @@ class BalanceTrackerSDKImpl(
     override suspend fun addTransaction(
         amount: Double,
         dateTime: String,
-        type: TransactionType
+        type: TransactionType,
+        description: String?
     ) = database
         .addTransaction(
             amount = amount,
             dateTime = dateTime,
-            type = type
+            type = type,
+            description = description
         )
         .await()
 }

@@ -14,7 +14,12 @@ import me.ilker.transaction.transactions.TransactionType
 fun AddTransactionScreen(
     state: State<AddTransactionState>,
     sideEffects: Flow<AddTransactionSideEffect>,
-    onAdd: (amount: Double, dateTime: String, type: TransactionType) -> Unit,
+    onAdd: (
+        amount: Double,
+        dateTime: String,
+        type: TransactionType,
+        description: String?
+    ) -> Unit,
     onBack: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -31,7 +36,7 @@ fun AddTransactionScreen(
     when (state.value) {
         AddTransactionState.InitialState -> AddTransactionInitialView(
             snackbarHostState = snackbarHostState,
-            onAdd = { amount, dateTime, type -> onAdd(amount, dateTime, type) }
+            onAdd = { amount, dateTime, type, description -> onAdd(amount, dateTime, type, description) }
         )
     }
 }

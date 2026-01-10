@@ -26,7 +26,8 @@ class TransactionManager(
             is TransactionIntent.Add -> addTransaction(
                 amount = intent.amount,
                 dateTime = intent.dateTime,
-                type = intent.type
+                type = intent.type,
+                description = intent.description
             )
         }
     }
@@ -38,13 +39,19 @@ class TransactionManager(
 
     override val sideEffect: Channel<TransactionSideEffect> = Channel()
 
-    private fun addTransaction(amount: Double, dateTime: String, type: TransactionType) {
+    private fun addTransaction(
+        amount: Double,
+        dateTime: String,
+        type: TransactionType,
+        description: String?
+    ) {
         scope.launch {
             val result = runCatching {
                 sdk.addTransaction(
                     amount = amount,
                     dateTime = dateTime,
-                    type = type
+                    type = type,
+                    description = description
                 )
             }
         }
