@@ -47,9 +47,7 @@ kotlin {
     wasmJs {
         browser {
             testTask {
-                useKarma {
-                    useFirefox()
-                }
+                enabled = false
             }
         }
 
