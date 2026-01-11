@@ -1,4 +1,4 @@
-name: Build
+name: Deploy
 
 on:
   workflow_dispatch:
@@ -28,4 +28,21 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build
-        run: ./gradlew build
+        run: ./gradlew :server:build
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: server_artifact
+          path: server/build/libs/server.jar
+
+  download:
+    name: Download artifact
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download
+        uses: actions/download-artifact@v5
+        with:
+          name: server_artifact
