@@ -1,5 +1,6 @@
 package me.ilker.transaction.transactions.views
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,7 +13,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,21 +30,28 @@ import me.ilker.balance_tracker.resources.add
 import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.app_name
 import me.ilker.balance_tracker.resources.date
+import me.ilker.balance_tracker.resources.delete
 import me.ilker.balance_tracker.resources.description
+import me.ilker.balance_tracker.resources.edit
 import me.ilker.balance_tracker.resources.expense_total
 import me.ilker.balance_tracker.resources.income_total
 import me.ilker.balance_tracker.resources.nothing_yet
 import me.ilker.balance_tracker.resources.start_create_transaction
 import me.ilker.balance_tracker.resources.transaction_type
 import me.ilker.transaction.add.views.round
+import me.ilker.transaction.transactions.ModalBottomSheetState
 import me.ilker.transaction.transactions.TransactionDomainModel
 import me.ilker.transaction.transactions.TransactionType
 import org.jetbrains.compose.resources.stringResource
 
+@ExperimentalMaterial3Api
 @Composable
 internal fun TransactionsLoadedView(
     transactions: List<TransactionDomainModel>,
-    add: () -> Unit
+    modalState: ModalBottomSheetState?,
+    add: () -> Unit,
+    onDismissRequest: () -> Unit,
+    onClick: (id: Long) -> Unit
 ) {
     Scaffold(
         modifier = Modifier.padding(vertical = 12.dp),
@@ -115,7 +125,12 @@ internal fun TransactionsLoadedView(
 
                 items(transactions) { transaction ->
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onClick(transaction.id)
+                            }
+                        ,
                         colors = CardDefaults.cardColors(
                             containerColor = Color(0xFF88CC),
                             contentColor = Color.Black,
@@ -183,5 +198,39 @@ internal fun TransactionsLoadedView(
                     )
                 }
             }
+
+        modalState?.let {
+            ModalBottomSheet(
+                onDismissRequest = onDismissRequest
+            ) {
+                when (modalState) {
+                    ModalBottomSheetState.ShowOptions -> ShowOptions()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShowOptions() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
+            text = stringResource(Res.string.edit),
+            fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+        )
+
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
+            text = stringResource(Res.string.delete),
+            fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+        )
     }
 }

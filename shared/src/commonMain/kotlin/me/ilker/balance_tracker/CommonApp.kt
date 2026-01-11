@@ -1,5 +1,6 @@
 package me.ilker.balance_tracker
 
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -23,10 +24,12 @@ import me.ilker.transaction.add.AddTransactionNavigationEventInfo
 import me.ilker.transaction.add.AddTransactionScreen
 import me.ilker.transaction.add.AddTransactionSideEffect
 import me.ilker.transaction.add.AddTransactionState
+import me.ilker.transaction.transactions.TransactionIntent
 import me.ilker.transaction.transactions.TransactionState
 import me.ilker.transaction.transactions.TransactionsScreen
 import org.koin.compose.koinInject
 
+@ExperimentalMaterial3Api
 @Composable
 fun CommonApp() {
     MaterialTheme {
@@ -40,7 +43,9 @@ fun CommonApp() {
 
                 TransactionsScreen(
                     state = state,
-                    add = { navController.navigate(Route.Add) }
+                    add = { navController.navigate(Route.Add) },
+                    onDismissRequest = { manager.sendIntent(TransactionIntent.OnDismissRequest) },
+                    onClick = { id -> manager.sendIntent(TransactionIntent.OnClick(id = id)) }
                 )
             }
 

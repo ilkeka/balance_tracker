@@ -1,18 +1,25 @@
 package me.ilker.transaction.transactions
 
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import me.ilker.transaction.transactions.views.TransactionsLoadedView
 
+@ExperimentalMaterial3Api
 @Composable
 fun TransactionsScreen(
     state: State<TransactionState>,
-    add: () -> Unit
+    add: () -> Unit,
+    onDismissRequest: () -> Unit,
+    onClick: (id: Long) -> Unit
 ) {
     when (val currentState = state.value) {
         is TransactionState.Loaded -> TransactionsLoadedView(
             transactions = currentState.transactions,
-            add = add
+            modalState = currentState.modalState,
+            add = add,
+            onDismissRequest = onDismissRequest,
+            onClick = onClick
         )
     }
 }

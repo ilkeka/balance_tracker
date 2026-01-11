@@ -3,13 +3,16 @@ package me.ilker.balance_tracker.managers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.core.Manager
+import me.ilker.transaction.transactions.ModalBottomSheetState
 import me.ilker.transaction.transactions.TransactionIntent
 import me.ilker.transaction.transactions.TransactionSideEffect
 import me.ilker.transaction.transactions.TransactionState
@@ -21,6 +24,7 @@ class TransactionManager(
 ) : Manager<TransactionState, TransactionIntent, TransactionSideEffect>() {
     private val scope = CoroutineScope(EmptyCoroutineContext + SupervisorJob())
 
+    private val modalState: MutableStateFlow<ModalBottomSheetState?> = MutableStateFlow(null)
     override fun sendIntent(intent: TransactionIntent) {
         when (intent) {
             is TransactionIntent.Add -> addTransaction(
@@ -29,13 +33,27 @@ class TransactionManager(
                 type = intent.type,
                 description = intent.description
             )
+            is TransactionIntent.OnClick -> onClick(intent.id)
+            TransactionIntent.OnDismissRequest -> onDismissRequest()
         }
     }
 
-    override val state: StateFlow<TransactionState> = sdk
-        .transactions
-        .map { transactions -> TransactionState.Loaded(transactions) }
-        .stateIn(scope, SharingStarted.Lazily, initialValue = TransactionState.Loaded(emptyList()))
+    override val state: StateFlow<TransactionState> = combine(
+        sdk.transactions,
+        modalState
+    ) { transactions, modalBottomSheetState ->
+        TransactionState.Loaded(
+            transactions = transactions,
+            modalState = modalBottomSheetState
+        )
+    }.stateIn(
+        scope = scope,
+        started = SharingStarted.Lazily,
+        initialValue = TransactionState.Loaded(
+            transactions = emptyList(),
+            modalState = null
+        )
+    )
 
     override val sideEffect: Channel<TransactionSideEffect> = Channel()
 
@@ -55,5 +73,24 @@ class TransactionManager(
                 )
             }
         }
+    }
+
+    private fun onClick(
+        id: Long
+    ) {
+        val currentState = state.value as? TransactionState.Loaded ?: return
+
+        currentState
+            .transactions
+            .find { transaction -> transaction.id == id }
+            ?.let {
+                modalState.update {
+                    ModalBottomSheetState.ShowOptions
+                }
+            }
+    }
+
+    private fun onDismissRequest() {
+        modalState.update { null }
     }
 }

@@ -9,4 +9,10 @@ sealed interface TransactionIntent : Intent {
         val type: TransactionType,
         val description: String?
     ): TransactionIntent
+
+    data class OnClick(
+        val id: Long
+    ): TransactionIntent
+
+    data object OnDismissRequest: TransactionIntent
 }
