@@ -44,6 +44,7 @@ fun CommonApp() {
                 TransactionsScreen(
                     state = state,
                     add = { navController.navigate(Route.Add) },
+                    onDeleteTransactions = { manager.sendIntent(TransactionIntent.OnDeleteTransaction) },
                     onDismissRequest = { manager.sendIntent(TransactionIntent.OnDismissRequest) },
                     onClick = { id -> manager.sendIntent(TransactionIntent.OnClick(id = id)) }
                 )

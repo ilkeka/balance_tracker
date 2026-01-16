@@ -10,6 +10,7 @@ import me.ilker.transaction.transactions.views.TransactionsLoadedView
 fun TransactionsScreen(
     state: State<TransactionState>,
     add: () -> Unit,
+    onDeleteTransactions: () -> Unit,
     onDismissRequest: () -> Unit,
     onClick: (id: Long) -> Unit
 ) {
@@ -18,6 +19,7 @@ fun TransactionsScreen(
             transactions = currentState.transactions,
             modalState = currentState.modalState,
             add = add,
+            onDeleteTransactions = onDeleteTransactions,
             onDismissRequest = onDismissRequest,
             onClick = onClick
         )

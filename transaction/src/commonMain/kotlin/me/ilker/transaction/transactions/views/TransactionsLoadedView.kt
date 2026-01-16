@@ -50,6 +50,7 @@ internal fun TransactionsLoadedView(
     transactions: List<TransactionDomainModel>,
     modalState: ModalBottomSheetState?,
     add: () -> Unit,
+    onDeleteTransactions: () -> Unit,
     onDismissRequest: () -> Unit,
     onClick: (id: Long) -> Unit
 ) {
@@ -204,7 +205,9 @@ internal fun TransactionsLoadedView(
                 onDismissRequest = onDismissRequest
             ) {
                 when (modalState) {
-                    ModalBottomSheetState.ShowOptions -> ShowOptions()
+                    ModalBottomSheetState.ShowOptions -> ShowOptions(
+                        onDeleteTransactions = onDeleteTransactions
+                    )
                 }
             }
         }
@@ -212,7 +215,9 @@ internal fun TransactionsLoadedView(
 }
 
 @Composable
-private fun ShowOptions() {
+private fun ShowOptions(
+    onDeleteTransactions: () -> Unit,
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -220,7 +225,7 @@ private fun ShowOptions() {
         Text(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = 24.dp),
             text = stringResource(Res.string.edit),
             fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
         )
@@ -228,7 +233,10 @@ private fun ShowOptions() {
         Text(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp),
+                .clickable {
+                    onDeleteTransactions()
+                }
+                .padding(horizontal = 24.dp),
             text = stringResource(Res.string.delete),
             fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
         )

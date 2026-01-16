@@ -14,3 +14,6 @@ VALUES(?,?,?, ?);
 
 getTransactions:
 SELECT * FROM Transactions;
+
+deleteTransaction:
+DELETE FROM Transactions WHERE id = id;

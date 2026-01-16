@@ -10,5 +10,7 @@ sealed class TransactionState : State {
 }
 
 sealed class ModalBottomSheetState {
-    data object ShowOptions : ModalBottomSheetState()
+    data class ShowOptions(
+        val transactionId: Long
+    ) : ModalBottomSheetState()
 }

@@ -37,4 +37,8 @@ internal class DB(databaseDriverFactory: DatabaseDriverFactory) {
         type = type,
         description = description
     )
+
+    internal fun deleteTransaction(
+        id: Long
+    ) = dbQuery.
 }

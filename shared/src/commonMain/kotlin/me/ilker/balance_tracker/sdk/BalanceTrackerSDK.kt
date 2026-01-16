@@ -17,4 +17,8 @@ interface BalanceTrackerSDK {
         type: TransactionType,
         description: String?
     ): Long
+
+    suspend fun deleteTransaction(
+        id: Long
+    )
 }

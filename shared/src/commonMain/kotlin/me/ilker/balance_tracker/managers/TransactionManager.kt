@@ -35,6 +35,7 @@ class TransactionManager(
             )
             is TransactionIntent.OnClick -> onClick(intent.id)
             TransactionIntent.OnDismissRequest -> onDismissRequest()
+            TransactionIntent.OnDeleteTransaction -> TODO()
         }
     }
 
@@ -85,12 +86,23 @@ class TransactionManager(
             .find { transaction -> transaction.id == id }
             ?.let {
                 modalState.update {
-                    ModalBottomSheetState.ShowOptions
+                    ModalBottomSheetState.ShowOptions(
+                        transactionId = id
+                    )
                 }
             }
     }
 
     private fun onDismissRequest() {
         modalState.update { null }
+    }
+
+    private fun onDeleteTransaction() {
+        val currentState = state.value as? TransactionState.Loaded ?: return
+        val currentModalState = currentState.modalState as? ModalBottomSheetState.ShowOptions ?: return
+
+        scope.launch {
+            sdk.getTransactions()
+        }
     }
 }

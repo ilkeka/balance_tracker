@@ -15,4 +15,6 @@ sealed interface TransactionIntent : Intent {
     ): TransactionIntent
 
     data object OnDismissRequest: TransactionIntent
+
+    data object OnDeleteTransaction: TransactionIntent
 }
