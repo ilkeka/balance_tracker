@@ -23,7 +23,7 @@ FROM eclipse-temurin:22-jre
 WORKDIR /server
 
 # Copy the jar from the build
-COPY --from=build /server/build/libs/server.jar server.jar
+COPY --from=build /server/server/build/libs/server.jar server.jar
 
 # Entypoint to launch the server
 ENTRYPOINT ["java", "-jar", "server.jar"]
