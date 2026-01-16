@@ -16,7 +16,7 @@ COPY . .
 RUN chmod +x ./gradlew
 
 # Build the server project
-RUN ./gradlew build
+RUN ./gradlew :server:build
 
 ### Copy jar
 FROM eclipse-temurin:22-jre
