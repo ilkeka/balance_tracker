@@ -1,0 +1,6 @@
+ktor:
+  deployment:
+    port: 9090
+  application:
+    modules:
+      - me.ilker.balance_tracker.ApplicationKt.module
