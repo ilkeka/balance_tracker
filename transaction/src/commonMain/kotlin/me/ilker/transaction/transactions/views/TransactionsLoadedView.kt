@@ -30,6 +30,7 @@ import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.add
 import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.app_name
+import me.ilker.balance_tracker.resources.balance
 import me.ilker.balance_tracker.resources.date
 import me.ilker.balance_tracker.resources.delete
 import me.ilker.balance_tracker.resources.description
@@ -90,106 +91,113 @@ internal fun TransactionsLoadedView(
             )
         }
     ) { paddingValues ->
-        transactions.takeUnless { it.isEmpty() }?.let {
-            LazyColumn(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(paddingValues),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                stickyHeader {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp),
-                        colors = CardDefaults.cardColors(
-                            contentColor = MaterialTheme.colorScheme.tertiary,
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            disabledContentColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.33f),
-                            disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.33f),
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Column(
+        transactions
+            .takeUnless { it.isEmpty() }
+            ?.let {
+                LazyColumn(
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(paddingValues),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    stickyHeader {
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                                .background(MaterialTheme.colorScheme.background)
+                                .padding(horizontal = 12.dp),
+                            colors = CardDefaults.cardColors(
+                                contentColor = MaterialTheme.colorScheme.tertiary,
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                disabledContentColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.33f),
+                                disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.33f),
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                         ) {
-                            val (expense, income) = with(transactions.partition { it.type == TransactionType.Expense }) {
-                                this.first.sumOf { transaction -> transaction.amount }.round(2) to
-                                this.second.sumOf { transaction -> transaction.amount }.round(2)
-                            }
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                            ) {
+                                val (expense, income) = with(transactions.partition { it.type == TransactionType.Expense }) {
+                                    this.first.sumOf { transaction -> transaction.amount }.round(2) to
+                                    this.second.sumOf { transaction -> transaction.amount }.round(2)
+                                }
 
-                            Text(
-                                modifier = Modifier.fillMaxWidth(),
-                                text = "${stringResource(Res.string.expense_total)}: $expense",
-                            )
-
-                            Text(
-                                modifier = Modifier.fillMaxWidth(),
-                                text = "${stringResource(Res.string.income_total)}: $income",
-                            )
-                        }
-                    }
-                }
-
-                items(transactions) { transaction ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                onClick(transaction.id)
-                            }
-                            .padding(horizontal = 12.dp)
-                        ,
-                        colors = CardDefaults.cardColors(
-                            contentColor = MaterialTheme.colorScheme.primary,
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-                            disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
-                        ) {
-                            val amountString = stringResource(Res.string.amount)
-                            val dateString = stringResource(Res.string.date)
-                            val transactionType = stringResource(Res.string.transaction_type)
-
-                            Text(
-                                modifier = Modifier.fillMaxWidth(),
-                                text = "$amountString: ${transaction.amount}",
-                            )
-
-                            Text(
-                                modifier = Modifier.fillMaxWidth(),
-                                text = "$dateString: ${transaction.dateTime}",
-                            )
-
-                            Text(
-                                modifier = Modifier.fillMaxWidth(),
-                                text = "$transactionType: ${transaction.type.name}",
-                            )
-
-                            transaction.description?.takeUnless { it.isBlank() }?.let { description ->
                                 Text(
                                     modifier = Modifier.fillMaxWidth(),
-                                    text = "${stringResource(Res.string.description)}: $description",
+                                    text = "${stringResource(Res.string.balance)}: ${income - expense}",
+                                )
+
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = "${stringResource(Res.string.income_total)}: $income",
+                                )
+
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = "${stringResource(Res.string.expense_total)}: $expense",
                                 )
                             }
                         }
                     }
 
-                    HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 2.dp)
+                    items(transactions) { transaction ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onClick(transaction.id)
+                                }
+                                .padding(horizontal = 12.dp)
+                            ,
+                            colors = CardDefaults.cardColors(
+                                contentColor = MaterialTheme.colorScheme.primary,
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
+                                disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                            ) {
+                                val amountString = stringResource(Res.string.amount)
+                                val dateString = stringResource(Res.string.date)
+                                val transactionType = stringResource(Res.string.transaction_type)
+
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = "$amountString: ${transaction.amount}",
+                                )
+
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = "$dateString: ${transaction.dateTime}",
+                                )
+
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = "$transactionType: ${transaction.type.name}",
+                                )
+
+                                transaction.description?.takeUnless { it.isBlank() }?.let { description ->
+                                    Text(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        text = "${stringResource(Res.string.description)}: $description",
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
-        }
-            ?:  Card(
+            ?: Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(paddingValues)
+                    .padding(horizontal = 12.dp)
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp)),
@@ -229,8 +237,10 @@ private fun ShowOptions(
     onDeleteTransactions: () -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
             modifier = Modifier
@@ -238,6 +248,12 @@ private fun ShowOptions(
                 .padding(horizontal = 24.dp),
             text = stringResource(Res.string.edit),
             fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+        )
+
+        HorizontalDivider(
+            modifier = Modifier.fillMaxWidth(),
+            thickness = 2.dp,
+            color = MaterialTheme.colorScheme.secondary
         )
 
         Text(
