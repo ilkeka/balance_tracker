@@ -40,6 +40,8 @@ class BalanceTrackerSDKImpl(
         .await()
 
     override suspend fun deleteTransaction(id: Long) {
-        val result = database.
+        val result = database.deleteTransaction(
+            id = id
+        )
     }
 }

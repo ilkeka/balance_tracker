@@ -1,5 +1,6 @@
 package me.ilker.transaction.transactions.views
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,12 +16,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -55,13 +56,18 @@ internal fun TransactionsLoadedView(
     onClick: (id: Long) -> Unit
 ) {
     Scaffold(
-        modifier = Modifier.padding(vertical = 12.dp),
+        modifier = Modifier,
         topBar = {
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+                    .padding(top = 48.dp)
+                    .padding(bottom = 12.dp)
+            ) {
                 Text(
-                    modifier = Modifier.padding(12.dp),
                     text = stringResource(Res.string.app_name),
-                    fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
+                    fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -70,13 +76,13 @@ internal fun TransactionsLoadedView(
             Button(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 16.dp),
+                    .padding(24.dp),
                 onClick = add,
                 colors = ButtonColors(
-                    contentColor = Color(0xD0FFFFFF),
-                    containerColor = Color(0xD0EC5050),
-                    disabledContentColor = Color(0xD0FFFFFF),
-                    disabledContainerColor = Color(0x1A884DFA),
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
+                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
                 ),
                 content = {
                     Text(stringResource(Res.string.add))
@@ -87,17 +93,20 @@ internal fun TransactionsLoadedView(
         transactions.takeUnless { it.isEmpty() }?.let {
             LazyColumn(
                 modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(paddingValues),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 stickyHeader {
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFFF88CC),
-                            contentColor = Color.Black,
-                            disabledContainerColor = Color.Transparent,
-                            disabledContentColor = Color.Black
+                            contentColor = MaterialTheme.colorScheme.tertiary,
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            disabledContentColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.33f),
+                            disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.33f),
                         ),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
@@ -131,12 +140,13 @@ internal fun TransactionsLoadedView(
                             .clickable {
                                 onClick(transaction.id)
                             }
+                            .padding(horizontal = 12.dp)
                         ,
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFF88CC),
-                            contentColor = Color.Black,
-                            disabledContainerColor = Color.Transparent,
-                            disabledContentColor = Color.Black
+                            contentColor = MaterialTheme.colorScheme.primary,
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
+                            disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
                         )
                     ) {
                         Column(
@@ -205,7 +215,7 @@ internal fun TransactionsLoadedView(
                 onDismissRequest = onDismissRequest
             ) {
                 when (modalState) {
-                    ModalBottomSheetState.ShowOptions -> ShowOptions(
+                    is ModalBottomSheetState.ShowOptions -> ShowOptions(
                         onDeleteTransactions = onDeleteTransactions
                     )
                 }

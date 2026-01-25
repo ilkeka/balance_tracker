@@ -20,6 +20,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -34,10 +35,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import kotlin.time.Instant
 import kotlinx.coroutines.channels.BufferOverflow
@@ -142,16 +144,21 @@ internal fun AddTransactionInitialView(
     }
 
     Scaffold(
-        modifier = Modifier
-            .padding(vertical = 12.dp),
+        modifier = Modifier,
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
         topBar = {
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+                    .padding(top = 48.dp)
+                    .padding(bottom = 12.dp)
+            ) {
                 Text(
-                    modifier = Modifier.padding(12.dp),
                     text = stringResource(Res.string.new_transaction),
+                    fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -160,7 +167,7 @@ internal fun AddTransactionInitialView(
             Button(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 16.dp),
+                    .padding(24.dp),
                 onClick = {
                     amountInputState.text.toString().toDoubleOrNull()?.round(2)?.let { amount ->
                         onAdd(
@@ -172,10 +179,10 @@ internal fun AddTransactionInitialView(
                     }
                 },
                 colors = ButtonColors(
-                    contentColor = Color(0xD0FFFFFF),
-                    containerColor = Color(0xD0EC5050),
-                    disabledContentColor = Color(0xD0FFFFFF),
-                    disabledContainerColor = Color(0x1A884DFA),
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
+                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
                 ),
                 enabled = submitEnabledState,
                 content = {
