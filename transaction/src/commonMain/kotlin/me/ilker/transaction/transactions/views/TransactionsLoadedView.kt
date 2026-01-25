@@ -242,7 +242,7 @@ private fun ShowOptions(
             .padding(vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
+        /*Text(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp),
@@ -254,7 +254,7 @@ private fun ShowOptions(
             modifier = Modifier.fillMaxWidth(),
             thickness = 2.dp,
             color = MaterialTheme.colorScheme.secondary
-        )
+        )*/
 
         Text(
             modifier = Modifier
