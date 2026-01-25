@@ -4,6 +4,13 @@ import me.ilker.core.State
 
 sealed class TransactionState : State {
     data class Loaded(
-        val transactions: List<TransactionDomainModel>
+        val transactions: List<TransactionDomainModel>,
+        val modalState: ModalBottomSheetState?
     ) : TransactionState()
+}
+
+sealed class ModalBottomSheetState {
+    data class ShowOptions(
+        val transactionId: Long
+    ) : ModalBottomSheetState()
 }

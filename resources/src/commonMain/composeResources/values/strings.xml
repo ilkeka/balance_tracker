@@ -4,6 +4,9 @@
     <string name="amount">Amount</string>
     <string name="amount_format">Decimal part should be represented with `.` character instead of `,`. For instance: 10.42</string>
     <string name="date">Date</string>
+    <string name="balance">Balance</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
     <string name="expense">Expense</string>
     <string name="expense_total">Total expense</string>
     <string name="description">Description</string>
