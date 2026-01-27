@@ -1,15 +1,20 @@
 package me.ilker.balance_tracker.database.impl
 
+import app.cash.sqldelight.EnumColumnAdapter
 import me.ilker.balance_tracker.Database
 import me.ilker.balance_tracker.database.DB
 import me.ilker.balance_tracker.database.DatabaseDriverFactory
+import me.ilker.balancetracker.Transactions
 import kotlin.Throws
 
 internal class DBImpl(
     databaseDriverFactory: DatabaseDriverFactory
 ): DB {
-    private val database = Database.Companion(
-        driver = databaseDriverFactory.createDriver()
+    private val database = Database(
+        driver = databaseDriverFactory.createDriver(),
+        TransactionsAdapter = Transactions.Adapter(
+            typeAdapter =  EnumColumnAdapter(),
+        ),
     )
 
     private val dbQuery = database.databaseQueries

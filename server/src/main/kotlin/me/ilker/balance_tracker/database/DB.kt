@@ -1,6 +1,5 @@
 package me.ilker.balance_tracker.database
 
-import app.cash.sqldelight.db.QueryResult
 import me.ilker.balancetracker.User
 import kotlin.Throws
 
@@ -10,7 +9,7 @@ interface DB {
         email: String,
         password: String,
         createdAt: String
-    ): QueryResult<Long>
+    ): Long
 
     suspend fun getUser(
         id: String
