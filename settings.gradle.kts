@@ -29,6 +29,7 @@ dependencyResolutionManagement {
 }
 
 include(":android")
+include(":desktop")
 include(":server")
 include(":shared")
 include(":web")

@@ -55,6 +55,7 @@ kotlin {
         }
 
         jvmMain.dependencies {
+            implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.sqldelight.sqlite.driver)
         }
 
@@ -77,7 +78,7 @@ kotlin {
         implementation(libs.jetbrains.compose.navigationevent)
         implementation(libs.jetbrains.lifecycle.runtime.compose)
         implementation(libs.koin.compose)
-        implementation(libs.kotlinx.coroutines)
+        implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.datetime)
         implementation(libs.kotlinx.serialization.json)
         implementation(libs.sqldelight.coroutines.extensions)
