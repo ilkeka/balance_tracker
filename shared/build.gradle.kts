@@ -26,12 +26,28 @@ kotlin {
 
     jvm()
 
-    sourceSets {
-        androidMain {
-            dependencies {
-                implementation(libs.koin.compose)
-                implementation(libs.sqldelight.android.driver)
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser {
+            testTask {
+                enabled = false
             }
+            commonWebpackConfig {
+                outputFileName = "web.js"
+            }
+        }
+
+        compilerOptions {
+            freeCompilerArgs.add("-Xwasm-kclass-fqn")
+        }
+
+        binaries.executable()
+    }
+
+    sourceSets {
+        androidMain.dependencies {
+            implementation(libs.koin.compose)
+            implementation(libs.sqldelight.android.driver)
         }
 
         iosMain.dependencies {
@@ -41,18 +57,12 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.sqldelight.sqlite.driver)
         }
-    }
 
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser {
-            testTask {
-                enabled = false
-            }
-        }
-
-        compilerOptions {
-            freeCompilerArgs.add("-Xwasm-kclass-fqn")
+        wasmJsMain.dependencies {
+            implementation(libs.sqldelight.web.driver)
+            implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.2.1"))
+            implementation(npm("sql.js", "1.8.0"))
+            implementation(devNpm("copy-webpack-plugin", libs.versions.webPackPlugin.get()))
         }
     }
 
@@ -84,6 +94,7 @@ kotlin {
 sqldelight {
     databases {
         create("Database") {
+            generateAsync = true
             packageName.set("me.ilker.balance_tracker")
         }
     }

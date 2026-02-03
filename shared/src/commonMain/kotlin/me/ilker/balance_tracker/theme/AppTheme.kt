@@ -1,4 +1,4 @@
-package me.ilker.balance_tracker.sdk.theme
+package me.ilker.balance_tracker.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

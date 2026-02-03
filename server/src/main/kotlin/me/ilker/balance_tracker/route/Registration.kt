@@ -5,7 +5,6 @@ import io.ktor.server.request.receiveNullable
 import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.util.encodeBase64
 import io.ktor.util.getDigestFunction
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -13,6 +12,7 @@ import me.ilker.balance_tracker.Registration
 import me.ilker.balance_tracker.database.DB
 import me.ilker.balance_tracker.models.RegistrationRequest
 import org.koin.ktor.ext.inject
+import kotlin.io.encoding.Base64
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -50,10 +50,9 @@ internal fun Route.registration() {
             .createUser(
                 id = id,
                 email = request.email.value,
-                password = digest(request.password.value).encodeBase64(),
+                password = Base64.encode(digest(request.password.value)),
                 createdAt = Clock.System.now().toLocalDateTime(TimeZone.UTC).toString()
             )
-            .await()
 
         call.respond(
             status = HttpStatusCode.Created,

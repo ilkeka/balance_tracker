@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import me.ilker.balance_tracker.managers.AddTransactionManager
 import me.ilker.balance_tracker.managers.TransactionManager
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
-import me.ilker.balance_tracker.sdk.theme.AppTheme
+import me.ilker.balance_tracker.theme.AppTheme
 import me.ilker.core.Route
 import me.ilker.transaction.add.AddTransactionIntent
 import me.ilker.transaction.add.AddTransactionNavigationEventInfo

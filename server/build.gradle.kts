@@ -22,6 +22,7 @@ ktor {
 dependencies {
     implementation(projects.shared)
     implementation(projects.resources)
+    implementation(projects.transaction)
 
     implementation(libs.koin.compose)
     implementation(libs.koin.ktor)
@@ -47,6 +48,7 @@ dependencies {
 sqldelight {
     databases {
         create("Database") {
+            generateAsync = true
             packageName.set("me.ilker.balance_tracker")
         }
     }

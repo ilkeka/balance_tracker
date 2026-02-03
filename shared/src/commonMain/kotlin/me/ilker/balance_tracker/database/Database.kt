@@ -26,7 +26,7 @@ internal class DB(databaseDriverFactory: DatabaseDriverFactory) {
             )
         }
 
-    internal fun addTransaction(
+    internal suspend fun addTransaction(
         amount: Double,
         dateTime: String,
         type: TransactionType,
@@ -38,7 +38,7 @@ internal class DB(databaseDriverFactory: DatabaseDriverFactory) {
         description = description
     )
 
-    internal fun deleteTransaction(
+    internal suspend fun deleteTransaction(
         id: Long
     ) = dbQuery.deleteTransaction(
         id = id
