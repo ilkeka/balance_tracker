@@ -1,4 +1,4 @@
-package me.ilker.balance_tracker.sdk.theme
+package me.ilker.balance_tracker.theme
 
 import androidx.compose.ui.graphics.Color
 
@@ -11,7 +11,7 @@ val TertiaryDarkColor = Color(0xFFECC19C)
 val TertiaryContainerColor = Color(0xFFD8F8D2)
 val TertiaryDarkContainerColor = Color(0xD00F1328)
 val SurfaceColor = Color(0xD0FFFFFF)
-val OnSurfaceColor = Color(0xD0FFFFFF)
+val OnSurfaceColor = Color(0xD0524545)
 val SurfaceDarkColor = Color(0x6F320202)
 val OnSurfaceDarkColor = Color(0xD0AA9292)
 val BackgroundColor = Color(0xFFC5B2B2)

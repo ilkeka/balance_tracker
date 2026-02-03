@@ -45,11 +45,9 @@ kotlin {
     }
 
     sourceSets {
-        androidMain {
-            dependencies {
-                implementation(libs.koin.compose)
-                implementation(libs.sqldelight.android.driver)
-            }
+        androidMain.dependencies {
+            implementation(libs.koin.compose)
+            implementation(libs.sqldelight.android.driver)
         }
 
         iosMain.dependencies {
