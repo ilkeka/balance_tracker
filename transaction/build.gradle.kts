@@ -28,7 +28,7 @@ kotlin {
         implementation(libs.jetbrains.compose.material3)
         implementation(libs.jetbrains.compose.navigationevent)
         implementation(libs.jetbrains.lifecycle.runtime.compose)
-        implementation(libs.kotlinx.coroutines)
+        implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.datetime)
         implementation(libs.kotlinx.serialization.json)
 
