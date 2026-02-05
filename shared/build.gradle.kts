@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
 
 plugins {
     alias(libs.plugins.androidKotlinMultiplatformLibrary)
@@ -21,8 +22,29 @@ kotlin {
         compileSdk = libs.versions.android.compileSdk.get().toInt()
     }
 
-    iosArm64()
-    iosSimulatorArm64()
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "BalanceTracker"
+        }
+    }
+
+    @OptIn(ExperimentalSwiftExportDsl::class)
+    swiftExport {
+        // Set the root module name
+        moduleName = "Shared"
+
+        // Set the collapse rule
+        // Removes package prefix from generated Swift code
+        flattenPackage = "me.ilker.balance_tracker"
+
+        // Provide compiler arguments to link tasks
+        configure {
+            freeCompilerArgs.add("-Xexpect-actual-classes")
+        }
+    }
 
     jvm()
 
