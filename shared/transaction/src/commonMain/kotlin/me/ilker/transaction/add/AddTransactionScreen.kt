@@ -36,7 +36,8 @@ fun AddTransactionScreen(
     when (state.value) {
         AddTransactionState.InitialState -> AddTransactionInitialView(
             snackbarHostState = snackbarHostState,
-            onAdd = { amount, dateTime, type, description -> onAdd(amount, dateTime, type, description) }
+            onAdd = { amount, dateTime, type, description -> onAdd(amount, dateTime, type, description) },
+            onBack = onBack
         )
     }
 }

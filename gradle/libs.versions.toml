@@ -6,6 +6,7 @@ android-targetSdk = "36"
 androidx-activity = "1.12.3"
 androidx-lifecycle = "2.9.6"
 jetbrains-compose = "1.11.0-alpha02"
+jetbrains-compose-material = "1.7.3"
 jetbrains-compose-navigation = "2.9.1"
 jetbrains-compose-navigationevent = "1.0.0"
 koin = "4.1.1"
@@ -22,6 +23,7 @@ webPackPlugin = "9.1.0"
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 jetbrains-compose-component-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "jetbrains-compose" }
 jetbrains-compose-desktop-jvm-linux-x64 = { module = "org.jetbrains.compose.desktop:desktop-jvm-linux-x64", version.ref = "jetbrains-compose" }
+jetbrains-compose-materialicons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "jetbrains-compose-material" }
 jetbrains-compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "jetbrains-compose" }
 jetbrains-compose-navigation = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "jetbrains-compose-navigation" }
 jetbrains-compose-navigationevent = { module = "org.jetbrains.androidx.navigationevent:navigationevent-compose", version.ref = "jetbrains-compose-navigationevent" }
