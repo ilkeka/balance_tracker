@@ -33,9 +33,9 @@ kotlin {
 }
 
 dependencies {
-    implementation(projects.shared)
-    implementation(projects.resources)
-    implementation(projects.transaction)
+    implementation(projects.shared.common)
+    implementation(projects.shared.resources)
+    implementation(projects.shared.transaction)
 
     implementation(libs.koin.compose)
     implementation(libs.koin.ktor)

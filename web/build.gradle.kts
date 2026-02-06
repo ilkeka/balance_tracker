@@ -20,7 +20,7 @@ kotlin {
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     dependencies {
-        implementation(projects.shared)
+        implementation(projects.shared.common)
 
         implementation(libs.jetbrains.compose.material3)
         implementation(libs.jetbrains.compose.ui)

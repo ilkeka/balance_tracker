@@ -91,9 +91,9 @@ kotlin {
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     dependencies {
-        implementation(projects.core)
-        implementation(projects.resources)
-        implementation(projects.transaction)
+        implementation(projects.shared.core)
+        implementation(projects.shared.resources)
+        implementation(projects.shared.transaction)
 
         implementation(libs.jetbrains.compose.material3)
         implementation(libs.jetbrains.compose.navigation)

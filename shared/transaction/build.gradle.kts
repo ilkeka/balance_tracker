@@ -1,4 +1,3 @@
-import org.gradle.kotlin.dsl.invoke
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -8,6 +7,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.kotlinxSerialization)
 }
 
 kotlin {
@@ -16,10 +16,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_21)
         }
 
-        // https://kotlinlang.org/docs/multiplatform/whats-new-compose-180.html#support-for-multiplatform-resources-in-the-androidlibrary-target
-        androidResources.enable = true
-
-        namespace = "me.ilker.balance_tracker.resources"
+        namespace = "me.ilker.balance_tracker.shared.transaction"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
     }
 
@@ -31,20 +28,21 @@ kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
-        compilerOptions {
-            freeCompilerArgs.add("-Xwasm-kclass-fqn")
-        }
     }
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     dependencies {
-        implementation(libs.jetbrains.compose.runtime)
-        implementation(libs.jetbrains.compose.component.resources)
-    }
-}
+        implementation(projects.shared.core)
+        implementation(projects.shared.resources)
 
-compose.resources {
-    publicResClass = true
-    packageOfResClass = "me.ilker.balance_tracker.resources"
-    generateResClass = always
+        implementation(libs.jetbrains.compose.component.resources)
+        implementation(libs.jetbrains.compose.material3)
+        implementation(libs.jetbrains.compose.navigationevent)
+        implementation(libs.jetbrains.lifecycle.runtime.compose)
+        implementation(libs.kotlinx.coroutines.core)
+        implementation(libs.kotlinx.datetime)
+        implementation(libs.kotlinx.serialization.json)
+
+        testImplementation(libs.kotlin.test)
+    }
 }

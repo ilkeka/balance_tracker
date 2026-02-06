@@ -31,9 +31,9 @@ dependencyResolutionManagement {
 include(":android")
 include(":desktop")
 include(":server")
-include(":shared")
 include(":web")
 
-include(":core")
-include(":resources")
-include(":transaction")
+include(":shared:common")
+include(":shared:core")
+include(":shared:resources")
+include(":shared:transaction")
