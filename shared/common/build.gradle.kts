@@ -93,7 +93,7 @@ kotlin {
     dependencies {
         implementation(projects.shared.core)
         implementation(projects.resources)
-        implementation(projects.transaction)
+        implementation(projects.shared.transaction)
 
         implementation(libs.jetbrains.compose.material3)
         implementation(libs.jetbrains.compose.navigation)
