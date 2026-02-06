@@ -33,7 +33,7 @@ kotlin {
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     dependencies {
         implementation(projects.shared.core)
-        implementation(projects.resources)
+        implementation(projects.shared.resources)
 
         implementation(libs.jetbrains.compose.component.resources)
         implementation(libs.jetbrains.compose.material3)

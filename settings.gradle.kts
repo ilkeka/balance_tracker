@@ -35,5 +35,5 @@ include(":web")
 
 include(":shared:common")
 include(":shared:core")
-include(":resources")
+include(":shared:resources")
 include(":shared:transaction")

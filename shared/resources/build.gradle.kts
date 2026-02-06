@@ -19,7 +19,7 @@ kotlin {
         // https://kotlinlang.org/docs/multiplatform/whats-new-compose-180.html#support-for-multiplatform-resources-in-the-androidlibrary-target
         androidResources.enable = true
 
-        namespace = "me.ilker.balance_tracker.resources"
+        namespace = "me.ilker.balance_tracker.shared.resources"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
     }
 

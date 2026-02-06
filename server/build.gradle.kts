@@ -34,7 +34,7 @@ kotlin {
 
 dependencies {
     implementation(projects.shared.common)
-    implementation(projects.resources)
+    implementation(projects.shared.resources)
     implementation(projects.shared.transaction)
 
     implementation(libs.koin.compose)
