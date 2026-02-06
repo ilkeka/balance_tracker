@@ -21,7 +21,7 @@ kotlin {
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     dependencies {
-        implementation(projects.core)
+        implementation(projects.shared.core)
         implementation(projects.resources)
 
         implementation(libs.jetbrains.compose.component.resources)
