@@ -16,10 +16,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -33,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
@@ -71,6 +76,7 @@ internal fun AddTransactionInitialView(
         type: TransactionType,
         description: String?
     ) -> Unit,
+    onBack: () -> Unit
 ) {
     val amountInputState = rememberTextFieldState()
     val expenseTypeState = remember { mutableStateOf(TransactionType.Expense) }
@@ -154,8 +160,18 @@ internal fun AddTransactionInitialView(
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp)
                     .padding(top = 48.dp)
-                    .padding(bottom = 12.dp)
+                    .padding(bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                IconButton(
+                    onClick = onBack,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+
                 Text(
                     text = stringResource(Res.string.new_transaction),
                     fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
