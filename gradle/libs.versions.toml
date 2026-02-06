@@ -17,6 +17,7 @@ kotlinx-serialization-json = "1.10.0"
 ktor = "3.4.0"
 logback = "1.5.27"
 sqldelight = "2.2.1"
+sqlJs = "1.8.0"
 webPackPlugin = "9.1.0"
 
 [libraries]
