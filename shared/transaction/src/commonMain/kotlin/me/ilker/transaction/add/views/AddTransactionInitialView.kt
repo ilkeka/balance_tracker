@@ -32,10 +32,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -49,7 +51,9 @@ import androidx.compose.ui.unit.dp
 import kotlin.time.Instant
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.add
@@ -61,9 +65,10 @@ import me.ilker.balance_tracker.resources.expense
 import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.new_transaction
 import me.ilker.balance_tracker.resources.transaction_type
+import me.ilker.core.extensions.round
 import me.ilker.transaction.transactions.TransactionType
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.round
 import kotlin.time.Clock
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -80,30 +85,37 @@ internal fun AddTransactionInitialView(
 ) {
     val amountInputState = rememberTextFieldState()
     val expenseTypeState = remember { mutableStateOf(TransactionType.Expense) }
-    val expenseTypeInputState = remember(expenseTypeState.value) { TextFieldState(expenseTypeState.value.name) }
+    val expenseTypeInputState = rememberTextFieldState()
     var expanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
+    var currentSelectedDateMillis by rememberSaveable { mutableStateOf(Clock.System.now().toEpochMilliseconds()) }
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = currentSelectedDateMillis)
     val descriptionState = rememberTextFieldState()
-    val selectedDateState by remember(datePickerState.selectedDateMillis) {
+    val dateState by remember(currentSelectedDateMillis) {
         mutableStateOf(
-            datePickerState
-                .selectedDateMillis
-                ?.let { millis ->
-                    Instant
-                        .fromEpochMilliseconds(millis)
-                        .toLocalDateTime(TimeZone.currentSystemDefault())
-                } ?: Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        )
-    }
-    val dateState by remember(selectedDateState) {
-        mutableStateOf(
-        TextFieldState(selectedDateState.date.toString())
+            TextFieldState(
+                with(
+                    LocalDateTime.Format {
+                        day()
+                        char('/')
+                        monthNumber()
+                        char('/')
+                        year()
+                    }
+                ) {
+                    format(
+                        Instant
+                            .fromEpochMilliseconds(currentSelectedDateMillis)
+                            .toLocalDateTime(TimeZone.currentSystemDefault())
+                    )
+                }
+            )
         )
     }
     val submitEnabledState by remember(amountInputState) {
         derivedStateOf {
-            amountInputState.text.isNotBlank() && amountInputState.text.toString().toDoubleOrNull() != null
+            amountInputState.text.isNotBlank() && amountInputState.text.toString()
+                .toDoubleOrNull() != null
         }
     }
 
@@ -127,7 +139,6 @@ internal fun AddTransactionInitialView(
             }
         }
     }
-
     val dateInteractionSource = remember {
         object : MutableInteractionSource {
             override val interactions = MutableSharedFlow<Interaction>(
@@ -146,6 +157,25 @@ internal fun AddTransactionInitialView(
             override fun tryEmit(interaction: Interaction): Boolean {
                 return interactions.tryEmit(interaction)
             }
+        }
+    }
+
+    LaunchedEffect(currentSelectedDateMillis, datePickerState.selectedDateMillis) {
+        datePickerState.selectedDateMillis?.let { selectedDateMillis ->
+            if (selectedDateMillis != currentSelectedDateMillis && showDatePicker) {
+                showDatePicker = false
+                currentSelectedDateMillis = selectedDateMillis
+            }
+        }
+    }
+
+    LaunchedEffect(expenseTypeState.value) {
+        val typeString = when (expenseTypeState.value) {
+            TransactionType.Expense -> getString(Res.string.expense)
+            TransactionType.Income -> getString(Res.string.income)
+        }
+        expenseTypeInputState.edit {
+            replace(0, length, typeString)
         }
     }
 
@@ -188,7 +218,7 @@ internal fun AddTransactionInitialView(
                     amountInputState.text.toString().toDoubleOrNull()?.round(2)?.let { amount ->
                         onAdd(
                             amount,
-                            selectedDateState.date.toString(),
+                            dateState.text.toString(),
                             expenseTypeState.value,
                             descriptionState.text.toString()
                         )
@@ -258,6 +288,7 @@ internal fun AddTransactionInitialView(
                 item {
                     DatePicker(
                         state = datePickerState,
+                        showModeToggle = false
                     )
                 }
             }
@@ -341,10 +372,4 @@ internal fun AddTransactionInitialView(
             }
         }
     }
-}
-
-fun Double.round(decimals: Int): Double {
-    var multiplier = 1.0
-    repeat(decimals) { multiplier *= 10 }
-    return round(this * multiplier) / multiplier
 }

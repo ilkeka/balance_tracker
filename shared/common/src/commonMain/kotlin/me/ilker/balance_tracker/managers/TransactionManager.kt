@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.core.Manager
+import me.ilker.core.extensions.round
 import me.ilker.transaction.transactions.ModalBottomSheetState
 import me.ilker.transaction.transactions.TransactionIntent
 import me.ilker.transaction.transactions.TransactionSideEffect
@@ -27,12 +28,6 @@ class TransactionManager(
     private val modalState: MutableStateFlow<ModalBottomSheetState?> = MutableStateFlow(null)
     override fun sendIntent(intent: TransactionIntent) {
         when (intent) {
-            is TransactionIntent.Add -> addTransaction(
-                amount = intent.amount,
-                dateTime = intent.dateTime,
-                type = intent.type,
-                description = intent.description
-            )
             is TransactionIntent.OnClick -> onClick(intent.id)
             TransactionIntent.OnDismissRequest -> onDismissRequest()
             TransactionIntent.OnDeleteTransaction -> onDeleteTransaction()
@@ -43,38 +38,37 @@ class TransactionManager(
         sdk.transactions,
         modalState
     ) { transactions, modalBottomSheetState ->
+        val transactionsSorted = transactions
+            .sortedBy { it.dateTime }
+            .takeLast(3)
+
         TransactionState.Loaded(
-            transactions = transactions,
+            balance = run {
+                val (expense, income) = with(transactions.partition { it.type == TransactionType.Expense }) {
+                    this.first.sumOf { transaction -> transaction.amount }.round(2) to
+                            this.second.sumOf { transaction -> transaction.amount }.round(2)
+                }
+
+                TransactionState.Loaded.BalanceUiModel(
+                    balance = income - expense,
+                    expense = expense,
+                    income = income
+                )
+            },
+            transactions = transactionsSorted,
             modalState = modalBottomSheetState
         )
     }.stateIn(
         scope = scope,
         started = SharingStarted.Lazily,
         initialValue = TransactionState.Loaded(
+            balance = null,
             transactions = emptyList(),
             modalState = null
         )
     )
 
     override val sideEffect: Channel<TransactionSideEffect> = Channel()
-
-    private fun addTransaction(
-        amount: Double,
-        dateTime: String,
-        type: TransactionType,
-        description: String?
-    ) {
-        scope.launch {
-            val result = runCatching {
-                sdk.addTransaction(
-                    amount = amount,
-                    dateTime = dateTime,
-                    type = type,
-                    description = description
-                )
-            }
-        }
-    }
 
     private fun onClick(
         id: Long
