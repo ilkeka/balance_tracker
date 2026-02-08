@@ -8,12 +8,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import me.ilker.balance_tracker.resources.Res
+import me.ilker.balance_tracker.resources.add_transaction_success_feedback
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.core.Manager
 import me.ilker.transaction.add.AddTransactionIntent
 import me.ilker.transaction.add.AddTransactionSideEffect
 import me.ilker.transaction.add.AddTransactionState
 import me.ilker.transaction.transactions.TransactionType
+import org.jetbrains.compose.resources.getString
 import kotlin.coroutines.EmptyCoroutineContext
 
 class AddTransactionManager(
@@ -54,7 +57,7 @@ class AddTransactionManager(
             }
 
             result.getOrNull()?.let {
-                sideEffect.trySend(AddTransactionSideEffect.Feedback("Added transaction successfully!"))
+                sideEffect.trySend(AddTransactionSideEffect.Feedback(getString(Res.string.add_transaction_success_feedback)))
                 delay(500)
                 sideEffect.trySend(AddTransactionSideEffect.Back)
             }

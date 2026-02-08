@@ -95,6 +95,7 @@ kotlin {
         implementation(projects.shared.resources)
         implementation(projects.shared.transaction)
 
+        implementation(libs.jetbrains.compose.component.resources)
         implementation(libs.jetbrains.compose.material3)
         implementation(libs.jetbrains.compose.navigation)
         implementation(libs.jetbrains.compose.navigationevent)

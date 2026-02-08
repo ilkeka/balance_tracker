@@ -21,6 +21,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -100,17 +101,16 @@ internal fun TransactionsLoadedView(
                         stickyHeader {
                             val summaryColor = when {
                                 balance.expense > balance.income -> MaterialTheme.colorScheme.errorContainer
-                                balance.expense < balance.income -> MaterialTheme.colorScheme.tertiaryContainer
+                                balance.expense < balance.income -> Color(0xFF34501F)
                                 else -> MaterialTheme.colorScheme.surfaceContainer
                             }
 
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 12.dp)
-                                ,
+                                    .padding(horizontal = 12.dp),
                                 colors = CardDefaults.cardColors(
-                                    contentColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = Color(0xFFD0DBD0),
                                     containerColor = summaryColor,
                                     disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
                                     disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
@@ -119,7 +119,6 @@ internal fun TransactionsLoadedView(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(summaryColor)
                                         .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
                                 ) {
                                     Text(
