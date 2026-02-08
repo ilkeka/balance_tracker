@@ -44,7 +44,7 @@ class TransactionManager(
         modalState
     ) { transactions, modalBottomSheetState ->
         TransactionState.Loaded(
-            transactions = transactions,
+            transactions = transactions.sortedBy { it.dateTime },
             modalState = modalBottomSheetState
         )
     }.stateIn(
