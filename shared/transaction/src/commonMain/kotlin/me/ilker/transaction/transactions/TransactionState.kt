@@ -3,6 +3,8 @@ package me.ilker.transaction.transactions
 import me.ilker.core.State
 
 sealed class TransactionState : State {
+    data object InitialState: TransactionState()
+
     data class Loaded(
         val balance: BalanceUiModel?,
         val transactions: List<TransactionDomainModel>,
