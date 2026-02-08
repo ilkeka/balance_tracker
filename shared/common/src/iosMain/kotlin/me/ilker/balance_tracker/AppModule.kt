@@ -6,7 +6,7 @@ import me.ilker.balance_tracker.sdk.impl.BalanceTrackerSDKImpl
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 
-private val appModule = module {
+internal actual val appModule = module {
     single<BalanceTrackerSDK> {
         BalanceTrackerSDKImpl(
             driverFactory = DatabaseDriverFactory()
@@ -14,6 +14,7 @@ private val appModule = module {
     }
 }
 
+@Suppress("Unused")
 fun startKoin() {
     startKoin {
         modules(appModule)

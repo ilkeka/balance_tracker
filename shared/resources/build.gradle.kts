@@ -38,8 +38,9 @@ kotlin {
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     dependencies {
-        implementation(libs.jetbrains.compose.runtime)
         implementation(libs.jetbrains.compose.component.resources)
+        implementation(libs.jetbrains.compose.material3)
+        implementation(libs.jetbrains.compose.runtime)
     }
 }
 
