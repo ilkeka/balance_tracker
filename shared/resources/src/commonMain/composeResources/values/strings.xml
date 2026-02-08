@@ -1,5 +1,6 @@
 <resources>
     <string name="add">Add</string>
+    <string name="add_transaction_success_feedback">Added transaction successfully!</string>
     <string name="app_name">Balance Tracker</string>
     <string name="amount">Amount</string>
     <string name="amount_format">Decimal part should be represented with the dot. For instance: 10.42</string>

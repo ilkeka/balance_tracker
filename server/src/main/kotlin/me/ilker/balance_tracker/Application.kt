@@ -20,6 +20,7 @@ fun main(args: Array<String>) {
 }
 
 @ExperimentalUuidApi
+@Suppress("Unused")
 fun Application.module() {
     configHttp()
     configAuth()
