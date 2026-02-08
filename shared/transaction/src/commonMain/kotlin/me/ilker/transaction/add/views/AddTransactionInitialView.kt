@@ -49,7 +49,9 @@ import androidx.compose.ui.unit.dp
 import kotlin.time.Instant
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.add
@@ -80,10 +82,13 @@ internal fun AddTransactionInitialView(
 ) {
     val amountInputState = rememberTextFieldState()
     val expenseTypeState = remember { mutableStateOf(TransactionType.Expense) }
-    val expenseTypeInputState = remember(expenseTypeState.value) { TextFieldState(expenseTypeState.value.name) }
+    val expenseTypeInputState =
+        remember(expenseTypeState.value) { TextFieldState(expenseTypeState.value.name) }
     var expanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = Clock.System.now().toEpochMilliseconds(),
+    )
     val descriptionState = rememberTextFieldState()
     val selectedDateState by remember(datePickerState.selectedDateMillis) {
         mutableStateOf(
@@ -98,12 +103,25 @@ internal fun AddTransactionInitialView(
     }
     val dateState by remember(selectedDateState) {
         mutableStateOf(
-        TextFieldState(selectedDateState.date.toString())
+            TextFieldState(
+                with(
+                    LocalDateTime.Format {
+                        day()
+                        char('/')
+                        monthNumber()
+                        char('/')
+                        year()
+                    }
+                ) {
+                    format(selectedDateState)
+                }
+            )
         )
     }
     val submitEnabledState by remember(amountInputState) {
         derivedStateOf {
-            amountInputState.text.isNotBlank() && amountInputState.text.toString().toDoubleOrNull() != null
+            amountInputState.text.isNotBlank() && amountInputState.text.toString()
+                .toDoubleOrNull() != null
         }
     }
 
@@ -188,7 +206,7 @@ internal fun AddTransactionInitialView(
                     amountInputState.text.toString().toDoubleOrNull()?.round(2)?.let { amount ->
                         onAdd(
                             amount,
-                            selectedDateState.date.toString(),
+                            dateState.text.toString(),
                             expenseTypeState.value,
                             descriptionState.text.toString()
                         )
@@ -258,6 +276,7 @@ internal fun AddTransactionInitialView(
                 item {
                     DatePicker(
                         state = datePickerState,
+                        showModeToggle = false
                     )
                 }
             }
