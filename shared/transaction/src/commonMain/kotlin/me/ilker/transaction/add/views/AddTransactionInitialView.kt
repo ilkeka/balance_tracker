@@ -32,10 +32,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -86,22 +88,14 @@ internal fun AddTransactionInitialView(
         remember(expenseTypeState.value) { TextFieldState(expenseTypeState.value.name) }
     var expanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var currentSelectedDateMillis by rememberSaveable {
+        mutableStateOf(Clock.System.now().toEpochMilliseconds())
+    }
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = Clock.System.now().toEpochMilliseconds(),
+        initialSelectedDateMillis = currentSelectedDateMillis,
     )
     val descriptionState = rememberTextFieldState()
-    val selectedDateState by remember(datePickerState.selectedDateMillis) {
-        mutableStateOf(
-            datePickerState
-                .selectedDateMillis
-                ?.let { millis ->
-                    Instant
-                        .fromEpochMilliseconds(millis)
-                        .toLocalDateTime(TimeZone.currentSystemDefault())
-                } ?: Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        )
-    }
-    val dateState by remember(selectedDateState) {
+    val dateState by remember(currentSelectedDateMillis) {
         mutableStateOf(
             TextFieldState(
                 with(
@@ -113,7 +107,11 @@ internal fun AddTransactionInitialView(
                         year()
                     }
                 ) {
-                    format(selectedDateState)
+                    format(
+                        Instant
+                            .fromEpochMilliseconds(currentSelectedDateMillis)
+                            .toLocalDateTime(TimeZone.currentSystemDefault())
+                    )
                 }
             )
         )
@@ -163,6 +161,15 @@ internal fun AddTransactionInitialView(
 
             override fun tryEmit(interaction: Interaction): Boolean {
                 return interactions.tryEmit(interaction)
+            }
+        }
+    }
+
+    LaunchedEffect(currentSelectedDateMillis, datePickerState.selectedDateMillis) {
+        datePickerState.selectedDateMillis?.let { selectedDateMillis ->
+            if (selectedDateMillis != currentSelectedDateMillis && showDatePicker) {
+                showDatePicker = false
+                currentSelectedDateMillis = selectedDateMillis
             }
         }
     }
