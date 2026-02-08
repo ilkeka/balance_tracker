@@ -67,6 +67,7 @@ import me.ilker.balance_tracker.resources.new_transaction
 import me.ilker.balance_tracker.resources.transaction_type
 import me.ilker.core.extensions.round
 import me.ilker.transaction.transactions.TransactionType
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
 
@@ -84,16 +85,11 @@ internal fun AddTransactionInitialView(
 ) {
     val amountInputState = rememberTextFieldState()
     val expenseTypeState = remember { mutableStateOf(TransactionType.Expense) }
-    val expenseTypeInputState =
-        remember(expenseTypeState.value) { TextFieldState(expenseTypeState.value.name) }
+    val expenseTypeInputState = rememberTextFieldState()
     var expanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
-    var currentSelectedDateMillis by rememberSaveable {
-        mutableStateOf(Clock.System.now().toEpochMilliseconds())
-    }
-    val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = currentSelectedDateMillis,
-    )
+    var currentSelectedDateMillis by rememberSaveable { mutableStateOf(Clock.System.now().toEpochMilliseconds()) }
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = currentSelectedDateMillis)
     val descriptionState = rememberTextFieldState()
     val dateState by remember(currentSelectedDateMillis) {
         mutableStateOf(
@@ -143,7 +139,6 @@ internal fun AddTransactionInitialView(
             }
         }
     }
-
     val dateInteractionSource = remember {
         object : MutableInteractionSource {
             override val interactions = MutableSharedFlow<Interaction>(
@@ -171,6 +166,16 @@ internal fun AddTransactionInitialView(
                 showDatePicker = false
                 currentSelectedDateMillis = selectedDateMillis
             }
+        }
+    }
+
+    LaunchedEffect(expenseTypeState.value) {
+        val typeString = when (expenseTypeState.value) {
+            TransactionType.Expense -> getString(Res.string.expense)
+            TransactionType.Income -> getString(Res.string.income)
+        }
+        expenseTypeInputState.edit {
+            replace(0, length, typeString)
         }
     }
 

@@ -2,7 +2,7 @@
     <string name="add">Add</string>
     <string name="app_name">Balance Tracker</string>
     <string name="amount">Amount</string>
-    <string name="amount_format">Decimal part should be represented with `.` character instead of `,`. For instance: 10.42</string>
+    <string name="amount_format">Decimal part should be represented with the dot. For instance: 10.42</string>
     <string name="date">Date</string>
     <string name="balance">Balance</string>
     <string name="delete">Delete</string>
