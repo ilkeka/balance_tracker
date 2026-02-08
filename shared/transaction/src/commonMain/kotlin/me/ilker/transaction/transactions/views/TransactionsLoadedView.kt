@@ -35,19 +35,18 @@ import me.ilker.balance_tracker.resources.delete
 import me.ilker.balance_tracker.resources.description
 import me.ilker.balance_tracker.resources.expense_total
 import me.ilker.balance_tracker.resources.income_total
+import me.ilker.balance_tracker.resources.latest_transactions
 import me.ilker.balance_tracker.resources.nothing_yet
 import me.ilker.balance_tracker.resources.start_create_transaction
-import me.ilker.transaction.add.views.round
 import me.ilker.transaction.transactions.ModalBottomSheetState
-import me.ilker.transaction.transactions.TransactionDomainModel
+import me.ilker.transaction.transactions.TransactionState
 import me.ilker.transaction.transactions.TransactionType
 import org.jetbrains.compose.resources.stringResource
 
 @ExperimentalMaterial3Api
 @Composable
 internal fun TransactionsLoadedView(
-    transactions: List<TransactionDomainModel>,
-    modalState: ModalBottomSheetState?,
+    state: TransactionState.Loaded,
     add: () -> Unit,
     onDeleteTransactions: () -> Unit,
     onDismissRequest: () -> Unit,
@@ -88,7 +87,7 @@ internal fun TransactionsLoadedView(
             )
         }
     ) { paddingValues ->
-        transactions
+        state.transactions
             .takeUnless { it.isEmpty() }
             ?.let {
                 LazyColumn(
@@ -97,55 +96,63 @@ internal fun TransactionsLoadedView(
                         .padding(paddingValues),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    stickyHeader {
-                        val (expense, income) = with(transactions.partition { it.type == TransactionType.Expense }) {
-                            this.first.sumOf { transaction -> transaction.amount }.round(2) to
-                                    this.second.sumOf { transaction -> transaction.amount }.round(2)
-                        }
+                    state.balance?.let { balance ->
+                        stickyHeader {
+                            val summaryColor = when {
+                                balance.expense > balance.income -> MaterialTheme.colorScheme.errorContainer
+                                balance.expense < balance.income -> MaterialTheme.colorScheme.tertiaryContainer
+                                else -> MaterialTheme.colorScheme.surfaceContainer
+                            }
 
-                        val summaryColor = when {
-                            expense > income -> MaterialTheme.colorScheme.errorContainer
-                            expense < income -> MaterialTheme.colorScheme.tertiaryContainer
-                            else -> MaterialTheme.colorScheme.surfaceContainer
-                        }
-
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp)
-                            ,
-                            colors = CardDefaults.cardColors(
-                                contentColor = MaterialTheme.colorScheme.primary,
-                                containerColor = summaryColor,
-                                disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-                                disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
-                            ),
-                        ) {
-                            Column(
+                            Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(summaryColor)
-                                    .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                                    .padding(horizontal = 12.dp)
+                                ,
+                                colors = CardDefaults.cardColors(
+                                    contentColor = MaterialTheme.colorScheme.primary,
+                                    containerColor = summaryColor,
+                                    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
+                                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
+                                ),
                             ) {
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = "${stringResource(Res.string.balance)}: ${income - expense}",
-                                )
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(summaryColor)
+                                        .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                                ) {
+                                    Text(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        text = "${stringResource(Res.string.balance)}: ${balance.balance}",
+                                    )
 
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = "${stringResource(Res.string.income_total)}: $income",
-                                )
+                                    Text(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        text = "${stringResource(Res.string.income_total)}: ${balance.income}",
+                                    )
 
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = "${stringResource(Res.string.expense_total)}: $expense",
-                                )
+                                    Text(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        text = "${stringResource(Res.string.expense_total)}: ${balance.expense}",
+                                    )
+                                }
                             }
                         }
                     }
 
-                    items(transactions) { transaction ->
+                    item {
+                        Text(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp),
+                            text = stringResource(Res.string.latest_transactions),
+                            fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    items(state.transactions) { transaction ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -217,7 +224,7 @@ internal fun TransactionsLoadedView(
                 }
             }
 
-        modalState?.let {
+        state.modalState?.let { modalState ->
             ModalBottomSheet(
                 onDismissRequest = onDismissRequest
             ) {

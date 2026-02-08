@@ -16,8 +16,7 @@ fun TransactionsScreen(
 ) {
     when (val currentState = state.value) {
         is TransactionState.Loaded -> TransactionsLoadedView(
-            transactions = currentState.transactions,
-            modalState = currentState.modalState,
+            state = currentState,
             add = add,
             onDeleteTransactions = onDeleteTransactions,
             onDismissRequest = onDismissRequest,

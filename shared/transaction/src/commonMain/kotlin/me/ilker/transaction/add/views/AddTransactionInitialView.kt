@@ -63,9 +63,9 @@ import me.ilker.balance_tracker.resources.expense
 import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.new_transaction
 import me.ilker.balance_tracker.resources.transaction_type
+import me.ilker.core.extensions.round
 import me.ilker.transaction.transactions.TransactionType
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.round
 import kotlin.time.Clock
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -360,10 +360,4 @@ internal fun AddTransactionInitialView(
             }
         }
     }
-}
-
-fun Double.round(decimals: Int): Double {
-    var multiplier = 1.0
-    repeat(decimals) { multiplier *= 10 }
-    return round(this * multiplier) / multiplier
 }
