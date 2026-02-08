@@ -61,11 +61,7 @@ class TransactionManager(
     }.stateIn(
         scope = scope,
         started = SharingStarted.Lazily,
-        initialValue = TransactionState.Loaded(
-            balance = null,
-            transactions = emptyList(),
-            modalState = null
-        )
+        initialValue = TransactionState.InitialState
     )
 
     override val sideEffect: Channel<TransactionSideEffect> = Channel()
