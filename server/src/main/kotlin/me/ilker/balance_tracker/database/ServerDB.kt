@@ -3,7 +3,7 @@ package me.ilker.balance_tracker.database
 import me.ilker.balancetracker.User
 import kotlin.Throws
 
-interface DB {
+interface ServerDB {
     suspend fun createUser(
         id: String,
         email: String,
