@@ -9,7 +9,7 @@ import io.ktor.util.getDigestFunction
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import me.ilker.balance_tracker.Registration
-import me.ilker.balance_tracker.database.DB
+import me.ilker.balance_tracker.database.ServerDB
 import me.ilker.balance_tracker.models.RegistrationRequest
 import org.koin.ktor.ext.inject
 import kotlin.io.encoding.Base64
@@ -19,7 +19,7 @@ import kotlin.uuid.Uuid
 
 @ExperimentalUuidApi
 internal fun Route.registration() {
-    val db by inject<DB>()
+    val db by inject<ServerDB>()
     val digest = getDigestFunction("SHA-256") { "ktor${it.length}" }
 
     post<Registration> {
