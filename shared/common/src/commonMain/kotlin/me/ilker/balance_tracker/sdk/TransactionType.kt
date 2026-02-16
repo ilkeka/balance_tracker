@@ -1,4 +1,4 @@
-package me.ilker.transaction.transactions
+package me.ilker.balance_tracker.sdk
 
 enum class TransactionType {
     Expense,

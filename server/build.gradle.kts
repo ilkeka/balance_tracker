@@ -35,7 +35,6 @@ kotlin {
 dependencies {
     implementation(projects.shared.common)
     implementation(projects.shared.resources)
-    implementation(projects.shared.transaction)
 
     implementation(libs.koin.compose)
     implementation(libs.koin.ktor)
@@ -60,7 +59,7 @@ dependencies {
 
 sqldelight {
     databases {
-        create("Database") {
+        create("ServerDatabase") {
             generateAsync = true
             packageName.set("me.ilker.balance_tracker")
         }

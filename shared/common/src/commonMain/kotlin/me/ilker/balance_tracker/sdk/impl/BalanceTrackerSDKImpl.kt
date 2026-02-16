@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.Flow
 import me.ilker.balance_tracker.database.DB
 import me.ilker.balance_tracker.database.DatabaseDriverFactory
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
-import me.ilker.transaction.transactions.TransactionDomainModel
-import me.ilker.transaction.transactions.TransactionType
+import me.ilker.balance_tracker.sdk.TransactionDomainModel
+import me.ilker.balance_tracker.sdk.TransactionType
 
 class BalanceTrackerSDKImpl(
     driverFactory: DatabaseDriverFactory

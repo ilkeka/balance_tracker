@@ -7,6 +7,7 @@ plugins {
 
 kotlin {
     dependencies {
+        implementation(projects.shared.app)
         implementation(projects.shared.common)
 
         implementation(libs.androidx.activity.compose)

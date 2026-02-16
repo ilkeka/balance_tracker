@@ -66,7 +66,7 @@ import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.new_transaction
 import me.ilker.balance_tracker.resources.transaction_type
 import me.ilker.core.extensions.round
-import me.ilker.transaction.transactions.TransactionType
+import me.ilker.balance_tracker.sdk.TransactionType
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock

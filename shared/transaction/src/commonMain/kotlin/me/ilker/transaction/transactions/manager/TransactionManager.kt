@@ -1,4 +1,4 @@
-package me.ilker.balance_tracker.managers
+package me.ilker.transaction.transactions.manager
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -17,7 +17,7 @@ import me.ilker.transaction.transactions.ModalBottomSheetState
 import me.ilker.transaction.transactions.TransactionIntent
 import me.ilker.transaction.transactions.TransactionSideEffect
 import me.ilker.transaction.transactions.TransactionState
-import me.ilker.transaction.transactions.TransactionType
+import me.ilker.balance_tracker.sdk.TransactionType
 import kotlin.coroutines.EmptyCoroutineContext
 
 class TransactionManager(

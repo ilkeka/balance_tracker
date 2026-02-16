@@ -1,7 +1,7 @@
 package me.ilker.balance_tracker.database.impl
 
 import app.cash.sqldelight.EnumColumnAdapter
-import me.ilker.balance_tracker.Database
+import me.ilker.balance_tracker.ServerDatabase
 import me.ilker.balance_tracker.database.DatabaseDriverFactory
 import me.ilker.balance_tracker.database.ServerDB
 import me.ilker.balancetracker.Transactions
@@ -10,21 +10,20 @@ import kotlin.Throws
 internal class ServerDBImpl(
     databaseDriverFactory: DatabaseDriverFactory
 ): ServerDB {
-    private val database = Database(
+    private val database = ServerDatabase(
         driver = databaseDriverFactory.createDriver(),
         TransactionsAdapter = Transactions.Adapter(
-            typeAdapter =  EnumColumnAdapter(),
+            typeAdapter = EnumColumnAdapter(),
         ),
     )
-
-    private val dbQuery = database.databaseQueries
 
     override suspend fun createUser(
         id: String,
         email: String,
         password: String,
         createdAt: String
-    ) = dbQuery
+    ) = database
+        .userQueries
         .insertUser(
             id = id,
             email = email,
@@ -34,18 +33,21 @@ internal class ServerDBImpl(
 
     override suspend fun getUser(
         id: String
-    ) = dbQuery
+    ) = database
+        .userQueries
         .getUser(id = id)
         .executeAsOneOrNull()
 
     override suspend fun getUserByMail(
         email: String
-    ) = dbQuery
+    ) = database
+        .userQueries
         .getUserByEmail(email = email)
         .executeAsOneOrNull()
 
     @Throws(Exception::class)
-    override suspend fun getUsers() = dbQuery
+    override suspend fun getUsers() = database
+        .userQueries
         .getUsers()
         .executeAsList()
 }

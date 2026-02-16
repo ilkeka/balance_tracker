@@ -1,5 +1,6 @@
 package me.ilker.transaction.transactions
 
+import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.core.State
 
 sealed class TransactionState : State {

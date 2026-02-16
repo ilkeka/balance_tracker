@@ -41,7 +41,7 @@ import me.ilker.balance_tracker.resources.nothing_yet
 import me.ilker.balance_tracker.resources.start_create_transaction
 import me.ilker.transaction.transactions.ModalBottomSheetState
 import me.ilker.transaction.transactions.TransactionState
-import me.ilker.transaction.transactions.TransactionType
+import me.ilker.balance_tracker.sdk.TransactionType
 import org.jetbrains.compose.resources.stringResource
 
 @ExperimentalMaterial3Api
