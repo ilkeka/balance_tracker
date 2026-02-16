@@ -1,4 +1,4 @@
-package me.ilker.balance_tracker.managers
+package me.ilker.transaction.add.manager
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -11,11 +11,11 @@ import kotlinx.coroutines.launch
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.add_transaction_success_feedback
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
+import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.core.Manager
 import me.ilker.transaction.add.AddTransactionIntent
 import me.ilker.transaction.add.AddTransactionSideEffect
 import me.ilker.transaction.add.AddTransactionState
-import me.ilker.transaction.transactions.TransactionType
 import org.jetbrains.compose.resources.getString
 import kotlin.coroutines.EmptyCoroutineContext
 

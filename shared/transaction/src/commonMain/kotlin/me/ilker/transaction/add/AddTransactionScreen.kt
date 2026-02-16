@@ -8,7 +8,7 @@ import androidx.compose.runtime.remember
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import me.ilker.transaction.add.views.AddTransactionInitialView
-import me.ilker.transaction.transactions.TransactionType
+import me.ilker.balance_tracker.sdk.TransactionType
 
 @Composable
 fun AddTransactionScreen(

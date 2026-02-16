@@ -1,4 +1,4 @@
-import me.ilker.transaction.transactions.TransactionType;
+import me.ilker.balance_tracker.sdk.TransactionType;
 
 CREATE TABLE Transactions (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,

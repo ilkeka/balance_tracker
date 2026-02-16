@@ -21,6 +21,7 @@ kotlin {
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     dependencies {
+        implementation(projects.shared.app)
         implementation(projects.shared.common)
 
         implementation(libs.jetbrains.compose.desktop.jvm.linux.x64)

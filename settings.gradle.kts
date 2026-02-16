@@ -33,6 +33,7 @@ include(":desktop")
 include(":server")
 include(":web")
 
+include(":shared:app")
 include(":shared:common")
 include(":shared:core")
 include(":shared:resources")

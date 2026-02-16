@@ -18,8 +18,8 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
-import me.ilker.balance_tracker.managers.AddTransactionManager
-import me.ilker.balance_tracker.managers.TransactionManager
+import me.ilker.transaction.add.manager.AddTransactionManager
+import me.ilker.transaction.transactions.manager.TransactionManager
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.theme.AppTheme
 import me.ilker.core.Route
