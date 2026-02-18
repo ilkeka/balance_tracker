@@ -23,7 +23,9 @@ kotlin {
     dependencies {
         implementation(projects.shared.app)
         implementation(projects.shared.common)
+        implementation(projects.shared.resources)
 
+        implementation(libs.jetbrains.compose.component.resources)
         implementation(libs.jetbrains.compose.desktop.jvm.linux.x64)
         implementation(libs.jetbrains.compose.ui)
         implementation(libs.koin.compose)
