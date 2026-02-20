@@ -23,6 +23,9 @@ import me.ilker.transaction.transactions.manager.TransactionManager
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.theme.AppTheme
 import me.ilker.core.Route
+import me.ilker.home.HomeIntent
+import me.ilker.home.HomeManager
+import me.ilker.home.HomeScreen
 import me.ilker.transaction.add.AddTransactionIntent
 import me.ilker.transaction.add.AddTransactionNavigationEventInfo
 import me.ilker.transaction.add.AddTransactionScreen
@@ -57,7 +60,22 @@ fun CommonApp() {
                         add = { navController.navigate(Route.Add) },
                         onDeleteTransactions = { manager.sendIntent(TransactionIntent.OnDeleteTransaction) },
                         onDismissRequest = { manager.sendIntent(TransactionIntent.OnDismissRequest) },
+                        onTransactionsClicked = { navController.navigate(Route.Transactions) },
                         onClick = { id -> manager.sendIntent(TransactionIntent.OnClick(id = id)) }
+                    )
+                }
+
+                composable<Route.Transactions> {
+                    val manager = remember { HomeManager(sdk = sdk) }
+                    val state = manager.state.collectAsStateWithLifecycle()
+
+                    HomeScreen(
+                        state = state,
+                        add = { navController.navigate(Route.Add) },
+                        onDeleteTransactions = { manager.sendIntent(HomeIntent.OnDeleteTransaction) },
+                        onDismissRequest = { manager.sendIntent(HomeIntent.OnDismissRequest) },
+                        onTransactionsClicked = { navController.navigate(Route.Transactions) },
+                        onClick = { id -> manager.sendIntent(HomeIntent.OnClick(id = id)) }
                     )
                 }
 

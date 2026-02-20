@@ -8,4 +8,7 @@ interface Route {
 
     @Serializable
     object Add : Route
+
+    @Serializable
+    object Transactions : Route
 }

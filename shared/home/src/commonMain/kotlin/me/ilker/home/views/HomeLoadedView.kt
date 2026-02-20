@@ -1,4 +1,4 @@
-package me.ilker.transaction.transactions.views
+package me.ilker.home.views
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,7 +15,6 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -41,15 +40,15 @@ import me.ilker.balance_tracker.resources.latest_transactions
 import me.ilker.balance_tracker.resources.nothing_yet
 import me.ilker.balance_tracker.resources.see_all
 import me.ilker.balance_tracker.resources.start_create_transaction
-import me.ilker.transaction.transactions.ModalBottomSheetState
-import me.ilker.transaction.transactions.TransactionState
 import me.ilker.balance_tracker.sdk.TransactionType
+import me.ilker.home.HomeState
+import me.ilker.home.ModalBottomSheetState
 import org.jetbrains.compose.resources.stringResource
 
 @ExperimentalMaterial3Api
 @Composable
-internal fun TransactionsLoadedView(
-    state: TransactionState.Loaded,
+internal fun HomeLoadedView(
+    state: HomeState.Loaded,
     add: () -> Unit,
     onDeleteTransactions: () -> Unit,
     onDismissRequest: () -> Unit,

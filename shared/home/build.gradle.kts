@@ -16,7 +16,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_21)
         }
 
-        namespace = "me.ilker.balance_tracker.shared.app"
+        namespace = "me.ilker.balance_tracker.shared.home"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
     }
 
@@ -34,17 +34,13 @@ kotlin {
     dependencies {
         implementation(projects.shared.common)
         implementation(projects.shared.core)
-        implementation(projects.shared.home)
         implementation(projects.shared.resources)
-        implementation(projects.shared.transaction)
 
         implementation(libs.jetbrains.compose.component.resources)
         implementation(libs.jetbrains.compose.materialicons.core)
         implementation(libs.jetbrains.compose.material3)
-        implementation(libs.jetbrains.compose.navigation)
         implementation(libs.jetbrains.compose.navigationevent)
         implementation(libs.jetbrains.lifecycle.runtime.compose)
-        implementation(libs.koin.compose)
         implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.datetime)
         implementation(libs.kotlinx.serialization.json)
