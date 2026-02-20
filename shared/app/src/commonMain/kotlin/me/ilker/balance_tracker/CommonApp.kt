@@ -33,6 +33,7 @@ import me.ilker.transaction.add.AddTransactionSideEffect
 import me.ilker.transaction.add.AddTransactionState
 import me.ilker.transaction.transactions.TransactionIntent
 import me.ilker.transaction.transactions.TransactionState
+import me.ilker.transaction.transactions.TransactionsNavigationEventInfo
 import me.ilker.transaction.transactions.TransactionsScreen
 import org.koin.compose.koinInject
 
@@ -65,16 +66,27 @@ fun CommonApp() {
                     )
                 }
 
-                composable<Route.Transactions> {
+                composable<Route.Transactions> {navBackStackEntry ->
+                    val route = navBackStackEntry.toRoute<Route.Transactions>()
                     val manager = remember { TransactionManager(sdk = sdk) }
                     val state: State<TransactionState> = manager.state.collectAsStateWithLifecycle()
+                    val navEventState = rememberNavigationEventState(
+                        currentInfo = TransactionsNavigationEventInfo(route = route),
+                    )
+
+                    NavigationBackHandler(
+                        state = navEventState,
+                        isBackEnabled = true,
+                        onBackCompleted = { navController.popBackStack() }
+                    )
 
                     TransactionsScreen(
                         state = state,
                         add = { navController.navigate(Route.Add) },
                         onDeleteTransactions = { manager.sendIntent(TransactionIntent.OnDeleteTransaction) },
                         onDismissRequest = { manager.sendIntent(TransactionIntent.OnDismissRequest) },
-                        onClick = { id -> manager.sendIntent(TransactionIntent.OnClick(id = id)) }
+                        onClick = { id -> manager.sendIntent(TransactionIntent.OnClick(id = id)) },
+                        onBack = { navController.popBackStack() }
                     )
                 }
 
