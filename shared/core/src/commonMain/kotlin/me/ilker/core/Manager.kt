@@ -2,7 +2,6 @@ package me.ilker.core
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.internal.ChannelFlow
 
 abstract class Manager<STATE: State, INTENT: Intent, SIDE_EFFECT: SideEffect> {
 

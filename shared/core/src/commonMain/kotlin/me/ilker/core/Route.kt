@@ -2,10 +2,13 @@ package me.ilker.core
 
 import kotlinx.serialization.Serializable
 
-interface Route {
+sealed interface Route {
     @Serializable
-    object Root : Route
+    object Home : Route
 
     @Serializable
     object Add : Route
+
+    @Serializable
+    object Transactions : Route
 }

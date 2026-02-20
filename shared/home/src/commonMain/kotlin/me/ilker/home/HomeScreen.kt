@@ -1,30 +1,30 @@
-package me.ilker.transaction.transactions
+package me.ilker.home
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import me.ilker.transaction.transactions.views.TransactionsInitialView
-import me.ilker.transaction.transactions.views.TransactionsLoadedView
+import me.ilker.home.views.HomeInitialView
+import me.ilker.home.views.HomeLoadedView
 
 @ExperimentalMaterial3Api
 @Composable
-fun TransactionsScreen(
-    state: State<TransactionState>,
+fun HomeScreen(
+    state: State<HomeState>,
     add: () -> Unit,
     onDeleteTransactions: () -> Unit,
     onDismissRequest: () -> Unit,
-    onClick: (id: Long) -> Unit,
-    onBack: () -> Unit
+    onTransactionsClicked: () -> Unit,
+    onClick: (id: Long) -> Unit
 ) {
     when (val currentState = state.value) {
-        TransactionState.InitialState -> TransactionsInitialView()
-        is TransactionState.Loaded -> TransactionsLoadedView(
+        HomeState.InitialState -> HomeInitialView()
+        is HomeState.Loaded -> HomeLoadedView(
             state = currentState,
             add = add,
             onDeleteTransactions = onDeleteTransactions,
             onDismissRequest = onDismissRequest,
-            onClick = onClick,
-            onBack = onBack
+            onTransactionsClicked = onTransactionsClicked,
+            onClick = onClick
         )
     }
 }

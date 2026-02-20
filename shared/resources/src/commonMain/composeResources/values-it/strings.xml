@@ -17,5 +17,6 @@
     <string name="new_transaction">Nuova transazione</string>
     <string name="nothing_yet">Ancore niente</string>
     <string name="start_create_transaction">Inizia a creare transazioni per tracciarle e analizzarle.</string>
+    <string name="see_all">Vedi tutte</string>
     <string name="transaction_type">Tipologia</string>
 </resources>
