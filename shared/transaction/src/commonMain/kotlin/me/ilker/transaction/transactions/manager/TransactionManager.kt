@@ -40,7 +40,6 @@ class TransactionManager(
     ) { transactions, modalBottomSheetState ->
         val transactionsSorted = transactions
             .sortedBy { it.dateTime }
-            .takeLast(3)
 
         TransactionState.Loaded(
             balance = run {

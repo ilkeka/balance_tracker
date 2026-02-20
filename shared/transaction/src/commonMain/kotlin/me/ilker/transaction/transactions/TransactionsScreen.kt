@@ -13,7 +13,6 @@ fun TransactionsScreen(
     add: () -> Unit,
     onDeleteTransactions: () -> Unit,
     onDismissRequest: () -> Unit,
-    onTransactionsClicked: () -> Unit,
     onClick: (id: Long) -> Unit
 ) {
     when (val currentState = state.value) {
@@ -23,7 +22,6 @@ fun TransactionsScreen(
             add = add,
             onDeleteTransactions = onDeleteTransactions,
             onDismissRequest = onDismissRequest,
-            onTransactionsClicked = onTransactionsClicked,
             onClick = onClick
         )
     }

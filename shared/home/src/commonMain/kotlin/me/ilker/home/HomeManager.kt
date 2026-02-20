@@ -36,6 +36,7 @@ class HomeManager(
     ) { transactions, modalBottomSheetState ->
         val transactionsSorted = transactions
             .sortedBy { it.dateTime }
+            .takeLast(3)
 
         HomeState.Loaded(
             balance = run {

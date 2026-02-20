@@ -49,23 +49,9 @@ fun CommonApp() {
             NavHost(
                 modifier = Modifier.consumeWindowInsets(padding),
                 navController = navController,
-                startDestination = Route.Root
+                startDestination = Route.Home
             ) {
-                composable<Route.Root> {
-                    val manager = remember { TransactionManager(sdk = sdk) }
-                    val state: State<TransactionState> = manager.state.collectAsStateWithLifecycle()
-
-                    TransactionsScreen(
-                        state = state,
-                        add = { navController.navigate(Route.Add) },
-                        onDeleteTransactions = { manager.sendIntent(TransactionIntent.OnDeleteTransaction) },
-                        onDismissRequest = { manager.sendIntent(TransactionIntent.OnDismissRequest) },
-                        onTransactionsClicked = { navController.navigate(Route.Transactions) },
-                        onClick = { id -> manager.sendIntent(TransactionIntent.OnClick(id = id)) }
-                    )
-                }
-
-                composable<Route.Transactions> {
+                composable<Route.Home> {
                     val manager = remember { HomeManager(sdk = sdk) }
                     val state = manager.state.collectAsStateWithLifecycle()
 
@@ -76,6 +62,19 @@ fun CommonApp() {
                         onDismissRequest = { manager.sendIntent(HomeIntent.OnDismissRequest) },
                         onTransactionsClicked = { navController.navigate(Route.Transactions) },
                         onClick = { id -> manager.sendIntent(HomeIntent.OnClick(id = id)) }
+                    )
+                }
+
+                composable<Route.Transactions> {
+                    val manager = remember { TransactionManager(sdk = sdk) }
+                    val state: State<TransactionState> = manager.state.collectAsStateWithLifecycle()
+
+                    TransactionsScreen(
+                        state = state,
+                        add = { navController.navigate(Route.Add) },
+                        onDeleteTransactions = { manager.sendIntent(TransactionIntent.OnDeleteTransaction) },
+                        onDismissRequest = { manager.sendIntent(TransactionIntent.OnDismissRequest) },
+                        onClick = { id -> manager.sendIntent(TransactionIntent.OnClick(id = id)) }
                     )
                 }
 

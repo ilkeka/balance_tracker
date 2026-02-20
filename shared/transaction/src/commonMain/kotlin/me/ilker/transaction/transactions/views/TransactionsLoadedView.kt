@@ -15,7 +15,6 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -39,7 +38,6 @@ import me.ilker.balance_tracker.resources.expense_total
 import me.ilker.balance_tracker.resources.income_total
 import me.ilker.balance_tracker.resources.latest_transactions
 import me.ilker.balance_tracker.resources.nothing_yet
-import me.ilker.balance_tracker.resources.see_all
 import me.ilker.balance_tracker.resources.start_create_transaction
 import me.ilker.transaction.transactions.ModalBottomSheetState
 import me.ilker.transaction.transactions.TransactionState
@@ -53,7 +51,6 @@ internal fun TransactionsLoadedView(
     add: () -> Unit,
     onDeleteTransactions: () -> Unit,
     onDismissRequest: () -> Unit,
-    onTransactionsClicked: () -> Unit,
     onClick: (id: Long) -> Unit
 ) {
     Scaffold(
@@ -144,30 +141,14 @@ internal fun TransactionsLoadedView(
                     }
 
                     item {
-                        Row(
+                        Text(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp)
-                        ) {
-                            Text(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(end = 12.dp),
-                                text = stringResource(Res.string.latest_transactions),
-                                fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
-                                fontWeight = FontWeight.SemiBold
-                            )
-
-                            Text(
-                                modifier = Modifier
-                                    .clickable {
-                                        onTransactionsClicked()
-                                    },
-                                text = stringResource(Res.string.see_all),
-                                fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
+                                .padding(horizontal = 12.dp),
+                            text = stringResource(Res.string.latest_transactions),
+                            fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
 
                     items(state.transactions) { transaction ->
