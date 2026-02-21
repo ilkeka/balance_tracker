@@ -17,6 +17,7 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +40,7 @@ import me.ilker.balance_tracker.resources.balance
 import me.ilker.balance_tracker.resources.date
 import me.ilker.balance_tracker.resources.delete
 import me.ilker.balance_tracker.resources.description
+import me.ilker.balance_tracker.resources.details
 import me.ilker.balance_tracker.resources.expense_total
 import me.ilker.balance_tracker.resources.income_total
 import me.ilker.balance_tracker.resources.latest_transactions
@@ -57,6 +59,7 @@ internal fun TransactionsLoadedView(
     onDeleteTransactions: () -> Unit,
     onDismissRequest: () -> Unit,
     onClick: (id: Long) -> Unit,
+    onDetailClick: (id: Long) -> Unit,
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -245,7 +248,8 @@ internal fun TransactionsLoadedView(
             ) {
                 when (modalState) {
                     is ModalBottomSheetState.ShowOptions -> ShowOptions(
-                        onDeleteTransactions = onDeleteTransactions
+                        onDeleteTransactions = onDeleteTransactions,
+                        onDetailClick = { onDetailClick(modalState.transactionId) }
                     )
                 }
             }
@@ -255,6 +259,7 @@ internal fun TransactionsLoadedView(
 
 @Composable
 private fun ShowOptions(
+    onDetailClick: () -> Unit,
     onDeleteTransactions: () -> Unit,
 ) {
     Column(
@@ -263,11 +268,14 @@ private fun ShowOptions(
             .padding(vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        /*Text(
+        Text(
             modifier = Modifier
                 .fillMaxWidth()
+                .clickable {
+                    onDetailClick()
+                }
                 .padding(horizontal = 24.dp),
-            text = stringResource(Res.string.edit),
+            text = stringResource(Res.string.details),
             fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
         )
 
@@ -275,7 +283,7 @@ private fun ShowOptions(
             modifier = Modifier.fillMaxWidth(),
             thickness = 2.dp,
             color = MaterialTheme.colorScheme.secondary
-        )*/
+        )
 
         Text(
             modifier = Modifier

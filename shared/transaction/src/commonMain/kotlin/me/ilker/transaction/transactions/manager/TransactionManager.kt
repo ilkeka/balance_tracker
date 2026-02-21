@@ -65,7 +65,7 @@ class TransactionManager(
         initialValue = TransactionState.InitialState
     )
 
-    override val sideEffect: Channel<TransactionSideEffect> = Channel()
+    override val sideEffect: Channel<TransactionSideEffect> = Channel(capacity = 1)
 
     private fun onClick(
         id: Long

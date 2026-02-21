@@ -38,6 +38,7 @@ import me.ilker.transaction.details.TransactionDetailsState
 import me.ilker.transaction.details.manager.TransactionDetailsManager
 import me.ilker.transaction.details.navigation.TransactionDetailsNavigationEventInfo
 import me.ilker.transaction.transactions.TransactionIntent
+import me.ilker.transaction.transactions.TransactionSideEffect
 import me.ilker.transaction.transactions.TransactionState
 import me.ilker.transaction.transactions.navigation.Transactions
 import me.ilker.transaction.transactions.navigation.TransactionsNavigationEventInfo
@@ -93,6 +94,7 @@ fun CommonApp() {
                         onDeleteTransactions = { manager.sendIntent(TransactionIntent.OnDeleteTransaction) },
                         onDismissRequest = { manager.sendIntent(TransactionIntent.OnDismissRequest) },
                         onClick = { id -> manager.sendIntent(TransactionIntent.OnClick(id = id)) },
+                        onDetailClick = { id -> navController.navigate(TransactionDetails(id = id)) },
                         onBack = { navController.popBackStack() }
                     )
                 }
@@ -100,10 +102,8 @@ fun CommonApp() {
                 composable<AddTransaction> { navBackStackEntry ->
                     val route = navBackStackEntry.toRoute<AddTransaction>()
                     val manager = remember { AddTransactionManager(sdk = sdk) }
-                    val state: State<AddTransactionState> =
-                        manager.state.collectAsStateWithLifecycle()
-                    val sideEffects: Flow<AddTransactionSideEffect> =
-                        manager.sideEffect.receiveAsFlow()
+                    val state: State<AddTransactionState> = manager.state.collectAsStateWithLifecycle()
+                    val sideEffects: Flow<AddTransactionSideEffect> = manager.sideEffect.receiveAsFlow()
                     val navEventState = rememberNavigationEventState(
                         currentInfo = AddTransactionNavigationEventInfo(route = route),
                     )
