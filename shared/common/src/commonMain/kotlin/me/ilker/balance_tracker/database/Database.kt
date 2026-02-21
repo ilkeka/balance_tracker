@@ -15,6 +15,17 @@ internal class DB(databaseDriverFactory: DatabaseDriverFactory) {
     )
     private val dbQuery = database.databaseQueries
 
+    internal fun getTransactionById(id: Long) = dbQuery
+        .getTransaction(id = id) { id, amount, dateTime, type, description ->
+            TransactionDomainModel(
+                id = id,
+                amount = amount,
+                dateTime = dateTime,
+                type = type,
+                description = description
+            )
+        }
+
     internal fun getTransactions() = dbQuery
         .getTransactions { id, amount, dateTime, type, description ->
             TransactionDomainModel(

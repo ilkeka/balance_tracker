@@ -18,5 +18,6 @@
     <string name="nothing_yet">Nothing yet</string>
     <string name="start_create_transaction">Start creating transactions in order to track and analyze them.</string>
     <string name="see_all">See all</string>
+    <string name="transaction_details">Transaction details</string>
     <string name="transaction_type">Transaction type</string>
 </resources>

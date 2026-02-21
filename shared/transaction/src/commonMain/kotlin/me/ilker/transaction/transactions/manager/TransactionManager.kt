@@ -43,9 +43,11 @@ class TransactionManager(
 
         TransactionState.Loaded(
             balance = run {
-                val (expense, income) = with(transactions.partition { it.type == TransactionType.Expense }) {
+                val (expense, income) = with(
+                    transactions.partition { it.type == TransactionType.Expense }
+                ) {
                     this.first.sumOf { transaction -> transaction.amount }.round(2) to
-                            this.second.sumOf { transaction -> transaction.amount }.round(2)
+                    this.second.sumOf { transaction -> transaction.amount }.round(2)
                 }
 
                 TransactionState.Loaded.BalanceUiModel(
