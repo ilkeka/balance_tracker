@@ -11,10 +11,7 @@ import me.ilker.transaction.transactions.views.TransactionsLoadedView
 fun TransactionsScreen(
     state: State<TransactionState>,
     add: () -> Unit,
-    onDeleteTransactions: () -> Unit,
-    onDismissRequest: () -> Unit,
     onClick: (id: Long) -> Unit,
-    onDetailClick: (id: Long) -> Unit,
     onBack: () -> Unit
 ) {
     when (val currentState = state.value) {
@@ -22,10 +19,7 @@ fun TransactionsScreen(
         is TransactionState.Loaded -> TransactionsLoadedView(
             state = currentState,
             add = add,
-            onDeleteTransactions = onDeleteTransactions,
-            onDismissRequest = onDismissRequest,
             onClick = onClick,
-            onDetailClick = onDetailClick,
             onBack = onBack
         )
     }

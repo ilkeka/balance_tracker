@@ -18,31 +18,29 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
-import me.ilker.transaction.add.manager.AddTransactionManager
-import me.ilker.transaction.transactions.manager.TransactionManager
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.theme.AppTheme
 import me.ilker.home.Home
 import me.ilker.home.HomeIntent
 import me.ilker.home.HomeManager
 import me.ilker.home.HomeScreen
-import me.ilker.transaction.add.navigation.AddTransaction
 import me.ilker.transaction.add.AddTransactionIntent
-import me.ilker.transaction.add.navigation.AddTransactionNavigationEventInfo
 import me.ilker.transaction.add.AddTransactionScreen
 import me.ilker.transaction.add.AddTransactionSideEffect
 import me.ilker.transaction.add.AddTransactionState
+import me.ilker.transaction.add.manager.AddTransactionManager
+import me.ilker.transaction.add.navigation.AddTransaction
+import me.ilker.transaction.add.navigation.AddTransactionNavigationEventInfo
 import me.ilker.transaction.details.TransactionDetails
 import me.ilker.transaction.details.TransactionDetailsScreen
 import me.ilker.transaction.details.TransactionDetailsState
 import me.ilker.transaction.details.manager.TransactionDetailsManager
 import me.ilker.transaction.details.navigation.TransactionDetailsNavigationEventInfo
-import me.ilker.transaction.transactions.TransactionIntent
-import me.ilker.transaction.transactions.TransactionSideEffect
 import me.ilker.transaction.transactions.TransactionState
+import me.ilker.transaction.transactions.TransactionsScreen
+import me.ilker.transaction.transactions.manager.TransactionManager
 import me.ilker.transaction.transactions.navigation.Transactions
 import me.ilker.transaction.transactions.navigation.TransactionsNavigationEventInfo
-import me.ilker.transaction.transactions.TransactionsScreen
 import org.koin.compose.koinInject
 
 @ExperimentalMaterial3Api
@@ -91,10 +89,7 @@ fun CommonApp() {
                     TransactionsScreen(
                         state = state,
                         add = { navController.navigate(AddTransaction) },
-                        onDeleteTransactions = { manager.sendIntent(TransactionIntent.OnDeleteTransaction) },
-                        onDismissRequest = { manager.sendIntent(TransactionIntent.OnDismissRequest) },
-                        onClick = { id -> manager.sendIntent(TransactionIntent.OnClick(id = id)) },
-                        onDetailClick = { id -> navController.navigate(TransactionDetails(id = id)) },
+                        onClick = { id -> navController.navigate(TransactionDetails(id = id)) },
                         onBack = { navController.popBackStack() }
                     )
                 }
