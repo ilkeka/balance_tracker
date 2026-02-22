@@ -32,7 +32,9 @@ import me.ilker.transaction.add.manager.AddTransactionManager
 import me.ilker.transaction.add.navigation.AddTransaction
 import me.ilker.transaction.add.navigation.AddTransactionNavigationEventInfo
 import me.ilker.transaction.details.TransactionDetails
+import me.ilker.transaction.details.TransactionDetailsIntent
 import me.ilker.transaction.details.TransactionDetailsScreen
+import me.ilker.transaction.details.TransactionDetailsSideEffect
 import me.ilker.transaction.details.TransactionDetailsState
 import me.ilker.transaction.details.manager.TransactionDetailsManager
 import me.ilker.transaction.details.navigation.TransactionDetailsNavigationEventInfo
@@ -133,6 +135,7 @@ fun CommonApp() {
                         )
                     }
                     val state: State<TransactionDetailsState> = manager.state.collectAsStateWithLifecycle()
+                    val sideEffects: Flow<TransactionDetailsSideEffect> = manager.sideEffect.receiveAsFlow()
                     val navEventState = rememberNavigationEventState(
                         currentInfo = TransactionDetailsNavigationEventInfo(route = route),
                     )
@@ -145,6 +148,8 @@ fun CommonApp() {
 
                     TransactionDetailsScreen(
                         state = state,
+                        sideEffects = sideEffects,
+                        onDelete = { manager.sendIntent(TransactionDetailsIntent.DeleteTransaction) },
                         onBack = { navController.popBackStack() }
                     )
                 }

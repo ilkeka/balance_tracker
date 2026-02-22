@@ -46,6 +46,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun TransactionDetailsLoadedView(
     state: TransactionDetailsState.DetailsLoadedState,
+    onDelete: () -> Unit,
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -88,7 +89,7 @@ internal fun TransactionDetailsLoadedView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 16.dp),
-                    onClick = {},
+                    onClick = onDelete,
                     colors = ButtonColors(
                         contentColor = TertiaryContainerColor,
                         containerColor = MaterialTheme.colorScheme.errorContainer,

@@ -7,6 +7,7 @@
     <string name="date">Data</string>
     <string name="balance">Saldo</string>
     <string name="delete">Elimina</string>
+    <string name="delete_transaction_success_feedback">Transazione eliminata correttamente!</string>
     <string name="details">Dettagli</string>
     <string name="edit">Modifica</string>
     <string name="expense">Spesa</string>
