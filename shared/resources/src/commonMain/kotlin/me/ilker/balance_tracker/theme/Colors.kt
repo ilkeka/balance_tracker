@@ -3,7 +3,7 @@ package me.ilker.balance_tracker.theme
 import androidx.compose.ui.graphics.Color
 
 val PrimaryColor = Color(0xD0573535)
-val PrimaryContainerColor = Color(0xD0EC5050)
+val PrimaryContainerColor = Color(0xD0FAFABB)
 val PrimaryDarkColor = Color(0xFF9CF39C)
 val PrimaryDarkContainerColor = Color(0xD0531F1F)
 val SecondaryColor = Color(0xFFEE9769)

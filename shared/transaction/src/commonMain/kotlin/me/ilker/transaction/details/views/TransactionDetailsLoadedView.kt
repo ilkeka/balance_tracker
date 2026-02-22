@@ -12,6 +12,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,14 +30,19 @@ import androidx.compose.ui.unit.dp
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.date
+import me.ilker.balance_tracker.resources.delete
 import me.ilker.balance_tracker.resources.expense
 import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.transaction_details
 import me.ilker.balance_tracker.resources.transaction_type
 import me.ilker.balance_tracker.sdk.TransactionType
+import me.ilker.balance_tracker.theme.ErrorContainerDarkColor
+import me.ilker.balance_tracker.theme.PrimaryColor
+import me.ilker.balance_tracker.theme.TertiaryContainerColor
 import me.ilker.transaction.details.TransactionDetailsState
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun TransactionDetailsLoadedView(
     state: TransactionDetailsState.DetailsLoadedState,
@@ -65,6 +73,35 @@ internal fun TransactionDetailsLoadedView(
                     fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
                     fontWeight = FontWeight.Bold
                 )
+            }
+        },
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = 16.dp,
+                        vertical = 8.dp
+                    )
+            ) {
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    onClick = {},
+                    colors = ButtonColors(
+                        contentColor = TertiaryContainerColor,
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        disabledContentColor = TertiaryContainerColor.copy(alpha = 0.33f),
+                        disabledContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.33f),
+                    ),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.delete),
+                        fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
+                        fontWeight = FontWeight.Normal,
+                    )
+                }
             }
         }
     ) { paddingValues ->

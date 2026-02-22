@@ -16,7 +16,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,7 +31,6 @@ import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.app_name
 import me.ilker.balance_tracker.resources.balance
 import me.ilker.balance_tracker.resources.date
-import me.ilker.balance_tracker.resources.delete
 import me.ilker.balance_tracker.resources.description
 import me.ilker.balance_tracker.resources.expense_total
 import me.ilker.balance_tracker.resources.income_total
@@ -42,7 +40,6 @@ import me.ilker.balance_tracker.resources.see_all
 import me.ilker.balance_tracker.resources.start_create_transaction
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.home.HomeState
-import me.ilker.home.ModalBottomSheetState
 import org.jetbrains.compose.resources.stringResource
 
 @ExperimentalMaterial3Api
@@ -50,8 +47,6 @@ import org.jetbrains.compose.resources.stringResource
 internal fun HomeLoadedView(
     state: HomeState.Loaded,
     add: () -> Unit,
-    onDeleteTransactions: () -> Unit,
-    onDismissRequest: () -> Unit,
     onTransactionsClicked: () -> Unit,
     onClick: (id: Long) -> Unit
 ) {
@@ -240,54 +235,5 @@ internal fun HomeLoadedView(
                     )
                 }
             }
-
-        state.modalState?.let { modalState ->
-            ModalBottomSheet(
-                onDismissRequest = onDismissRequest
-            ) {
-                when (modalState) {
-                    is ModalBottomSheetState.ShowOptions -> ShowOptions(
-                        onDeleteTransactions = onDeleteTransactions
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ShowOptions(
-    onDeleteTransactions: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        /*Text(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            text = stringResource(Res.string.edit),
-            fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
-        )
-
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth(),
-            thickness = 2.dp,
-            color = MaterialTheme.colorScheme.secondary
-        )*/
-
-        Text(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    onDeleteTransactions()
-                }
-                .padding(horizontal = 24.dp),
-            text = stringResource(Res.string.delete),
-            fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
-        )
     }
 }

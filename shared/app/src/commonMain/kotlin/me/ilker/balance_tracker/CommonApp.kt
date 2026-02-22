@@ -65,8 +65,6 @@ fun CommonApp() {
                     HomeScreen(
                         state = state,
                         add = { navController.navigate(AddTransaction) },
-                        onDeleteTransactions = { manager.sendIntent(HomeIntent.OnDeleteTransaction) },
-                        onDismissRequest = { manager.sendIntent(HomeIntent.OnDismissRequest) },
                         onTransactionsClicked = { navController.navigate(Transactions) },
                         onClick = { id -> manager.sendIntent(HomeIntent.OnClick(id = id)) }
                     )
