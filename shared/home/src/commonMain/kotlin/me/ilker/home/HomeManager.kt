@@ -3,12 +3,10 @@ package me.ilker.home
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.core.Manager
 import me.ilker.core.extensions.round
@@ -20,10 +18,9 @@ class HomeManager(
 ) : Manager<HomeState, HomeIntent, HomeSideEffect>() {
     private val scope = CoroutineScope(EmptyCoroutineContext + SupervisorJob())
 
-    private val modalState: MutableStateFlow<ModalBottomSheetState?> = MutableStateFlow(null)
     override fun sendIntent(intent: HomeIntent) {
         when (intent) {
-            is HomeIntent.OnClick -> onClick(intent.id)
+            else -> Unit
         }
     }
 
@@ -55,22 +52,5 @@ class HomeManager(
         initialValue = HomeState.InitialState
     )
 
-    override val sideEffect: Channel<HomeSideEffect> = Channel()
-
-    private fun onClick(
-        id: Long
-    ) {
-        val currentState = state.value as? HomeState.Loaded ?: return
-
-        currentState
-            .transactions
-            .find { transaction -> transaction.id == id }
-            ?.let {
-                modalState.update {
-                    ModalBottomSheetState.ShowOptions(
-                        transactionId = id
-                    )
-                }
-            }
-    }
+    override val sideEffect: Channel<HomeSideEffect> = Channel(capacity = 1)
 }

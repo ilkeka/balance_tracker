@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import me.ilker.balance_tracker.resources.Res
+import me.ilker.balance_tracker.resources.back
 import me.ilker.balance_tracker.resources.transaction_details
 import org.jetbrains.compose.resources.stringResource
 
@@ -45,7 +46,7 @@ internal fun TransactionDetailsInitialView(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = "Back"
+                        contentDescription = stringResource(Res.string.back)
                     )
                 }
                 Text(

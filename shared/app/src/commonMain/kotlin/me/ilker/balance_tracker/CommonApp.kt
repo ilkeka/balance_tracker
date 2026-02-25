@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.theme.AppTheme
 import me.ilker.home.Home
-import me.ilker.home.HomeIntent
 import me.ilker.home.HomeManager
 import me.ilker.home.HomeScreen
 import me.ilker.transaction.add.AddTransactionIntent
@@ -68,7 +67,7 @@ fun CommonApp() {
                         state = state,
                         add = { navController.navigate(AddTransaction) },
                         onTransactionsClicked = { navController.navigate(Transactions) },
-                        onClick = { id -> manager.sendIntent(HomeIntent.OnClick(id = id)) }
+                        onClick = { id -> navController.navigate(TransactionDetails(id = id)) },
                     )
                 }
 
@@ -88,7 +87,6 @@ fun CommonApp() {
 
                     TransactionsScreen(
                         state = state,
-                        add = { navController.navigate(AddTransaction) },
                         onClick = { id -> navController.navigate(TransactionDetails(id = id)) },
                         onBack = { navController.popBackStack() }
                     )

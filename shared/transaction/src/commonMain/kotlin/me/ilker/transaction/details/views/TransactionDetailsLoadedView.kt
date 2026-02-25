@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.amount
+import me.ilker.balance_tracker.resources.back
 import me.ilker.balance_tracker.resources.date
 import me.ilker.balance_tracker.resources.delete
 import me.ilker.balance_tracker.resources.expense
@@ -59,7 +60,7 @@ internal fun TransactionDetailsLoadedView(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
+                    .padding(end = 12.dp)
                     .padding(top = 48.dp)
                     .padding(bottom = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -69,7 +70,7 @@ internal fun TransactionDetailsLoadedView(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = "Back"
+                        contentDescription = stringResource(Res.string.back)
                     )
                 }
 
