@@ -1,6 +1,5 @@
 package me.ilker.transaction.details.manager
 
-import balance_tracker.shared.transaction.generated.resources.Res
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
@@ -10,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.delete_transaction_success_feedback
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.core.Manager

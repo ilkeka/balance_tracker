@@ -31,6 +31,7 @@ fun TransactionDetailsScreen(
     when (val currentState = state.value) {
        is TransactionDetailsState.DetailsLoadedState -> TransactionDetailsLoadedView(
            state = currentState,
+           snackbarHostState = snackbarHostState,
            onDelete = onDelete,
            onBack = onBack
        )

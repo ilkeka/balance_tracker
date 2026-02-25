@@ -19,6 +19,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -36,8 +38,6 @@ import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.transaction_details
 import me.ilker.balance_tracker.resources.transaction_type
 import me.ilker.balance_tracker.sdk.TransactionType
-import me.ilker.balance_tracker.theme.ErrorContainerDarkColor
-import me.ilker.balance_tracker.theme.PrimaryColor
 import me.ilker.balance_tracker.theme.TertiaryContainerColor
 import me.ilker.transaction.details.TransactionDetailsState
 import org.jetbrains.compose.resources.stringResource
@@ -46,11 +46,15 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun TransactionDetailsLoadedView(
     state: TransactionDetailsState.DetailsLoadedState,
+    snackbarHostState: SnackbarHostState,
     onDelete: () -> Unit,
     onBack: () -> Unit
 ) {
     Scaffold(
         modifier = Modifier,
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             Row(
                 modifier = Modifier
