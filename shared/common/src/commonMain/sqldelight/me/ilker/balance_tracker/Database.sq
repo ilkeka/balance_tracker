@@ -12,6 +12,9 @@ insertTransaction:
 INSERT INTO Transactions(amount, dateTime, type, description)
 VALUES(?,?,?, ?);
 
+getTransaction:
+SELECT * FROM Transactions WHERE id = ?;
+
 getTransactions:
 SELECT * FROM Transactions;
 

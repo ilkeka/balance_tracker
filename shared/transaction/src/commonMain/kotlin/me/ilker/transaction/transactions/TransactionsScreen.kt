@@ -10,9 +10,6 @@ import me.ilker.transaction.transactions.views.TransactionsLoadedView
 @Composable
 fun TransactionsScreen(
     state: State<TransactionState>,
-    add: () -> Unit,
-    onDeleteTransactions: () -> Unit,
-    onDismissRequest: () -> Unit,
     onClick: (id: Long) -> Unit,
     onBack: () -> Unit
 ) {
@@ -20,9 +17,6 @@ fun TransactionsScreen(
         TransactionState.InitialState -> TransactionsInitialView()
         is TransactionState.Loaded -> TransactionsLoadedView(
             state = currentState,
-            add = add,
-            onDeleteTransactions = onDeleteTransactions,
-            onDismissRequest = onDismissRequest,
             onClick = onClick,
             onBack = onBack
         )

@@ -11,8 +11,6 @@ import me.ilker.home.views.HomeLoadedView
 fun HomeScreen(
     state: State<HomeState>,
     add: () -> Unit,
-    onDeleteTransactions: () -> Unit,
-    onDismissRequest: () -> Unit,
     onTransactionsClicked: () -> Unit,
     onClick: (id: Long) -> Unit
 ) {
@@ -21,8 +19,6 @@ fun HomeScreen(
         is HomeState.Loaded -> HomeLoadedView(
             state = currentState,
             add = add,
-            onDeleteTransactions = onDeleteTransactions,
-            onDismissRequest = onDismissRequest,
             onTransactionsClicked = onTransactionsClicked,
             onClick = onClick
         )

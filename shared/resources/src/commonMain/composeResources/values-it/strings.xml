@@ -4,9 +4,12 @@
     <string name="app_name">Balance Tracker</string>
     <string name="amount">Importo</string>
     <string name="amount_format">La parte decimale dovrebbe essere rappresentata con il punto. Per esempio: 10.42</string>
-    <string name="date">Data</string>
+    <string name="back">Indietro</string>
     <string name="balance">Saldo</string>
+    <string name="date">Data</string>
     <string name="delete">Elimina</string>
+    <string name="delete_transaction_success_feedback">Transazione eliminata correttamente!</string>
+    <string name="details">Dettagli</string>
     <string name="edit">Modifica</string>
     <string name="expense">Spesa</string>
     <string name="expense_total">Spese</string>
@@ -18,5 +21,7 @@
     <string name="nothing_yet">Ancore niente</string>
     <string name="start_create_transaction">Inizia a creare transazioni per tracciarle e analizzarle.</string>
     <string name="see_all">Vedi tutte</string>
+    <string name="transaction_details">Dettagli</string>
     <string name="transaction_type">Tipologia</string>
+    <string name="transactions">Transazioni</string>
 </resources>

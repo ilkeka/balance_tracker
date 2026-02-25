@@ -2,6 +2,7 @@ package me.ilker.balance_tracker.sdk.impl
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOneOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import me.ilker.balance_tracker.database.DB
@@ -19,6 +20,10 @@ class BalanceTrackerSDKImpl(
         .getTransactions()
         .asFlow()
         .mapToList(Dispatchers.Default)
+
+    override suspend fun getTransactionById(id: Long): TransactionDomainModel? = database
+        .getTransactionById(id = id)
+        .executeAsOneOrNull()
 
     @Throws(Exception::class)
     override suspend fun getTransactions() = database

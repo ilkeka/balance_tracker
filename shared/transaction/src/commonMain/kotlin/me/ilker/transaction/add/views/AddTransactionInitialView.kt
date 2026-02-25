@@ -59,6 +59,7 @@ import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.add
 import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.amount_format
+import me.ilker.balance_tracker.resources.back
 import me.ilker.balance_tracker.resources.date
 import me.ilker.balance_tracker.resources.description
 import me.ilker.balance_tracker.resources.expense
@@ -198,7 +199,7 @@ internal fun AddTransactionInitialView(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = "Back"
+                        contentDescription = stringResource(Res.string.back)
                     )
                 }
 

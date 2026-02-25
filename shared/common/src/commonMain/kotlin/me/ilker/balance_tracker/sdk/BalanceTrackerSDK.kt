@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.Flow
 interface BalanceTrackerSDK {
     val transactions: Flow<List<TransactionDomainModel>>
 
+    suspend fun getTransactionById(id: Long): TransactionDomainModel?
+
     @Throws(Exception::class)
     suspend fun getTransactions(): List<TransactionDomainModel>
 

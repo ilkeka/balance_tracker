@@ -1,4 +1,4 @@
-package me.ilker.transaction.transactions
+package me.ilker.transaction.transactions.navigation
 
 import androidx.navigationevent.NavigationEventInfo
 import me.ilker.core.Route

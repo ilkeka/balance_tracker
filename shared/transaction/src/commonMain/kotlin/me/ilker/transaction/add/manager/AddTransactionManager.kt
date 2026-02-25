@@ -38,7 +38,7 @@ class AddTransactionManager(
     private val managerState = MutableStateFlow(AddTransactionState.InitialState)
     override val state: StateFlow<AddTransactionState> = managerState.asStateFlow()
 
-    override val sideEffect: Channel<AddTransactionSideEffect> = Channel()
+    override val sideEffect: Channel<AddTransactionSideEffect> = Channel(capacity = 1)
 
     private fun addTransaction(
         amount: Double,

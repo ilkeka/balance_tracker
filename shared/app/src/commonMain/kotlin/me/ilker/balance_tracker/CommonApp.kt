@@ -18,23 +18,30 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
-import me.ilker.transaction.add.manager.AddTransactionManager
-import me.ilker.transaction.transactions.manager.TransactionManager
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.theme.AppTheme
-import me.ilker.core.Route
-import me.ilker.home.HomeIntent
+import me.ilker.home.Home
 import me.ilker.home.HomeManager
 import me.ilker.home.HomeScreen
 import me.ilker.transaction.add.AddTransactionIntent
-import me.ilker.transaction.add.AddTransactionNavigationEventInfo
 import me.ilker.transaction.add.AddTransactionScreen
 import me.ilker.transaction.add.AddTransactionSideEffect
 import me.ilker.transaction.add.AddTransactionState
-import me.ilker.transaction.transactions.TransactionIntent
+import me.ilker.transaction.add.manager.AddTransactionManager
+import me.ilker.transaction.add.navigation.AddTransaction
+import me.ilker.transaction.add.navigation.AddTransactionNavigationEventInfo
+import me.ilker.transaction.details.TransactionDetails
+import me.ilker.transaction.details.TransactionDetailsIntent
+import me.ilker.transaction.details.TransactionDetailsScreen
+import me.ilker.transaction.details.TransactionDetailsSideEffect
+import me.ilker.transaction.details.TransactionDetailsState
+import me.ilker.transaction.details.manager.TransactionDetailsManager
+import me.ilker.transaction.details.navigation.TransactionDetailsNavigationEventInfo
 import me.ilker.transaction.transactions.TransactionState
-import me.ilker.transaction.transactions.TransactionsNavigationEventInfo
 import me.ilker.transaction.transactions.TransactionsScreen
+import me.ilker.transaction.transactions.manager.TransactionManager
+import me.ilker.transaction.transactions.navigation.Transactions
+import me.ilker.transaction.transactions.navigation.TransactionsNavigationEventInfo
 import org.koin.compose.koinInject
 
 @ExperimentalMaterial3Api
@@ -50,24 +57,22 @@ fun CommonApp() {
             NavHost(
                 modifier = Modifier.consumeWindowInsets(padding),
                 navController = navController,
-                startDestination = Route.Home
+                startDestination = Home
             ) {
-                composable<Route.Home> {
+                composable<Home> {
                     val manager = remember { HomeManager(sdk = sdk) }
                     val state = manager.state.collectAsStateWithLifecycle()
 
                     HomeScreen(
                         state = state,
-                        add = { navController.navigate(Route.Add) },
-                        onDeleteTransactions = { manager.sendIntent(HomeIntent.OnDeleteTransaction) },
-                        onDismissRequest = { manager.sendIntent(HomeIntent.OnDismissRequest) },
-                        onTransactionsClicked = { navController.navigate(Route.Transactions) },
-                        onClick = { id -> manager.sendIntent(HomeIntent.OnClick(id = id)) }
+                        add = { navController.navigate(AddTransaction) },
+                        onTransactionsClicked = { navController.navigate(Transactions) },
+                        onClick = { id -> navController.navigate(TransactionDetails(id = id)) },
                     )
                 }
 
-                composable<Route.Transactions> {navBackStackEntry ->
-                    val route = navBackStackEntry.toRoute<Route.Transactions>()
+                composable<Transactions> { navBackStackEntry ->
+                    val route = navBackStackEntry.toRoute<AddTransaction>()
                     val manager = remember { TransactionManager(sdk = sdk) }
                     val state: State<TransactionState> = manager.state.collectAsStateWithLifecycle()
                     val navEventState = rememberNavigationEventState(
@@ -82,21 +87,16 @@ fun CommonApp() {
 
                     TransactionsScreen(
                         state = state,
-                        add = { navController.navigate(Route.Add) },
-                        onDeleteTransactions = { manager.sendIntent(TransactionIntent.OnDeleteTransaction) },
-                        onDismissRequest = { manager.sendIntent(TransactionIntent.OnDismissRequest) },
-                        onClick = { id -> manager.sendIntent(TransactionIntent.OnClick(id = id)) },
+                        onClick = { id -> navController.navigate(TransactionDetails(id = id)) },
                         onBack = { navController.popBackStack() }
                     )
                 }
 
-                composable<Route.Add> { navBackStackEntry ->
-                    val route = navBackStackEntry.toRoute<Route.Add>()
+                composable<AddTransaction> { navBackStackEntry ->
+                    val route = navBackStackEntry.toRoute<AddTransaction>()
                     val manager = remember { AddTransactionManager(sdk = sdk) }
-                    val state: State<AddTransactionState> =
-                        manager.state.collectAsStateWithLifecycle()
-                    val sideEffects: Flow<AddTransactionSideEffect> =
-                        manager.sideEffect.receiveAsFlow()
+                    val state: State<AddTransactionState> = manager.state.collectAsStateWithLifecycle()
+                    val sideEffects: Flow<AddTransactionSideEffect> = manager.sideEffect.receiveAsFlow()
                     val navEventState = rememberNavigationEventState(
                         currentInfo = AddTransactionNavigationEventInfo(route = route),
                     )
@@ -120,6 +120,34 @@ fun CommonApp() {
                                 )
                             )
                         },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<TransactionDetails> { navBackStackEntry ->
+                    val route = navBackStackEntry.toRoute<TransactionDetails>()
+                    val manager = remember {
+                        TransactionDetailsManager(
+                            id = route.id,
+                            sdk = sdk
+                        )
+                    }
+                    val state: State<TransactionDetailsState> = manager.state.collectAsStateWithLifecycle()
+                    val sideEffects: Flow<TransactionDetailsSideEffect> = manager.sideEffect.receiveAsFlow()
+                    val navEventState = rememberNavigationEventState(
+                        currentInfo = TransactionDetailsNavigationEventInfo(route = route),
+                    )
+
+                    NavigationBackHandler(
+                        state = navEventState,
+                        isBackEnabled = true,
+                        onBackCompleted = { navController.popBackStack() }
+                    )
+
+                    TransactionDetailsScreen(
+                        state = state,
+                        sideEffects = sideEffects,
+                        onDelete = { manager.sendIntent(TransactionDetailsIntent.DeleteTransaction) },
                         onBack = { navController.popBackStack() }
                     )
                 }

@@ -8,8 +8,7 @@ sealed class HomeState : State {
 
     data class Loaded(
         val balance: BalanceUiModel?,
-        val transactions: List<TransactionDomainModel>,
-        val modalState: ModalBottomSheetState?
+        val transactions: List<TransactionDomainModel>
     ) : HomeState() {
         data class BalanceUiModel(
             val balance: Double,

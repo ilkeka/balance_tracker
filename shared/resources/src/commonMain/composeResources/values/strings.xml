@@ -4,9 +4,12 @@
     <string name="app_name">Balance Tracker</string>
     <string name="amount">Amount</string>
     <string name="amount_format">Decimal part should be represented with the dot. For instance: 10.42</string>
-    <string name="date">Date</string>
+    <string name="back">Back</string>
     <string name="balance">Balance</string>
+    <string name="date">Date</string>
     <string name="delete">Delete</string>
+    <string name="delete_transaction_success_feedback">Transaction deleted successfully!</string>
+    <string name="details">Details</string>
     <string name="edit">Edit</string>
     <string name="expense">Expense</string>
     <string name="expense_total">Total expense</string>
@@ -18,5 +21,7 @@
     <string name="nothing_yet">Nothing yet</string>
     <string name="start_create_transaction">Start creating transactions in order to track and analyze them.</string>
     <string name="see_all">See all</string>
+    <string name="transaction_details">Transaction details</string>
     <string name="transaction_type">Transaction type</string>
+    <string name="transactions">Transactions</string>
 </resources>
