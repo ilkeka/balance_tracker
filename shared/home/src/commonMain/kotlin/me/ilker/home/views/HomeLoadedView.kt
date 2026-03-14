@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -203,7 +204,8 @@ internal fun HomeLoadedView(
 
             item {
                 HorizontalPager(
-                    state = transactionsPagerState
+                    state = transactionsPagerState,
+                    verticalAlignment = Alignment.Top
                 ) { page ->
                     val transactions = state.balances[page].transactions
 
