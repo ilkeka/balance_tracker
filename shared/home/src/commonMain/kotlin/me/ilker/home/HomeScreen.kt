@@ -3,6 +3,7 @@ package me.ilker.home
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import kotlinx.datetime.YearMonth
 import me.ilker.home.views.HomeInitialView
 import me.ilker.home.views.HomeLoadedView
 
@@ -11,7 +12,7 @@ import me.ilker.home.views.HomeLoadedView
 fun HomeScreen(
     state: State<HomeState>,
     add: () -> Unit,
-    onTransactionsClicked: () -> Unit,
+    onTransactionsClicked: (yearMonth: YearMonth) -> Unit,
     onClick: (id: Long) -> Unit
 ) {
     when (val currentState = state.value) {

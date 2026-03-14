@@ -80,14 +80,19 @@ fun CommonApp() {
                     HomeScreen(
                         state = state,
                         add = { navController.navigate(AddTransaction) },
-                        onTransactionsClicked = { navController.navigate(Transactions) },
+                        onTransactionsClicked = { yearMonth -> navController.navigate(Transactions(yearMonth = yearMonth.toString())) },
                         onClick = { id -> navController.navigate(TransactionDetails(id = id)) },
                     )
                 }
 
                 composable<Transactions> { navBackStackEntry ->
-                    val route = navBackStackEntry.toRoute<AddTransaction>()
-                    val manager = remember { TransactionManager(sdk = sdk) }
+                    val route = navBackStackEntry.toRoute<Transactions>()
+                    val manager = remember {
+                        TransactionManager(
+                            sdk = sdk,
+                            yearMonth = route.yearMonth
+                        )
+                    }
                     val state: State<TransactionState> = manager.state.collectAsStateWithLifecycle()
                     val navEventState = rememberNavigationEventState(
                         currentInfo = TransactionsNavigationEventInfo(route = route),

@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
@@ -18,6 +17,7 @@ import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.month_names
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.sdk.TransactionType
+import me.ilker.balance_tracker.sdk.getLocalDate
 import me.ilker.core.Manager
 import me.ilker.core.extensions.round
 import org.jetbrains.compose.resources.getStringArray
@@ -38,18 +38,7 @@ class HomeManager(
 
     override val state: StateFlow<HomeState> = sdk.transactions.map { transactions ->
         val transactionsByYearMonth = transactions
-            .groupBy { transaction ->
-                LocalDate.parse(
-                    input = transaction.dateTime,
-                    format = LocalDate.Format {
-                        day()
-                        char('/')
-                        monthNumber()
-                        char('/')
-                        year()
-                    }
-                ).yearMonth
-            }
+            .groupBy { transaction -> transaction.getLocalDate().yearMonth }
             .asIterable()
             .sortedBy { it.key }
             .associate { it.key to it.value.sortedBy { transaction -> transaction.dateTime } }
@@ -77,7 +66,7 @@ class HomeManager(
                 balance = balance,
                 expense = expense,
                 income = income,
-                transactions = transactionByYearMonth.value.sortedByDescending { it.dateTime }
+                transactions = transactionByYearMonth.value.sortedByDescending { it.dateTime }.take(3)
             )
         }
 
