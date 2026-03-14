@@ -68,10 +68,10 @@ fun CommonApp() {
                 modifier = Modifier.consumeWindowInsets(padding),
                 navController = navController,
                 startDestination = Home,
-                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(durationMillis = 50, easing = EaseIn)) },
-                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(durationMillis = 50, easing = EaseOutBack)) },
-                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(durationMillis = 50, easing = EaseIn)) },
-                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(durationMillis = 50, easing = EaseOutBack)) }
+                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(durationMillis = 0, easing = EaseIn)) },
+                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(durationMillis = 0, easing = EaseOutBack)) },
+                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(durationMillis = 0, easing = EaseIn)) },
+                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(durationMillis = 0, easing = EaseOutBack)) }
             ) {
                 composable<Home> {
                     val manager = remember { HomeManager(sdk = sdk) }

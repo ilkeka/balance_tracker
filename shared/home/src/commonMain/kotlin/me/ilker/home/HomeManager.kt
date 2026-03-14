@@ -77,7 +77,7 @@ class HomeManager(
                 balance = balance,
                 expense = expense,
                 income = income,
-                transactions = transactionByYearMonth.value.sortedBy { it.dateTime }
+                transactions = transactionByYearMonth.value.sortedByDescending { it.dateTime }
             )
         }
 
