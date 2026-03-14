@@ -17,6 +17,20 @@
     <string name="income">Income</string>
     <string name="income_total">Total income</string>
     <string name="latest_transactions">Latest transactions</string>
+    <string-array name="month_names">
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
+    </string-array>
     <string name="new_transaction">New Transaction</string>
     <string name="nothing_yet">Nothing yet</string>
     <string name="start_create_transaction">Start creating transactions in order to track and analyze them.</string>

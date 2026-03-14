@@ -2,6 +2,7 @@ package me.ilker.balance_tracker
 
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -52,7 +53,7 @@ fun CommonApp() {
         val sdk: BalanceTrackerSDK = koinInject()
 
         Scaffold(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize().navigationBarsPadding()
         ) { padding ->
             NavHost(
                 modifier = Modifier.consumeWindowInsets(padding),

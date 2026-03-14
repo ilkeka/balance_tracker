@@ -39,9 +39,10 @@ class TransactionManager(
                         this.first.sumOf { transaction -> transaction.amount }.round(2) to
                         this.second.sumOf { transaction -> transaction.amount }.round(2)
                     }
+                    val balance = (income - expense).round(2)
 
                     TransactionState.Loaded.BalanceUiModel(
-                        balance = income - expense,
+                        balance = balance,
                         expense = expense,
                         income = income
                     )

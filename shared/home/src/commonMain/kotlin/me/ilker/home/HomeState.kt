@@ -1,25 +1,31 @@
 package me.ilker.home
 
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.core.State
+import kotlin.time.Clock
 
-sealed class HomeState : State {
-    data object InitialState: HomeState()
+sealed class HomeState(
+    open val selectedDate: LocalDate
+) : State {
+    data object InitialState: HomeState(
+        selectedDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    )
 
     data class Loaded(
-        val balance: BalanceUiModel?,
-        val transactions: List<TransactionDomainModel>
-    ) : HomeState() {
+        override val selectedDate: LocalDate,
+        val balances: List<BalanceUiModel>
+    ) : HomeState(
+        selectedDate = selectedDate
+    ) {
         data class BalanceUiModel(
+            val selectedDate: String,
             val balance: Double,
             val expense: Double,
             val income: Double,
+            val transactions: List<TransactionDomainModel>
         )
     }
-}
-
-sealed class ModalBottomSheetState {
-    data class ShowOptions(
-        val transactionId: Long
-    ) : ModalBottomSheetState()
 }
