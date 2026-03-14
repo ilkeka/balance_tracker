@@ -210,7 +210,10 @@ internal fun HomeLoadedView(
                     val transactions = state.balances[page].transactions
 
 
-                    Column {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         transactions.forEach { transaction ->
                             Card(
                                 modifier = Modifier
