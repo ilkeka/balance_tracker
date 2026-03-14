@@ -82,33 +82,23 @@ internal fun TransactionDetailsLoadedView(
             }
         },
         bottomBar = {
-            Column(
+            Button(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(
-                        horizontal = 16.dp,
-                        vertical = 8.dp
-                    )
-            ) {
-                Button(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    onClick = onDelete,
-                    colors = ButtonColors(
-                        contentColor = TertiaryContainerColor,
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        disabledContentColor = TertiaryContainerColor.copy(alpha = 0.33f),
-                        disabledContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.33f),
-                    ),
-                ) {
+                    .padding(24.dp),
+                onClick = onDelete,
+                colors = ButtonColors(
+                    contentColor = TertiaryContainerColor,
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    disabledContentColor = TertiaryContainerColor.copy(alpha = 0.33f),
+                    disabledContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.33f),
+                ),
+                content = {
                     Text(
-                        text = stringResource(Res.string.delete),
-                        fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
-                        fontWeight = FontWeight.Normal,
+                        text = stringResource(Res.string.delete)
                     )
                 }
-            }
+            )
         }
     ) { paddingValues ->
         LazyColumn(

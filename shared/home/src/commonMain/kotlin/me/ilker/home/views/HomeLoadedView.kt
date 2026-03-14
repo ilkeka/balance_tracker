@@ -31,6 +31,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.YearMonth
+import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.add
 import me.ilker.balance_tracker.resources.amount
@@ -51,7 +53,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun HomeLoadedView(
     state: HomeState.Loaded,
     add: () -> Unit,
-    onTransactionsClicked: () -> Unit,
+    onTransactionsClicked: (yearMonth: YearMonth) -> Unit,
     onClick: (id: Long) -> Unit
 ) {
     val balancePagerState = rememberPagerState(
@@ -184,7 +186,10 @@ internal fun HomeLoadedView(
                     Text(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(end = 12.dp),
+                            .padding(end = 12.dp)
+                            .clickable {
+                                onTransactionsClicked(state.selectedDate.yearMonth)
+                            },
                         text = stringResource(Res.string.latest_transactions),
                         fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.SemiBold
@@ -193,7 +198,7 @@ internal fun HomeLoadedView(
                     Text(
                         modifier = Modifier
                             .clickable {
-                                onTransactionsClicked()
+                                onTransactionsClicked(state.selectedDate.yearMonth)
                             },
                         text = stringResource(Res.string.see_all),
                         fontSize = TextUnit(value = 12f, type = TextUnitType.Sp),
@@ -209,8 +214,10 @@ internal fun HomeLoadedView(
                 ) { page ->
                     val transactions = state.balances[page].transactions
 
-
-                    Column {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         transactions.forEach { transaction ->
                             Card(
                                 modifier = Modifier

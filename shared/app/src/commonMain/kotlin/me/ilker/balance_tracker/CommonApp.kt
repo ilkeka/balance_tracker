@@ -1,9 +1,15 @@
 package me.ilker.balance_tracker
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.EaseIn
+import androidx.compose.animation.core.EaseOutBack
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -53,12 +59,19 @@ fun CommonApp() {
         val sdk: BalanceTrackerSDK = koinInject()
 
         Scaffold(
-            modifier = Modifier.fillMaxSize().navigationBarsPadding()
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .navigationBarsPadding()
         ) { padding ->
             NavHost(
                 modifier = Modifier.consumeWindowInsets(padding),
                 navController = navController,
-                startDestination = Home
+                startDestination = Home,
+                enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(durationMillis = 0, easing = EaseIn)) },
+                exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(durationMillis = 0, easing = EaseOutBack)) },
+                popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(durationMillis = 0, easing = EaseIn)) },
+                popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(durationMillis = 0, easing = EaseOutBack)) }
             ) {
                 composable<Home> {
                     val manager = remember { HomeManager(sdk = sdk) }
@@ -67,14 +80,19 @@ fun CommonApp() {
                     HomeScreen(
                         state = state,
                         add = { navController.navigate(AddTransaction) },
-                        onTransactionsClicked = { navController.navigate(Transactions) },
+                        onTransactionsClicked = { yearMonth -> navController.navigate(Transactions(yearMonth = yearMonth.toString())) },
                         onClick = { id -> navController.navigate(TransactionDetails(id = id)) },
                     )
                 }
 
                 composable<Transactions> { navBackStackEntry ->
-                    val route = navBackStackEntry.toRoute<AddTransaction>()
-                    val manager = remember { TransactionManager(sdk = sdk) }
+                    val route = navBackStackEntry.toRoute<Transactions>()
+                    val manager = remember {
+                        TransactionManager(
+                            sdk = sdk,
+                            yearMonth = route.yearMonth
+                        )
+                    }
                     val state: State<TransactionState> = manager.state.collectAsStateWithLifecycle()
                     val navEventState = rememberNavigationEventState(
                         currentInfo = TransactionsNavigationEventInfo(route = route),

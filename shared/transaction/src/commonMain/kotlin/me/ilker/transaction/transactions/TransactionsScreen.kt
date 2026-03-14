@@ -14,7 +14,9 @@ fun TransactionsScreen(
     onBack: () -> Unit
 ) {
     when (val currentState = state.value) {
-        TransactionState.InitialState -> TransactionsInitialView()
+        TransactionState.InitialState -> TransactionsInitialView(
+            onBack = onBack
+        )
         is TransactionState.Loaded -> TransactionsLoadedView(
             state = currentState,
             onClick = onClick,

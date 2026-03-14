@@ -2,9 +2,9 @@ package me.ilker.balance_tracker.database
 
 import app.cash.sqldelight.EnumColumnAdapter
 import me.ilker.balance_tracker.Database
-import me.ilker.balance_tracker.Transactions
 import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
+import me.ilker.balancetracker.Transactions
 
 internal class DB(databaseDriverFactory: DatabaseDriverFactory) {
     private val database = Database(
