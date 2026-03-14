@@ -184,7 +184,10 @@ internal fun HomeLoadedView(
                     Text(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(end = 12.dp),
+                            .padding(end = 12.dp)
+                            .clickable {
+                                onTransactionsClicked()
+                            },
                         text = stringResource(Res.string.latest_transactions),
                         fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.SemiBold
@@ -212,7 +215,7 @@ internal fun HomeLoadedView(
 
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         transactions.forEach { transaction ->
                             Card(
