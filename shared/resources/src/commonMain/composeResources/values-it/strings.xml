@@ -11,12 +11,26 @@
     <string name="delete_transaction_success_feedback">Transazione eliminata correttamente!</string>
     <string name="details">Dettagli</string>
     <string name="edit">Modifica</string>
-    <string name="expense">Spesa</string>
-    <string name="expense_total">Spese</string>
+    <string name="expense">Uscita</string>
+    <string name="expense_total">Uscite</string>
     <string name="description">Descrizione</string>
     <string name="income">Entrata</string>
     <string name="income_total">Entrate</string>
     <string name="latest_transactions">Ultime transazioni</string>
+    <string-array name="month_names">
+        <item>Gennaio</item>
+        <item>Febbraio</item>
+        <item>Marzo</item>
+        <item>Aprile</item>
+        <item>Maggio</item>
+        <item>Giugno</item>
+        <item>Luglio</item>
+        <item>Agosto</item>
+        <item>Settembre</item>
+        <item>Ottobre</item>
+        <item>Novembre</item>
+        <item>Dicembre</item>
+    </string-array>
     <string name="new_transaction">Nuova transazione</string>
     <string name="nothing_yet">Ancore niente</string>
     <string name="start_create_transaction">Inizia a creare transazioni per tracciarle e analizzarle.</string>

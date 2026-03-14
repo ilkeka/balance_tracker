@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -71,7 +73,8 @@ internal fun HomeLoadedView(
             Button(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .padding(24.dp)
+                ,
                 onClick = add,
                 colors = ButtonColors(
                     contentColor = MaterialTheme.colorScheme.primary,
@@ -120,6 +123,15 @@ internal fun HomeLoadedView(
                                 ) {
                                     Text(
                                         modifier = Modifier.fillMaxWidth(),
+                                        text = balance.selectedDate,
+                                        fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+
+                                    Spacer(Modifier.height(8.dp))
+
+                                    Text(
+                                        modifier = Modifier.fillMaxWidth(),
                                         text = "${stringResource(Res.string.balance)}: ${balance.balance}",
                                     )
 
@@ -142,6 +154,7 @@ internal fun HomeLoadedView(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 12.dp)
+                                .padding(top = 12.dp)
                         ) {
                             Text(
                                 modifier = Modifier
@@ -158,8 +171,8 @@ internal fun HomeLoadedView(
                                         onTransactionsClicked()
                                     },
                                 text = stringResource(Res.string.see_all),
-                                fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
-                                fontWeight = FontWeight.SemiBold
+                                fontSize = TextUnit(value = 12f, type = TextUnitType.Sp),
+                                fontWeight = FontWeight.Light
                             )
                         }
                     }

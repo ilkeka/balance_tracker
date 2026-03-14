@@ -3,15 +3,26 @@ package me.ilker.home
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.char
+import kotlinx.datetime.toLocalDateTime
+import me.ilker.balance_tracker.resources.Res
+import me.ilker.balance_tracker.resources.month_names
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
+import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.core.Manager
 import me.ilker.core.extensions.round
-import me.ilker.balance_tracker.sdk.TransactionType
+import org.jetbrains.compose.resources.getStringArray
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Clock
 
 class HomeManager(
     sdk: BalanceTrackerSDK
@@ -24,22 +35,43 @@ class HomeManager(
         }
     }
 
-    override val state: StateFlow<HomeState> = sdk
-        .transactions
-        .map { transactions ->
-        val transactionsSorted = transactions
+    private val currentState: MutableStateFlow<HomeState> = MutableStateFlow(HomeState.InitialState)
+
+    override val state: StateFlow<HomeState> = sdk.transactions.map { transactions ->
+        val transactionsOfMonth = transactions.filter { transaction ->
+            LocalDate.parse(
+                input = transaction.dateTime,
+                format = LocalDate.Format {
+                    day()
+                    char('/')
+                    monthNumber()
+                    char('/')
+                    year()
+                }
+            ).month == Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).month
+        }
+        val transactionsSorted = transactionsOfMonth
             .sortedBy { it.dateTime }
             .takeLast(3)
 
         HomeState.Loaded(
+            selectedDate = currentState.value.selectedDate,
             balance = run {
                 val (expense, income) = with(transactions.partition { it.type == TransactionType.Expense }) {
-                    this.first.sumOf { transaction -> transaction.amount }.round(2) to
-                    this.second.sumOf { transaction -> transaction.amount }.round(2)
+                    this.first.sumOf { transaction -> transaction.amount }.round(2) to this.second.sumOf { transaction -> transaction.amount }.round(2)
                 }
+                val balance = (income - expense).round(2)
+                val monthNames = getStringArray(Res.array.month_names)
 
                 HomeState.Loaded.BalanceUiModel(
-                    balance = income - expense,
+                    selectedDate = currentState.value.selectedDate.format(
+                        LocalDate.Format {
+                            monthName(names = MonthNames(monthNames))
+                            char(' ')
+                            year()
+                        }
+                    ),
+                    balance = balance,
                     expense = expense,
                     income = income
                 )
@@ -49,7 +81,7 @@ class HomeManager(
     }.stateIn(
         scope = scope,
         started = SharingStarted.Lazily,
-        initialValue = HomeState.InitialState
+        initialValue = currentState.value
     )
 
     override val sideEffect: Channel<HomeSideEffect> = Channel(capacity = 1)

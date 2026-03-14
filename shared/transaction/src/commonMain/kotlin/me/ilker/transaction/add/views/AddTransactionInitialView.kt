@@ -189,7 +189,7 @@ internal fun AddTransactionInitialView(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
+                    .padding(end = 12.dp)
                     .padding(top = 48.dp)
                     .padding(bottom = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -321,8 +321,8 @@ internal fun AddTransactionInitialView(
             if (expanded) {
                 item {
                     Column(
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         with(stringResource(Res.string.expense)) {
                             Text(
@@ -331,13 +331,18 @@ internal fun AddTransactionInitialView(
                                     .clickable {
                                         expenseTypeState.value = TransactionType.Expense
                                         expanded = !expanded
-                                    },
+                                    }
+                                    .padding(vertical = 4.dp),
                                 text = this@with,
                                 fontStyle = FontStyle.Italic
                             )
                         }
 
-                        HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 2.dp)
+                        HorizontalDivider(
+                            modifier = Modifier.fillMaxWidth(),
+                            thickness = 2.dp,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
 
                         with(stringResource(Res.string.income)) {
                             Text(
@@ -346,7 +351,8 @@ internal fun AddTransactionInitialView(
                                     .clickable {
                                         expenseTypeState.value = TransactionType.Income
                                         expanded = !expanded
-                                    },
+                                    }
+                                    .padding(vertical = 4.dp),
                                 text = this@with,
                                 fontStyle = FontStyle.Italic
                             )
