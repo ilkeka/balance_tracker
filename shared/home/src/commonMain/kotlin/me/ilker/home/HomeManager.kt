@@ -9,12 +9,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.month_names
@@ -24,7 +22,6 @@ import me.ilker.core.Manager
 import me.ilker.core.extensions.round
 import org.jetbrains.compose.resources.getStringArray
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.time.Clock
 
 class HomeManager(
     sdk: BalanceTrackerSDK
@@ -55,7 +52,7 @@ class HomeManager(
             }
             .asIterable()
             .sortedBy { it.key }
-            .associate { it.key to it.value }
+            .associate { it.key to it.value.sortedBy { transaction -> transaction.dateTime } }
 
         val balances = transactionsByYearMonth.map { transactionByYearMonth ->
             val (expense, income) = with(transactionByYearMonth.value.partition { it.type == TransactionType.Expense }) {
@@ -79,18 +76,14 @@ class HomeManager(
                 ),
                 balance = balance,
                 expense = expense,
-                income = income
+                income = income,
+                transactions = transactionByYearMonth.value.sortedBy { it.dateTime }
             )
         }
 
-        val transactionsSorted = transactionsByYearMonth[Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.yearMonth]
-            ?.sortedBy { it.dateTime }
-            ?.takeLast(3)
-
         HomeState.Loaded(
             selectedDate = currentState.value.selectedDate,
-            balances = balances,
-            transactions = transactionsSorted
+            balances = balances
         )
     }.stateIn(
         scope = scope,
