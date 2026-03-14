@@ -10,10 +10,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.YearMonth
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.month_names
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
@@ -38,7 +40,7 @@ class HomeManager(
     private val currentState: MutableStateFlow<HomeState> = MutableStateFlow(HomeState.InitialState)
 
     override val state: StateFlow<HomeState> = sdk.transactions.map { transactions ->
-        val transactionsOfMonth = transactions.filter { transaction ->
+        val transactionsByYearMonth = transactions.groupBy { transaction ->
             LocalDate.parse(
                 input = transaction.dateTime,
                 format = LocalDate.Format {
@@ -48,34 +50,42 @@ class HomeManager(
                     char('/')
                     year()
                 }
-            ).month == Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).month
+            ).yearMonth
         }
-        val transactionsSorted = transactionsOfMonth
-            .sortedBy { it.dateTime }
-            .takeLast(3)
+
+        val balances = transactionsByYearMonth.map { transactionByYearMonth ->
+            val (expense, income) = with(transactionByYearMonth.value.partition { it.type == TransactionType.Expense }) {
+                this.first.sumOf { transaction ->
+                    transaction.amount
+                }.round(2) to
+                this.second.sumOf { transaction ->
+                    transaction.amount
+                }.round(2)
+            }
+            val balance = (income - expense).round(2)
+            val monthNames = getStringArray(Res.array.month_names)
+
+            HomeState.Loaded.BalanceUiModel(
+                selectedDate = transactionByYearMonth.key.format(
+                    YearMonth.Format {
+                        monthName(names = MonthNames(monthNames))
+                        char(' ')
+                        year()
+                    }
+                ),
+                balance = balance,
+                expense = expense,
+                income = income
+            )
+        }
+
+        val transactionsSorted = transactionsByYearMonth[Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.yearMonth]
+            ?.sortedBy { it.dateTime }
+            ?.takeLast(3)
 
         HomeState.Loaded(
             selectedDate = currentState.value.selectedDate,
-            balance = run {
-                val (expense, income) = with(transactions.partition { it.type == TransactionType.Expense }) {
-                    this.first.sumOf { transaction -> transaction.amount }.round(2) to this.second.sumOf { transaction -> transaction.amount }.round(2)
-                }
-                val balance = (income - expense).round(2)
-                val monthNames = getStringArray(Res.array.month_names)
-
-                HomeState.Loaded.BalanceUiModel(
-                    selectedDate = currentState.value.selectedDate.format(
-                        LocalDate.Format {
-                            monthName(names = MonthNames(monthNames))
-                            char(' ')
-                            year()
-                        }
-                    ),
-                    balance = balance,
-                    expense = expense,
-                    income = income
-                )
-            },
+            balances = balances,
             transactions = transactionsSorted
         )
     }.stateIn(

@@ -16,8 +16,8 @@ sealed class HomeState(
 
     data class Loaded(
         override val selectedDate: LocalDate,
-        val balance: BalanceUiModel?,
-        val transactions: List<TransactionDomainModel>
+        val balances: List<BalanceUiModel>?,
+        val transactions: List<TransactionDomainModel>?
     ) : HomeState(
         selectedDate = selectedDate
     ) {

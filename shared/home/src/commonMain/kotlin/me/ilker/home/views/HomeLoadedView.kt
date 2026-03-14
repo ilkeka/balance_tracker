@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
@@ -52,6 +54,8 @@ internal fun HomeLoadedView(
     onTransactionsClicked: () -> Unit,
     onClick: (id: Long) -> Unit
 ) {
+    val pagerState = rememberPagerState { state.balances?.size ?: 0 }
+
     Scaffold(
         modifier = Modifier,
         topBar = {
@@ -89,7 +93,7 @@ internal fun HomeLoadedView(
         }
     ) { paddingValues ->
         state.transactions
-            .takeUnless { it.isEmpty() }
+            .takeUnless { it.isNullOrEmpty() }
             ?.let {
                 LazyColumn(
                     modifier = Modifier
@@ -97,53 +101,58 @@ internal fun HomeLoadedView(
                         .padding(paddingValues),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    state.balance?.let { balance ->
+                    state.balances?.let { balances ->
                         stickyHeader {
-                            val summaryColor = when {
-                                balance.expense > balance.income -> MaterialTheme.colorScheme.errorContainer
-                                balance.expense < balance.income -> Color(0xFF34501F)
-                                else -> MaterialTheme.colorScheme.surfaceContainer
-                            }
+                            HorizontalPager(
+                                state = pagerState
+                            ) { page ->
+                                val balance = balances[page]
+                                val summaryColor = when {
+                                    balance.expense > balance.income -> MaterialTheme.colorScheme.errorContainer
+                                    balance.expense < balance.income -> Color(0xFF34501F)
+                                    else -> MaterialTheme.colorScheme.surfaceContainer
+                                }
 
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 12.dp),
-                                colors = CardDefaults.cardColors(
-                                    contentColor = Color(0xFFD0DBD0),
-                                    containerColor = summaryColor,
-                                    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-                                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
-                                ),
-                            ) {
-                                Column(
+                                Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                                        .padding(horizontal = 12.dp),
+                                    colors = CardDefaults.cardColors(
+                                        contentColor = Color(0xFFD0DBD0),
+                                        containerColor = summaryColor,
+                                        disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
+                                        disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
+                                    ),
                                 ) {
-                                    Text(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        text = balance.selectedDate,
-                                        fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
-                                        fontWeight = FontWeight.SemiBold
-                                    )
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                                    ) {
+                                        Text(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            text = balance.selectedDate,
+                                            fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
+                                            fontWeight = FontWeight.SemiBold
+                                        )
 
-                                    Spacer(Modifier.height(8.dp))
+                                        Spacer(Modifier.height(8.dp))
 
-                                    Text(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        text = "${stringResource(Res.string.balance)}: ${balance.balance}",
-                                    )
+                                        Text(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            text = "${stringResource(Res.string.balance)}: ${balance.balance}",
+                                        )
 
-                                    Text(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        text = "${stringResource(Res.string.income_total)}: ${balance.income}",
-                                    )
+                                        Text(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            text = "${stringResource(Res.string.income_total)}: ${balance.income}",
+                                        )
 
-                                    Text(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        text = "${stringResource(Res.string.expense_total)}: ${balance.expense}",
-                                    )
+                                        Text(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            text = "${stringResource(Res.string.expense_total)}: ${balance.expense}",
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -177,47 +186,49 @@ internal fun HomeLoadedView(
                         }
                     }
 
-                    items(state.transactions) { transaction ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    onClick(transaction.id)
-                                }
-                                .padding(horizontal = 12.dp),
-                            colors = CardDefaults.cardColors(
-                                contentColor = MaterialTheme.colorScheme.primary,
-                                containerColor = when (transaction.type) {
-                                    TransactionType.Expense -> MaterialTheme.colorScheme.errorContainer
-                                    TransactionType.Income -> MaterialTheme.colorScheme.tertiaryContainer
-                                },
-                                disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-                                disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
-                            )
-                        ) {
-                            Column(
+                    state.transactions?.let {
+                        items(state.transactions) { transaction ->
+                            Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                                    .clickable {
+                                        onClick(transaction.id)
+                                    }
+                                    .padding(horizontal = 12.dp),
+                                colors = CardDefaults.cardColors(
+                                    contentColor = MaterialTheme.colorScheme.primary,
+                                    containerColor = when (transaction.type) {
+                                        TransactionType.Expense -> MaterialTheme.colorScheme.errorContainer
+                                        TransactionType.Income -> MaterialTheme.colorScheme.tertiaryContainer
+                                    },
+                                    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
+                                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
+                                )
                             ) {
-                                val amountString = stringResource(Res.string.amount)
-                                val dateString = stringResource(Res.string.date)
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                                ) {
+                                    val amountString = stringResource(Res.string.amount)
+                                    val dateString = stringResource(Res.string.date)
 
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = "$amountString: ${transaction.amount}",
-                                )
-
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = "$dateString: ${transaction.dateTime}",
-                                )
-
-                                transaction.description?.takeUnless { it.isBlank() }?.let { description ->
                                     Text(
                                         modifier = Modifier.fillMaxWidth(),
-                                        text = "${stringResource(Res.string.description)}: $description",
+                                        text = "$amountString: ${transaction.amount}",
                                     )
+
+                                    Text(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        text = "$dateString: ${transaction.dateTime}",
+                                    )
+
+                                    transaction.description?.takeUnless { it.isBlank() }?.let { description ->
+                                        Text(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            text = "${stringResource(Res.string.description)}: $description",
+                                        )
+                                    }
                                 }
                             }
                         }
