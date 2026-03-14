@@ -54,7 +54,10 @@ internal fun HomeLoadedView(
     onTransactionsClicked: () -> Unit,
     onClick: (id: Long) -> Unit
 ) {
-    val pagerState = rememberPagerState { state.balances?.size ?: 0 }
+    val pagerState = rememberPagerState(
+        initialPage = state.balances.lastIndex,
+        pageCount = { state.balances.size }
+    )
 
     Scaffold(
         modifier = Modifier,
@@ -101,7 +104,7 @@ internal fun HomeLoadedView(
                         .padding(paddingValues),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    state.balances?.let { balances ->
+                    state.balances.let { balances ->
                         stickyHeader {
                             HorizontalPager(
                                 state = pagerState

@@ -16,7 +16,7 @@ sealed class HomeState(
 
     data class Loaded(
         override val selectedDate: LocalDate,
-        val balances: List<BalanceUiModel>?,
+        val balances: List<BalanceUiModel>,
         val transactions: List<TransactionDomainModel>?
     ) : HomeState(
         selectedDate = selectedDate
@@ -28,10 +28,4 @@ sealed class HomeState(
             val income: Double,
         )
     }
-}
-
-sealed class ModalBottomSheetState {
-    data class ShowOptions(
-        val transactionId: Long
-    ) : ModalBottomSheetState()
 }

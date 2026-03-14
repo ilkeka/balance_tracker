@@ -40,27 +40,31 @@ class HomeManager(
     private val currentState: MutableStateFlow<HomeState> = MutableStateFlow(HomeState.InitialState)
 
     override val state: StateFlow<HomeState> = sdk.transactions.map { transactions ->
-        val transactionsByYearMonth = transactions.groupBy { transaction ->
-            LocalDate.parse(
-                input = transaction.dateTime,
-                format = LocalDate.Format {
-                    day()
-                    char('/')
-                    monthNumber()
-                    char('/')
-                    year()
-                }
-            ).yearMonth
-        }
+        val transactionsByYearMonth = transactions
+            .groupBy { transaction ->
+                LocalDate.parse(
+                    input = transaction.dateTime,
+                    format = LocalDate.Format {
+                        day()
+                        char('/')
+                        monthNumber()
+                        char('/')
+                        year()
+                    }
+                ).yearMonth
+            }
+            .asIterable()
+            .sortedBy { it.key }
+            .associate { it.key to it.value }
 
         val balances = transactionsByYearMonth.map { transactionByYearMonth ->
             val (expense, income) = with(transactionByYearMonth.value.partition { it.type == TransactionType.Expense }) {
                 this.first.sumOf { transaction ->
                     transaction.amount
                 }.round(2) to
-                this.second.sumOf { transaction ->
-                    transaction.amount
-                }.round(2)
+                        this.second.sumOf { transaction ->
+                            transaction.amount
+                        }.round(2)
             }
             val balance = (income - expense).round(2)
             val monthNames = getStringArray(Res.array.month_names)
