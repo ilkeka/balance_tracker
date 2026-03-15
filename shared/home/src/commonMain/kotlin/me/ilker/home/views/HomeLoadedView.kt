@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
@@ -22,8 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -57,26 +56,9 @@ internal fun HomeLoadedView(
     onClick: (id: Long) -> Unit
 ) {
     val balancePagerState = rememberPagerState(
-        initialPage = state.balances.lastIndex,
+        initialPage = state.balances.lastIndex.takeUnless { it < 0 } ?: 0,
         pageCount = { state.balances.size }
     )
-
-    val transactionsPagerState = rememberPagerState(
-        initialPage = balancePagerState.currentPage,
-        pageCount = { state.balances.size }
-    )
-
-    LaunchedEffect(balancePagerState) {
-        snapshotFlow { balancePagerState.currentPage }.collect {
-            transactionsPagerState.animateScrollToPage(it)
-        }
-    }
-
-    LaunchedEffect(transactionsPagerState) {
-        snapshotFlow { transactionsPagerState.currentPage }.collect {
-            balancePagerState.animateScrollToPage(it)
-        }
-    }
 
     Scaffold(
         modifier = Modifier,
@@ -113,106 +95,104 @@ internal fun HomeLoadedView(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
-                .padding(paddingValues),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            item {
-                HorizontalPager(
-                    state = balancePagerState
-                ) { page ->
-                    val balance = state.balances[page]
-                    val summaryColor = when {
-                        balance.expense > balance.income -> MaterialTheme.colorScheme.errorContainer
-                        balance.expense < balance.income -> Color(0xFF34501F)
-                        else -> MaterialTheme.colorScheme.surfaceContainer
-                    }
+        state.balances.takeUnless { it.isEmpty() }?.let {
+            LazyColumn(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(paddingValues),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {
+                    HorizontalPager(
+                        modifier = Modifier.fillMaxWidth(),
+                        state = balancePagerState,
+                        verticalAlignment = Alignment.Top,
+                        pageSize = PageSize.Fill,
+                    ) { page ->
+                        val balance = state.balances[page]
+                        val summaryColor = when {
+                            balance.expense > balance.income -> MaterialTheme.colorScheme.errorContainer
+                            balance.expense < balance.income -> Color(0xFF34501F)
+                            else -> MaterialTheme.colorScheme.surfaceContainer
+                        }
 
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp),
-                        colors = CardDefaults.cardColors(
-                            contentColor = Color(0xFFD0DBD0),
-                            containerColor = summaryColor,
-                            disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-                            disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
-                        ),
-                    ) {
-                        Column(
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                                .padding(horizontal = 12.dp),
+                            colors = CardDefaults.cardColors(
+                                contentColor = Color(0xFFD0DBD0),
+                                containerColor = summaryColor,
+                                disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
+                                disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
+                            ),
                         ) {
-                            Text(
-                                modifier = Modifier.fillMaxWidth(),
-                                text = balance.selectedDate,
-                                fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                            ) {
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = balance.selectedDate,
+                                    fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
+                                    fontWeight = FontWeight.SemiBold
+                                )
 
-                            Spacer(Modifier.height(8.dp))
+                                Spacer(Modifier.height(8.dp))
 
-                            Text(
-                                modifier = Modifier.fillMaxWidth(),
-                                text = "${stringResource(Res.string.balance)}: ${balance.balance}",
-                            )
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = "${stringResource(Res.string.balance)}: ${balance.balance}",
+                                )
 
-                            Text(
-                                modifier = Modifier.fillMaxWidth(),
-                                text = "${stringResource(Res.string.income_total)}: ${balance.income}",
-                            )
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = "${stringResource(Res.string.income_total)}: ${balance.income}",
+                                )
 
-                            Text(
-                                modifier = Modifier.fillMaxWidth(),
-                                text = "${stringResource(Res.string.expense_total)}: ${balance.expense}",
-                            )
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = "${stringResource(Res.string.expense_total)}: ${balance.expense}",
+                                )
+                            }
                         }
                     }
-
-
                 }
-            }
 
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp)
-                        .padding(top = 12.dp)
-                ) {
-                    Text(
+                item {
+                    Row(
                         modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 12.dp)
-                            .clickable {
-                                onTransactionsClicked(state.selectedDate.yearMonth)
-                            },
-                        text = stringResource(Res.string.latest_transactions),
-                        fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
-                        fontWeight = FontWeight.SemiBold
-                    )
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp)
+                            .padding(top = 12.dp)
+                    ) {
+                        Text(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 12.dp)
+                                .clickable {
+                                    onTransactionsClicked(state.selectedDate.yearMonth)
+                                },
+                            text = stringResource(Res.string.latest_transactions),
+                            fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
+                            fontWeight = FontWeight.SemiBold
+                        )
 
-                    Text(
-                        modifier = Modifier
-                            .clickable {
-                                onTransactionsClicked(state.selectedDate.yearMonth)
-                            },
-                        text = stringResource(Res.string.see_all),
-                        fontSize = TextUnit(value = 12f, type = TextUnitType.Sp),
-                        fontWeight = FontWeight.Light
-                    )
+                        Text(
+                            modifier = Modifier
+                                .clickable {
+                                    onTransactionsClicked(state.selectedDate.yearMonth)
+                                },
+                            text = stringResource(Res.string.see_all),
+                            fontSize = TextUnit(value = 12f, type = TextUnitType.Sp),
+                            fontWeight = FontWeight.Light
+                        )
+                    }
                 }
-            }
 
-            item {
-                HorizontalPager(
-                    state = transactionsPagerState,
-                    verticalAlignment = Alignment.Top
-                ) { page ->
-                    val transactions = state.balances[page].transactions
+                item {
+                    val transactions = state.balances[balancePagerState.currentPage].transactions
 
                     Column(
                         modifier = Modifier.fillMaxWidth(),
@@ -267,5 +247,11 @@ internal fun HomeLoadedView(
                 }
             }
         }
+            ?: NoTransactionsContent(
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+            )
     }
 }
