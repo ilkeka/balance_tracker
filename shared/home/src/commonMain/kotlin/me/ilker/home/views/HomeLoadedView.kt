@@ -61,7 +61,8 @@ internal fun HomeLoadedView(
     )
 
     Scaffold(
-        modifier = Modifier,
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.background),
         topBar = {
             Row(
                 modifier = Modifier
