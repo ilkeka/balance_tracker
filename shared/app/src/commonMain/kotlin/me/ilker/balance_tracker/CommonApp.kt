@@ -65,7 +65,8 @@ fun CommonApp() {
                 .navigationBarsPadding()
         ) { padding ->
             NavHost(
-                modifier = Modifier.consumeWindowInsets(padding),
+                modifier = Modifier
+                    .consumeWindowInsets(padding),
                 navController = navController,
                 startDestination = Home,
                 enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(durationMillis = 0, easing = EaseIn)) },

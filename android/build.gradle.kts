@@ -9,6 +9,7 @@ kotlin {
     dependencies {
         implementation(projects.shared.app)
         implementation(projects.shared.common)
+        implementation(projects.shared.resources)
 
         implementation(libs.androidx.activity.compose)
         implementation(libs.koin.compose)
