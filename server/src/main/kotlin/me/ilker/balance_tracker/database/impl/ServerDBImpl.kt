@@ -2,9 +2,9 @@ package me.ilker.balance_tracker.database.impl
 
 import app.cash.sqldelight.EnumColumnAdapter
 import me.ilker.balance_tracker.ServerDatabase
+import me.ilker.balance_tracker.Transactions
 import me.ilker.balance_tracker.database.DatabaseDriverFactory
 import me.ilker.balance_tracker.database.ServerDB
-import me.ilker.balancetracker.Transactions
 import kotlin.Throws
 
 internal class ServerDBImpl(

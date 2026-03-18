@@ -11,14 +11,16 @@ import me.ilker.home.views.HomeLoadedView
 @Composable
 fun HomeScreen(
     state: State<HomeState>,
+    setSelectedYearMonth: (yearMonth: YearMonth) -> Unit,
     add: () -> Unit,
-    onTransactionsClicked: (yearMonth: YearMonth) -> Unit,
+    onTransactionsClicked: () -> Unit,
     onClick: (id: Long) -> Unit
 ) {
     when (val currentState = state.value) {
         HomeState.InitialState -> HomeInitialView()
         is HomeState.Loaded -> HomeLoadedView(
             state = currentState,
+            setSelectedYearMonth = setSelectedYearMonth,
             add = add,
             onTransactionsClicked = onTransactionsClicked,
             onClick = onClick

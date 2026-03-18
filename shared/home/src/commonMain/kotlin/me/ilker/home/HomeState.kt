@@ -1,6 +1,7 @@
 package me.ilker.home
 
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import me.ilker.balance_tracker.sdk.TransactionDomainModel
@@ -21,7 +22,7 @@ sealed class HomeState(
         selectedDate = selectedDate
     ) {
         data class BalanceUiModel(
-            val selectedDate: String,
+            val selectedDate: LocalDate,
             val balance: Double,
             val expense: Double,
             val income: Double,

@@ -40,6 +40,10 @@ android {
         }
     }
     buildTypes {
+        getByName("debug") {
+            defaultConfig.applicationId = defaultConfig.applicationId.plus(".debug")
+        }
+
         getByName("release") {
             isMinifyEnabled = false
         }

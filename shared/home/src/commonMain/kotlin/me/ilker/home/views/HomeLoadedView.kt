@@ -23,6 +23,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,6 +33,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.YearMonth
+import kotlinx.datetime.format
+import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.char
 import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.add
@@ -42,23 +47,34 @@ import me.ilker.balance_tracker.resources.description
 import me.ilker.balance_tracker.resources.expense_total
 import me.ilker.balance_tracker.resources.income_total
 import me.ilker.balance_tracker.resources.latest_transactions
+import me.ilker.balance_tracker.resources.month_names
 import me.ilker.balance_tracker.resources.see_all
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.home.HomeState
+import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 
 @ExperimentalMaterial3Api
 @Composable
 internal fun HomeLoadedView(
     state: HomeState.Loaded,
+    setSelectedYearMonth: (yearMonth: YearMonth) -> Unit,
     add: () -> Unit,
-    onTransactionsClicked: (yearMonth: YearMonth) -> Unit,
+    onTransactionsClicked: () -> Unit,
     onClick: (id: Long) -> Unit
 ) {
     val balancePagerState = rememberPagerState(
         initialPage = state.balances.lastIndex.takeUnless { it < 0 } ?: 0,
         pageCount = { state.balances.size }
     )
+
+    LaunchedEffect(balancePagerState) {
+        snapshotFlow { balancePagerState.currentPage }.collect { page ->
+            state.balances.getOrNull(page)?.selectedDate?.let {
+                setSelectedYearMonth(it.yearMonth)
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier
@@ -109,6 +125,13 @@ internal fun HomeLoadedView(
                         state = balancePagerState,
                         verticalAlignment = Alignment.Top,
                         pageSize = PageSize.Fill,
+                        contentPadding = PaddingValues(
+                            start = if(balancePagerState.currentPage == 0) {
+                                0.dp
+                            } else {
+                                16.dp
+                            }
+                        )
                     ) { page ->
                         val balance = state.balances[page]
                         val summaryColor = when {
@@ -133,9 +156,17 @@ internal fun HomeLoadedView(
                                     .fillMaxWidth()
                                     .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
                             ) {
+                                val monthNames = stringArrayResource(Res.array.month_names)
+
                                 Text(
                                     modifier = Modifier.fillMaxWidth(),
-                                    text = balance.selectedDate,
+                                    text = balance.selectedDate.yearMonth.format(
+                                        YearMonth.Format {
+                                            monthName(names = MonthNames(monthNames))
+                                            char(' ')
+                                            year()
+                                        }
+                                    ),
                                     fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -173,7 +204,7 @@ internal fun HomeLoadedView(
                                 .weight(1f)
                                 .padding(end = 12.dp)
                                 .clickable {
-                                    onTransactionsClicked(state.selectedDate.yearMonth)
+                                    onTransactionsClicked()
                                 },
                             text = stringResource(Res.string.latest_transactions),
                             fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
@@ -183,7 +214,7 @@ internal fun HomeLoadedView(
                         Text(
                             modifier = Modifier
                                 .clickable {
-                                    onTransactionsClicked(state.selectedDate.yearMonth)
+                                    onTransactionsClicked()
                                 },
                             text = stringResource(Res.string.see_all),
                             fontSize = TextUnit(value = 12f, type = TextUnitType.Sp),
