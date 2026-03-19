@@ -65,3 +65,7 @@ sqldelight {
         }
     }
 }
+
+val distTar by tasks.getting(Tar::class) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
