@@ -31,8 +31,8 @@ android {
         applicationId = "me.ilker.balance_tracker"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 10
-        versionName = "1.0.9"
+        versionCode = 11
+        versionName = "1.0.10"
     }
     packaging {
         resources {
@@ -40,10 +40,6 @@ android {
         }
     }
     buildTypes {
-        getByName("debug") {
-            defaultConfig.applicationId = defaultConfig.applicationId.plus(".debug")
-        }
-
         getByName("release") {
             isMinifyEnabled = false
         }
