@@ -25,9 +25,11 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.theme.AppTheme
 import me.ilker.home.Home
+import me.ilker.home.HomeIntent
 import me.ilker.home.HomeManager
 import me.ilker.home.HomeScreen
 import me.ilker.transaction.add.AddTransactionIntent
@@ -80,8 +82,9 @@ fun CommonApp() {
 
                     HomeScreen(
                         state = state,
+                        setSelectedYearMonth = { value -> manager.sendIntent(HomeIntent.SetSelectedYearMonth(yearMonth = value)) },
                         add = { navController.navigate(AddTransaction) },
-                        onTransactionsClicked = { yearMonth -> navController.navigate(Transactions(yearMonth = yearMonth.toString())) },
+                        onTransactionsClicked = { navController.navigate(Transactions(yearMonth = state.value.selectedDate.yearMonth.toString())) },
                         onClick = { id -> navController.navigate(TransactionDetails(id = id)) },
                     )
                 }

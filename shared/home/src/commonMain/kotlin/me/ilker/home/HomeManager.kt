@@ -4,23 +4,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
-import kotlinx.datetime.format
-import kotlinx.datetime.format.MonthNames
-import kotlinx.datetime.format.char
 import kotlinx.datetime.yearMonth
-import me.ilker.balance_tracker.resources.Res
-import me.ilker.balance_tracker.resources.month_names
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getLocalDate
 import me.ilker.core.Manager
 import me.ilker.core.extensions.round
-import org.jetbrains.compose.resources.getStringArray
 import kotlin.coroutines.EmptyCoroutineContext
 
 class HomeManager(
@@ -30,55 +25,71 @@ class HomeManager(
 
     override fun sendIntent(intent: HomeIntent) {
         when (intent) {
-            else -> Unit
+            is HomeIntent.SetSelectedYearMonth -> handleSetSelectedYearMonth(intent.yearMonth)
+        }
+    }
+
+    private fun handleSetSelectedYearMonth(yearMonth: YearMonth) {
+        currentState.update {
+            when (it) {
+                HomeState.InitialState -> it
+                is HomeState.Loaded -> it.copy(
+                    selectedDate = LocalDate(
+                        year = yearMonth.year,
+                        month = yearMonth.month,
+                        day = 1
+                    )
+                )
+            }
         }
     }
 
     private val currentState: MutableStateFlow<HomeState> = MutableStateFlow(HomeState.InitialState)
 
-    override val state: StateFlow<HomeState> = sdk.transactions.map { transactions ->
-        val transactionsByYearMonth = transactions
-            .groupBy { transaction -> transaction.getLocalDate().yearMonth }
-            .asIterable()
-            .sortedBy { it.key }
-            .associate { it.key to it.value.sortedBy { transaction -> transaction.dateTime } }
+    init {
+        scope.launch {
+            sdk.transactions.collect { transactions ->
+                val transactionsByYearMonth = transactions
+                    .groupBy { transaction -> transaction.getLocalDate().yearMonth }
+                    .asIterable()
+                    .sortedBy { it.key }
+                    .associate { it.key to it.value.sortedBy { transaction -> transaction.dateTime } }
 
-        val balances = transactionsByYearMonth.map { transactionByYearMonth ->
-            val (expense, income) = with(transactionByYearMonth.value.partition { it.type == TransactionType.Expense }) {
-                this.first.sumOf { transaction ->
-                    transaction.amount
-                }.round(2) to
-                        this.second.sumOf { transaction ->
+                val balances = transactionsByYearMonth.map { transactionByYearMonth ->
+                    val (expense, income) = with(transactionByYearMonth.value.partition { it.type == TransactionType.Expense }) {
+                        this.first.sumOf { transaction ->
                             transaction.amount
-                        }.round(2)
-            }
-            val balance = (income - expense).round(2)
-            val monthNames = getStringArray(Res.array.month_names)
-
-            HomeState.Loaded.BalanceUiModel(
-                selectedDate = transactionByYearMonth.key.format(
-                    YearMonth.Format {
-                        monthName(names = MonthNames(monthNames))
-                        char(' ')
-                        year()
+                        }.round(2) to
+                                this.second.sumOf { transaction ->
+                                    transaction.amount
+                                }.round(2)
                     }
-                ),
-                balance = balance,
-                expense = expense,
-                income = income,
-                transactions = transactionByYearMonth.value.sortedByDescending { it.dateTime }.take(3)
-            )
-        }
+                    val balance = (income - expense).round(2)
 
-        HomeState.Loaded(
-            selectedDate = currentState.value.selectedDate,
-            balances = balances
-        )
-    }.stateIn(
-        scope = scope,
-        started = SharingStarted.Lazily,
-        initialValue = currentState.value
-    )
+                    HomeState.Loaded.BalanceUiModel(
+                        selectedDate = LocalDate(
+                            year = transactionByYearMonth.key.year,
+                            month = transactionByYearMonth.key.month,
+                            day = 1
+                        ),
+                        balance = balance,
+                        expense = expense,
+                        income = income,
+                        transactions = transactionByYearMonth.value.sortedByDescending { it.dateTime }.take(3)
+                    )
+                }
+
+                currentState.update {
+                    HomeState.Loaded(
+                        selectedDate = currentState.value.selectedDate,
+                        balances = balances
+                    )
+                }
+            }
+        }
+    }
+
+    override val state: StateFlow<HomeState> = currentState.asStateFlow()
 
     override val sideEffect: Channel<HomeSideEffect> = Channel(capacity = 1)
 }

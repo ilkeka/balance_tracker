@@ -36,3 +36,11 @@ java {
     sourceCompatibility = JavaVersion.VERSION_24
     targetCompatibility = JavaVersion.VERSION_24
 }
+
+val distTar by tasks.getting(Tar::class) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+val distZip by tasks.getting(Zip::class) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}

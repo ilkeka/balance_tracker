@@ -1,6 +1,6 @@
 package me.ilker.balance_tracker.database
 
-import me.ilker.balancetracker.User
+import me.ilker.balance_tracker.User
 import kotlin.Throws
 
 interface ServerDB {
