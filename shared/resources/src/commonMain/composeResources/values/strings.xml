@@ -6,6 +6,7 @@
     <string name="amount_format">Decimal part should be represented with the dot. For instance: 10.42</string>
     <string name="back">Back</string>
     <string name="balance">Balance</string>
+    <string name="category">Category</string>
     <string name="date">Date</string>
     <string name="delete">Delete</string>
     <string name="delete_transaction_success_feedback">Transaction deleted successfully!</string>

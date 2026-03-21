@@ -36,6 +36,7 @@ import me.ilker.balance_tracker.resources.nothing_yet
 import me.ilker.balance_tracker.resources.start_create_transaction
 import me.ilker.balance_tracker.resources.transactions
 import me.ilker.balance_tracker.sdk.TransactionType
+import me.ilker.balance_tracker.theme.SurfaceColor
 import me.ilker.transaction.transactions.TransactionState
 import org.jetbrains.compose.resources.stringResource
 

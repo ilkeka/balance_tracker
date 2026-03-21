@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.back
+import me.ilker.balance_tracker.resources.category
 import me.ilker.balance_tracker.resources.date
 import me.ilker.balance_tracker.resources.delete
 import me.ilker.balance_tracker.resources.expense
@@ -39,7 +40,6 @@ import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.transaction_details
 import me.ilker.balance_tracker.resources.transaction_type
 import me.ilker.balance_tracker.sdk.TransactionType
-import me.ilker.balance_tracker.theme.TertiaryContainerColor
 import me.ilker.transaction.details.TransactionDetailsState
 import org.jetbrains.compose.resources.stringResource
 
@@ -88,9 +88,9 @@ internal fun TransactionDetailsLoadedView(
                     .padding(24.dp),
                 onClick = onDelete,
                 colors = ButtonColors(
-                    contentColor = TertiaryContainerColor,
+                    contentColor = MaterialTheme.colorScheme.primary,
                     containerColor = MaterialTheme.colorScheme.errorContainer,
-                    disabledContentColor = TertiaryContainerColor.copy(alpha = 0.33f),
+                    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
                     disabledContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.33f),
                 ),
                 content = {
@@ -125,14 +125,14 @@ internal fun TransactionDetailsLoadedView(
                         text = stringResource(Res.string.amount),
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.secondary
+                        color = MaterialTheme.colorScheme.primary
                     )
 
                     Text(
                         text = state.transaction.amount.toString(),
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.secondary
+                        color = MaterialTheme.colorScheme.primary
                     )
 
                     Spacer(Modifier.height(16.dp))
@@ -141,7 +141,7 @@ internal fun TransactionDetailsLoadedView(
                         text = stringResource(Res.string.transaction_type),
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.secondary
+                        color = MaterialTheme.colorScheme.primary
                     )
 
                     Text(
@@ -151,7 +151,7 @@ internal fun TransactionDetailsLoadedView(
                         },
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.secondary
+                        color = MaterialTheme.colorScheme.primary
                     )
 
                     Spacer(Modifier.height(16.dp))
@@ -160,14 +160,30 @@ internal fun TransactionDetailsLoadedView(
                         text = stringResource(Res.string.date),
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.secondary
+                        color = MaterialTheme.colorScheme.primary
                     )
 
                     Text(
                         text = state.transaction.dateTime,
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.secondary
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Text(
+                        text = stringResource(Res.string.category),
+                        fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    Text(
+                        text = state.transaction.category.value,
+                        fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                        fontWeight = FontWeight.Normal,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }

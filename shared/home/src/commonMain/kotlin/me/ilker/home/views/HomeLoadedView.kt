@@ -50,6 +50,7 @@ import me.ilker.balance_tracker.resources.latest_transactions
 import me.ilker.balance_tracker.resources.month_names
 import me.ilker.balance_tracker.resources.see_all
 import me.ilker.balance_tracker.sdk.TransactionType
+import me.ilker.balance_tracker.theme.SurfaceColor
 import me.ilker.home.HomeState
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource

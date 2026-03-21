@@ -6,6 +6,7 @@
     <string name="amount_format">La parte decimale dovrebbe essere rappresentata con il punto. Per esempio: 10.42</string>
     <string name="back">Indietro</string>
     <string name="balance">Saldo</string>
+    <string name="category">Categoria</string>
     <string name="date">Data</string>
     <string name="delete">Elimina</string>
     <string name="delete_transaction_success_feedback">Transazione eliminata correttamente!</string>
