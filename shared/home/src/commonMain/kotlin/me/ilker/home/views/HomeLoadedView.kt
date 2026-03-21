@@ -283,6 +283,7 @@ internal fun HomeLoadedView(
                 modifier = Modifier
                     .padding(paddingValues)
                     .fillMaxWidth()
+                    .clickable { add() }
                     .padding(horizontal = 12.dp)
             )
     }

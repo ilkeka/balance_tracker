@@ -133,12 +133,13 @@ fun CommonApp() {
                     AddTransactionScreen(
                         state = state,
                         sideEffects = sideEffects,
-                        onAdd = { amount, dateTime, type, description ->
+                        onAdd = { amount, dateTime, type, category, description ->
                             manager.sendIntent(
                                 AddTransactionIntent.Add(
                                     amount = amount,
                                     dateTime = dateTime,
                                     type = type,
+                                    category = category,
                                     description = description
                                 )
                             )

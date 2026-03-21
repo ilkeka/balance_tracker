@@ -1,10 +1,12 @@
 package me.ilker.balance_tracker.database.impl
 
+import app.cash.sqldelight.ColumnAdapter
 import app.cash.sqldelight.EnumColumnAdapter
 import me.ilker.balance_tracker.ServerDatabase
 import me.ilker.balance_tracker.Transactions
 import me.ilker.balance_tracker.database.DatabaseDriverFactory
 import me.ilker.balance_tracker.database.ServerDB
+import me.ilker.balance_tracker.sdk.TransactionCategory
 import kotlin.Throws
 
 internal class ServerDBImpl(
@@ -14,6 +16,16 @@ internal class ServerDBImpl(
         driver = databaseDriverFactory.createDriver(),
         TransactionsAdapter = Transactions.Adapter(
             typeAdapter = EnumColumnAdapter(),
+            categoryAdapter = object : ColumnAdapter<TransactionCategory, String> {
+                override fun decode(databaseValue: String): TransactionCategory = TransactionCategory
+                    .Predefined
+                    .entries
+                    .find { it.value == databaseValue }
+                    ?: TransactionCategory.Custom(databaseValue)
+
+                override fun encode(value: TransactionCategory): String = value.value
+
+            }
         ),
     )
 

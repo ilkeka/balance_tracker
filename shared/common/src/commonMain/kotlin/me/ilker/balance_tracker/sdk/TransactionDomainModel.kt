@@ -8,6 +8,7 @@ data class TransactionDomainModel(
     val amount: Double,
     val dateTime: String,
     val type: TransactionType,
+    val category: TransactionCategory,
     val description: String?
 )
 

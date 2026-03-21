@@ -7,6 +7,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import me.ilker.balance_tracker.sdk.TransactionCategory
 import me.ilker.transaction.add.views.AddTransactionInitialView
 import me.ilker.balance_tracker.sdk.TransactionType
 
@@ -18,6 +19,7 @@ fun AddTransactionScreen(
         amount: Double,
         dateTime: String,
         type: TransactionType,
+        category: TransactionCategory,
         description: String?
     ) -> Unit,
     onBack: () -> Unit
@@ -36,7 +38,7 @@ fun AddTransactionScreen(
     when (state.value) {
         AddTransactionState.InitialState -> AddTransactionInitialView(
             snackbarHostState = snackbarHostState,
-            onAdd = { amount, dateTime, type, description -> onAdd(amount, dateTime, type, description) },
+            onAdd = { amount, dateTime, type, category, description -> onAdd(amount, dateTime, type, category, description) },
             onBack = onBack
         )
     }

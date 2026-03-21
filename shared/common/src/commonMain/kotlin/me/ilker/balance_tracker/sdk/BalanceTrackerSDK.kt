@@ -15,10 +15,11 @@ interface BalanceTrackerSDK {
         amount: Double,
         dateTime: String,
         type: TransactionType,
+        category: TransactionCategory,
         description: String?
     ): Long
 
     suspend fun deleteTransaction(
         id: Long
-    )
+    ): Long
 }

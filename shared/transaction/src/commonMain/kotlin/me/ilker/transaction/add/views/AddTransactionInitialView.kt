@@ -66,6 +66,7 @@ import me.ilker.balance_tracker.resources.expense
 import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.new_transaction
 import me.ilker.balance_tracker.resources.transaction_type
+import me.ilker.balance_tracker.sdk.TransactionCategory
 import me.ilker.core.extensions.round
 import me.ilker.balance_tracker.sdk.TransactionType
 import org.jetbrains.compose.resources.getString
@@ -80,6 +81,7 @@ internal fun AddTransactionInitialView(
         amount: Double,
         dateTime: String,
         type: TransactionType,
+        category: TransactionCategory,
         description: String?
     ) -> Unit,
     onBack: () -> Unit
@@ -221,6 +223,7 @@ internal fun AddTransactionInitialView(
                             amount,
                             dateState.text.toString(),
                             expenseTypeState.value,
+                            TransactionCategory.Predefined.Other, //TODO
                             descriptionState.text.toString()
                         )
                     }
