@@ -27,6 +27,7 @@
     <string name="expense">Expense</string>
     <string name="expense_total">Total expense</string>
     <string name="description">Description</string>
+    <string name="description_not_found">No description found for this transaction.</string>
     <string name="income">Income</string>
     <string name="income_total">Total income</string>
     <string name="latest_transactions">Latest transactions</string>

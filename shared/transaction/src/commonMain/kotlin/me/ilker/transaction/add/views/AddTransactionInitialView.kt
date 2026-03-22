@@ -271,10 +271,10 @@ internal fun AddTransactionInitialView(
                     }
                 },
                 colors = ButtonColors(
-                    contentColor = MaterialTheme.colorScheme.secondary,
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    disabledContentColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.33f),
-                    disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.33f),
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.33f),
+                    disabledContainerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.33f),
                 ),
                 enabled = submitEnabledState,
                 content = {
@@ -448,10 +448,10 @@ internal fun AddTransactionInitialView(
                                             expandCategory = !expandCategory
                                         },
                                     colors = CardDefaults.cardColors(
-                                        contentColor = MaterialTheme.colorScheme.primary,
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-                                        disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.33f),
+                                        contentColor = MaterialTheme.colorScheme.secondary,
+                                        containerColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        disabledContentColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.33f),
+                                        disabledContainerColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.33f),
                                     )
                                 ) {
                                     Text(

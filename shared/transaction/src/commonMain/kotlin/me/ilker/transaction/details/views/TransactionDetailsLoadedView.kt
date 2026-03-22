@@ -35,6 +35,8 @@ import me.ilker.balance_tracker.resources.back
 import me.ilker.balance_tracker.resources.category
 import me.ilker.balance_tracker.resources.date
 import me.ilker.balance_tracker.resources.delete
+import me.ilker.balance_tracker.resources.description
+import me.ilker.balance_tracker.resources.description_not_found
 import me.ilker.balance_tracker.resources.expense
 import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.transaction_details
@@ -89,9 +91,9 @@ internal fun TransactionDetailsLoadedView(
                     .padding(24.dp),
                 onClick = onDelete,
                 colors = ButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
                     containerColor = MaterialTheme.colorScheme.errorContainer,
-                    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
+                    disabledContentColor = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.33f),
                     disabledContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.33f),
                 ),
                 content = {
@@ -114,7 +116,7 @@ internal fun TransactionDetailsLoadedView(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                         .background(
-                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            color = MaterialTheme.colorScheme.tertiary,
                             shape = RoundedCornerShape(8.dp)
                         )
                         .padding(
@@ -126,14 +128,14 @@ internal fun TransactionDetailsLoadedView(
                         text = stringResource(Res.string.amount),
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onTertiary
                     )
 
                     Text(
                         text = state.transaction.amount.toString(),
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onTertiary
                     )
 
                     Spacer(Modifier.height(16.dp))
@@ -142,7 +144,7 @@ internal fun TransactionDetailsLoadedView(
                         text = stringResource(Res.string.transaction_type),
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onTertiary
                     )
 
                     Text(
@@ -152,7 +154,7 @@ internal fun TransactionDetailsLoadedView(
                         },
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onTertiary
                     )
 
                     Spacer(Modifier.height(16.dp))
@@ -161,14 +163,14 @@ internal fun TransactionDetailsLoadedView(
                         text = stringResource(Res.string.date),
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onTertiary
                     )
 
                     Text(
                         text = state.transaction.dateTime,
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onTertiary
                     )
 
                     Spacer(Modifier.height(16.dp))
@@ -177,14 +179,30 @@ internal fun TransactionDetailsLoadedView(
                         text = stringResource(Res.string.category),
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onTertiary
                     )
 
                     Text(
                         text = state.transaction.category.getValueForComposableUI(),
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onTertiary
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Text(
+                        text = stringResource(Res.string.description),
+                        fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onTertiary
+                    )
+
+                    Text(
+                        text = state.transaction.description?.takeUnless { it.isBlank() } ?: stringResource(Res.string.description_not_found),
+                        fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                        fontWeight = FontWeight.Normal,
+                        color = MaterialTheme.colorScheme.onTertiary
                     )
                 }
             }

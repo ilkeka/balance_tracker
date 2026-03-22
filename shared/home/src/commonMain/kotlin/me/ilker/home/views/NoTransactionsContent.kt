@@ -28,11 +28,11 @@ internal fun NoTransactionsContent(
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            contentColor = MaterialTheme.colorScheme.primary,
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-            disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
-        ),
+            contentColor = MaterialTheme.colorScheme.secondary,
+            containerColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            disabledContentColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.33f),
+            disabledContainerColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.33f),
+        )
     ) {
         Column(
             modifier = Modifier
