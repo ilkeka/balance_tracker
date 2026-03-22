@@ -102,10 +102,10 @@ internal fun HomeLoadedView(
                     .padding(24.dp),
                 onClick = add,
                 colors = ButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
+                    contentColor = MaterialTheme.colorScheme.secondary,
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    disabledContentColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.33f),
+                    disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.33f),
                 ),
                 content = {
                     Text(stringResource(Res.string.add))

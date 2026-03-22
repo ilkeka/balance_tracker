@@ -271,10 +271,10 @@ internal fun AddTransactionInitialView(
                     }
                 },
                 colors = ButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
+                    contentColor = MaterialTheme.colorScheme.secondary,
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    disabledContentColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.33f),
+                    disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.33f),
                 ),
                 enabled = submitEnabledState,
                 content = {
@@ -449,9 +449,9 @@ internal fun AddTransactionInitialView(
                                         },
                                     colors = CardDefaults.cardColors(
                                         contentColor = MaterialTheme.colorScheme.primary,
-                                        containerColor = MaterialTheme.colorScheme.secondary,
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                         disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-                                        disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
+                                        disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.33f),
                                     )
                                 ) {
                                     Text(
