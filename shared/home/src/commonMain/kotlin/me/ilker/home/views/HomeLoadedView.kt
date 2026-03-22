@@ -101,10 +101,10 @@ internal fun HomeLoadedView(
                     .padding(24.dp),
                 onClick = add,
                 colors = ButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.33f),
+                    disabledContainerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.33f),
                 ),
                 content = {
                     Text(stringResource(Res.string.add))
@@ -134,9 +134,14 @@ internal fun HomeLoadedView(
                         )
                     ) { page ->
                         val balance = state.balances[page]
-                        val summaryColor = when {
+                        val summaryContentColor = when {
+                            balance.expense > balance.income -> MaterialTheme.colorScheme.error
+                            balance.expense < balance.income -> MaterialTheme.colorScheme.onPrimary
+                            else -> MaterialTheme.colorScheme.surfaceContainer
+                        }
+                        val summaryContainerColor = when {
                             balance.expense > balance.income -> MaterialTheme.colorScheme.errorContainer
-                            balance.expense < balance.income -> Color(0xFF34501F)
+                            balance.expense < balance.income -> MaterialTheme.colorScheme.onPrimaryContainer
                             else -> MaterialTheme.colorScheme.surfaceContainer
                         }
 
@@ -145,10 +150,10 @@ internal fun HomeLoadedView(
                                 .fillMaxWidth()
                                 .padding(horizontal = 12.dp),
                             colors = CardDefaults.cardColors(
-                                contentColor = Color(0xFFD0DBD0),
-                                containerColor = summaryColor,
-                                disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-                                disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
+                                contentColor = summaryContentColor,
+                                containerColor = summaryContainerColor,
+                                disabledContentColor = summaryContentColor.copy(alpha = 0.33f),
+                                disabledContainerColor = summaryContainerColor.copy(alpha = 0.33f),
                             ),
                         ) {
                             Column(
@@ -168,7 +173,7 @@ internal fun HomeLoadedView(
                                         }
                                     ),
                                     fontSize = TextUnit(value = 18f, type = TextUnitType.Sp),
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.Bold
                                 )
 
                                 Spacer(Modifier.height(8.dp))
@@ -176,16 +181,22 @@ internal fun HomeLoadedView(
                                 Text(
                                     modifier = Modifier.fillMaxWidth(),
                                     text = "${stringResource(Res.string.balance)}: ${balance.balance}",
+                                    fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                                    fontWeight = FontWeight.SemiBold
                                 )
 
                                 Text(
                                     modifier = Modifier.fillMaxWidth(),
                                     text = "${stringResource(Res.string.income_total)}: ${balance.income}",
+                                    fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                                    fontWeight = FontWeight.SemiBold
                                 )
 
                                 Text(
                                     modifier = Modifier.fillMaxWidth(),
                                     text = "${stringResource(Res.string.expense_total)}: ${balance.expense}",
+                                    fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                                    fontWeight = FontWeight.SemiBold
                                 )
                             }
                         }
@@ -231,6 +242,14 @@ internal fun HomeLoadedView(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         transactions.forEach { transaction ->
+                            val contentColor = when(transaction.type) {
+                                TransactionType.Expense -> MaterialTheme.colorScheme.onError
+                                TransactionType.Income -> MaterialTheme.colorScheme.onPrimary
+                            }
+                            val containerColor = when(transaction.type) {
+                                TransactionType.Expense -> MaterialTheme.colorScheme.onErrorContainer
+                                TransactionType.Income -> MaterialTheme.colorScheme.onPrimaryContainer
+                            }
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -239,13 +258,10 @@ internal fun HomeLoadedView(
                                     }
                                     .padding(horizontal = 12.dp),
                                 colors = CardDefaults.cardColors(
-                                    contentColor = MaterialTheme.colorScheme.primary,
-                                    containerColor = when (transaction.type) {
-                                        TransactionType.Expense -> MaterialTheme.colorScheme.errorContainer
-                                        TransactionType.Income -> MaterialTheme.colorScheme.tertiaryContainer
-                                    },
-                                    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-                                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
+                                    contentColor = contentColor,
+                                    containerColor = containerColor,
+                                    disabledContentColor = contentColor.copy(alpha = 0.33f),
+                                    disabledContainerColor = containerColor.copy(alpha = 0.33f),
                                 )
                             ) {
                                 Column(
@@ -259,17 +275,20 @@ internal fun HomeLoadedView(
                                     Text(
                                         modifier = Modifier.fillMaxWidth(),
                                         text = "$amountString: ${transaction.amount}",
+                                        fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                                     )
 
                                     Text(
                                         modifier = Modifier.fillMaxWidth(),
                                         text = "$dateString: ${transaction.dateTime}",
+                                        fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                                     )
 
                                     transaction.description?.takeUnless { it.isBlank() }?.let { description ->
                                         Text(
                                             modifier = Modifier.fillMaxWidth(),
                                             text = "${stringResource(Res.string.description)}: $description",
+                                            fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                                         )
                                     }
                                 }
@@ -283,6 +302,7 @@ internal fun HomeLoadedView(
                 modifier = Modifier
                     .padding(paddingValues)
                     .fillMaxWidth()
+                    .clickable { add() }
                     .padding(horizontal = 12.dp)
             )
     }

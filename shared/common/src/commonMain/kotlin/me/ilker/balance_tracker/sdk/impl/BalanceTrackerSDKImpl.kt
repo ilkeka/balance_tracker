@@ -2,12 +2,12 @@ package me.ilker.balance_tracker.sdk.impl
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
-import app.cash.sqldelight.coroutines.mapToOneOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import me.ilker.balance_tracker.database.DB
 import me.ilker.balance_tracker.database.DatabaseDriverFactory
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
+import me.ilker.balance_tracker.sdk.TransactionCategory
 import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
 
@@ -34,18 +34,18 @@ class BalanceTrackerSDKImpl(
         amount: Double,
         dateTime: String,
         type: TransactionType,
+        category: TransactionCategory,
         description: String?
     ) = database
         .addTransaction(
             amount = amount,
             dateTime = dateTime,
             type = type,
+            category = category,
             description = description
         )
 
-    override suspend fun deleteTransaction(id: Long) {
-        val result = database.deleteTransaction(
-            id = id
-        )
-    }
+    override suspend fun deleteTransaction(id: Long) = database.deleteTransaction(
+        id = id
+    )
 }

@@ -12,6 +12,7 @@ kotlin {
         implementation(projects.shared.resources)
 
         implementation(libs.androidx.activity.compose)
+        implementation(libs.google.material)
         implementation(libs.koin.compose)
         implementation(libs.jetbrains.compose.ui)
     }

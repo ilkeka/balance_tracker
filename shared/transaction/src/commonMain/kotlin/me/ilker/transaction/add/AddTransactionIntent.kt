@@ -1,5 +1,6 @@
 package me.ilker.transaction.add
 
+import me.ilker.balance_tracker.sdk.TransactionCategory
 import me.ilker.core.Intent
 import me.ilker.balance_tracker.sdk.TransactionType
 
@@ -8,6 +9,7 @@ sealed class AddTransactionIntent : Intent {
         val amount: Double,
         val dateTime: String,
         val type: TransactionType,
+        val category: TransactionCategory,
         val description: String?
     ): AddTransactionIntent()
 }

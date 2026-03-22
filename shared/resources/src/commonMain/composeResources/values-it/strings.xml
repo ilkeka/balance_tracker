@@ -6,6 +6,19 @@
     <string name="amount_format">La parte decimale dovrebbe essere rappresentata con il punto. Per esempio: 10.42</string>
     <string name="back">Indietro</string>
     <string name="balance">Saldo</string>
+    <string name="category">Categoria</string>
+    <string name="category_bill">Bolletta</string>
+    <string name="category_entertainment">Intrattenimento</string>
+    <string name="category_gift">Regalo</string>
+    <string name="category_grocery">Alimentari</string>
+    <string name="category_health">Salute</string>
+    <string name="category_other">Altro</string>
+    <string name="category_reimbursement">Rimborso</string>
+    <string name="category_salary">Stipendio</string>
+    <string name="category_shopping">Shopping</string>
+    <string name="category_subscription">Abbonamento</string>
+    <string name="category_transportation">Trasporti</string>
+    <string name="category_travel">Viaggio</string>
     <string name="date">Data</string>
     <string name="delete">Elimina</string>
     <string name="delete_transaction_success_feedback">Transazione eliminata correttamente!</string>
@@ -14,6 +27,7 @@
     <string name="expense">Uscita</string>
     <string name="expense_total">Uscite</string>
     <string name="description">Descrizione</string>
+    <string name="description_not_found">Nessuna descrizione trovata per questa transazione.</string>
     <string name="income">Entrata</string>
     <string name="income_total">Entrate</string>
     <string name="latest_transactions">Ultime transazioni</string>

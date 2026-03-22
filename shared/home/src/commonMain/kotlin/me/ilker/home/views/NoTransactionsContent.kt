@@ -19,8 +19,6 @@ import androidx.compose.ui.unit.dp
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.nothing_yet
 import me.ilker.balance_tracker.resources.start_create_transaction
-import me.ilker.balance_tracker.theme.PrimaryDarkColor
-import me.ilker.balance_tracker.theme.SecondaryDarkColor
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -30,11 +28,11 @@ internal fun NoTransactionsContent(
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            contentColor = SecondaryDarkColor,
-            containerColor = PrimaryDarkColor,
-            disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-            disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
-        ),
+            contentColor = MaterialTheme.colorScheme.secondary,
+            containerColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            disabledContentColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.33f),
+            disabledContainerColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.33f),
+        )
     ) {
         Column(
             modifier = Modifier

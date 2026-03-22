@@ -36,6 +36,7 @@ import me.ilker.balance_tracker.resources.nothing_yet
 import me.ilker.balance_tracker.resources.start_create_transaction
 import me.ilker.balance_tracker.resources.transactions
 import me.ilker.balance_tracker.sdk.TransactionType
+import me.ilker.balance_tracker.theme.SurfaceColor
 import me.ilker.transaction.transactions.TransactionState
 import org.jetbrains.compose.resources.stringResource
 
@@ -92,13 +93,10 @@ internal fun TransactionsLoadedView(
                                 }
                                 .padding(horizontal = 12.dp),
                             colors = CardDefaults.cardColors(
-                                contentColor = MaterialTheme.colorScheme.primary,
-                                containerColor = when (transaction.type) {
-                                    TransactionType.Expense -> MaterialTheme.colorScheme.errorContainer
-                                    TransactionType.Income -> MaterialTheme.colorScheme.tertiaryContainer
-                                },
-                                disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.33f),
-                                disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.33f),
+                                contentColor = MaterialTheme.colorScheme.secondary,
+                                containerColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                disabledContentColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.33f),
+                                disabledContainerColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.33f),
                             )
                         ) {
                             Column(

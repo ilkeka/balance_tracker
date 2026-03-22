@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.add_transaction_success_feedback
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
+import me.ilker.balance_tracker.sdk.TransactionCategory
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.core.Manager
 import me.ilker.transaction.add.AddTransactionIntent
@@ -30,6 +31,7 @@ class AddTransactionManager(
                 amount = intent.amount,
                 dateTime = intent.dateTime,
                 type = intent.type,
+                category = intent.category,
                 description = intent.description
             )
         }
@@ -44,6 +46,7 @@ class AddTransactionManager(
         amount: Double,
         dateTime: String,
         type: TransactionType,
+        category: TransactionCategory,
         description: String?
     ) {
         scope.launch {
@@ -52,6 +55,7 @@ class AddTransactionManager(
                     amount = amount,
                     dateTime = dateTime,
                     type = type,
+                    category = category,
                     description = description
                 )
             }
