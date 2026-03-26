@@ -27,22 +27,21 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
-import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.add
 import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.app_name
 import me.ilker.balance_tracker.resources.balance
-import me.ilker.balance_tracker.resources.date
+import me.ilker.balance_tracker.resources.category
 import me.ilker.balance_tracker.resources.description
 import me.ilker.balance_tracker.resources.expense_total
 import me.ilker.balance_tracker.resources.income_total
@@ -50,6 +49,7 @@ import me.ilker.balance_tracker.resources.latest_transactions
 import me.ilker.balance_tracker.resources.month_names
 import me.ilker.balance_tracker.resources.see_all
 import me.ilker.balance_tracker.sdk.TransactionType
+import me.ilker.balance_tracker.sdk.getValueForComposableUI
 import me.ilker.home.HomeState
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
@@ -70,8 +70,8 @@ internal fun HomeLoadedView(
 
     LaunchedEffect(balancePagerState) {
         snapshotFlow { balancePagerState.currentPage }.collect { page ->
-            state.balances.getOrNull(page)?.selectedDate?.let {
-                setSelectedYearMonth(it.yearMonth)
+            state.balances.getOrNull(page)?.yearMonth?.let {
+                setSelectedYearMonth(it)
             }
         }
     }
@@ -148,6 +148,9 @@ internal fun HomeLoadedView(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .clickable {
+                                    onTransactionsClicked()
+                                }
                                 .padding(horizontal = 12.dp),
                             colors = CardDefaults.cardColors(
                                 contentColor = summaryContentColor,
@@ -165,7 +168,7 @@ internal fun HomeLoadedView(
 
                                 Text(
                                     modifier = Modifier.fillMaxWidth(),
-                                    text = balance.selectedDate.yearMonth.format(
+                                    text = balance.yearMonth.format(
                                         YearMonth.Format {
                                             monthName(names = MonthNames(monthNames))
                                             char(' ')
@@ -235,61 +238,84 @@ internal fun HomeLoadedView(
                 }
 
                 item {
-                    val transactions = state.balances[balancePagerState.currentPage].transactions
+                    val transactionsByLocalDate = state.balances[balancePagerState.currentPage].transactions
 
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        transactions.forEach { transaction ->
-                            val contentColor = when(transaction.type) {
-                                TransactionType.Expense -> MaterialTheme.colorScheme.onError
-                                TransactionType.Income -> MaterialTheme.colorScheme.onPrimary
-                            }
-                            val containerColor = when(transaction.type) {
-                                TransactionType.Expense -> MaterialTheme.colorScheme.onErrorContainer
-                                TransactionType.Income -> MaterialTheme.colorScheme.onPrimaryContainer
-                            }
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        onClick(transaction.id)
+                        transactionsByLocalDate.forEach { transactions ->
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = transactions.key.format(
+                                    format = LocalDate.Format {
+                                        day()
+                                        char('/')
+                                        monthNumber()
+                                        char('/')
+                                        year()
                                     }
-                                    .padding(horizontal = 12.dp),
-                                colors = CardDefaults.cardColors(
-                                    contentColor = contentColor,
-                                    containerColor = containerColor,
-                                    disabledContentColor = contentColor.copy(alpha = 0.33f),
-                                    disabledContainerColor = containerColor.copy(alpha = 0.33f),
-                                )
-                            ) {
+                                ),
+                                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                            )
+
+                            transactions.value.forEach { transaction ->
+                                val contentColor = when(transaction.type) {
+                                    TransactionType.Expense -> MaterialTheme.colorScheme.onError
+                                    TransactionType.Income -> MaterialTheme.colorScheme.onPrimary
+                                }
+                                val containerColor = when(transaction.type) {
+                                    TransactionType.Expense -> MaterialTheme.colorScheme.onErrorContainer
+                                    TransactionType.Income -> MaterialTheme.colorScheme.onPrimaryContainer
+                                }
+
                                 Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    val amountString = stringResource(Res.string.amount)
-                                    val dateString = stringResource(Res.string.date)
-
-                                    Text(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        text = "$amountString: ${transaction.amount}",
-                                        fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
-                                    )
-
-                                    Text(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        text = "$dateString: ${transaction.dateTime}",
-                                        fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
-                                    )
-
-                                    transaction.description?.takeUnless { it.isBlank() }?.let { description ->
-                                        Text(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            text = "${stringResource(Res.string.description)}: $description",
-                                            fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                onClick(transaction.id)
+                                            },
+                                        colors = CardDefaults.cardColors(
+                                            contentColor = contentColor,
+                                            containerColor = containerColor,
+                                            disabledContentColor = contentColor.copy(alpha = 0.33f),
+                                            disabledContainerColor = containerColor.copy(alpha = 0.33f),
                                         )
+                                    ) {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+                                        ) {
+                                            val amountString = stringResource(Res.string.amount)
+                                            val categoryString = stringResource(Res.string.category)
+
+                                            Text(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                text = "$amountString: ${transaction.amount}",
+                                                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                                            )
+
+                                            Text(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                text = "$categoryString: ${transaction.category.getValueForComposableUI()}",
+                                                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                                            )
+
+                                            transaction.description?.takeUnless { it.isBlank() }?.let { description ->
+                                                Text(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    text = "${stringResource(Res.string.description)}: $description",
+                                                    fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
