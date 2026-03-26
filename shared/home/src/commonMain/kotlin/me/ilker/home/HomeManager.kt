@@ -65,17 +65,16 @@ class HomeManager(
                                 }.round(2)
                     }
                     val balance = (income - expense).round(2)
+                    val transactionsGropedByDateTime = mapOf(
+                        transactionByYearMonth.key to transactionByYearMonth.value.take(3)
+                    )
 
                     HomeState.Loaded.BalanceUiModel(
-                        selectedDate = LocalDate(
-                            year = transactionByYearMonth.key.year,
-                            month = transactionByYearMonth.key.month,
-                            day = 1
-                        ),
+                        yearMonth = transactionByYearMonth.key,
                         balance = balance,
                         expense = expense,
                         income = income,
-                        transactions = transactionByYearMonth.value.sortedByDescending { it.dateTime }.take(3)
+                        transactions = transactionsGropedByDateTime
                     )
                 }
 
