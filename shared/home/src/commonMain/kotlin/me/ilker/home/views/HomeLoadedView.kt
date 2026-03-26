@@ -235,7 +235,7 @@ internal fun HomeLoadedView(
                 }
 
                 item {
-                    val transactions = state.balances[balancePagerState.currentPage].transactions
+                    val transactionsByLocalDate = state.balances[balancePagerState.currentPage].transactions
 
                     Column(
                         modifier = Modifier
@@ -243,8 +243,14 @@ internal fun HomeLoadedView(
                             .padding(horizontal = 12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        transactions.values.forEach { transactions ->
-                            transactions.forEach { transaction ->
+                        transactionsByLocalDate.forEach { transactions ->
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = transactions.key.toString(),
+                                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                            )
+
+                            transactions.value.forEach { transaction ->
                                 val contentColor = when(transaction.type) {
                                     TransactionType.Expense -> MaterialTheme.colorScheme.onError
                                     TransactionType.Income -> MaterialTheme.colorScheme.onPrimary
@@ -258,12 +264,6 @@ internal fun HomeLoadedView(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Text(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        text = transaction.dateTime,
-                                        fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
-                                    )
-
                                     Card(
                                         modifier = Modifier
                                             .fillMaxWidth()

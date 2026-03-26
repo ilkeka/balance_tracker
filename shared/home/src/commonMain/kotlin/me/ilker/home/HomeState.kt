@@ -26,7 +26,7 @@ sealed class HomeState(
             val balance: Double,
             val expense: Double,
             val income: Double,
-            val transactions: Map<YearMonth, List<TransactionDomainModel>>
+            val transactions: Map<LocalDate, List<TransactionDomainModel>>
         )
     }
 }
