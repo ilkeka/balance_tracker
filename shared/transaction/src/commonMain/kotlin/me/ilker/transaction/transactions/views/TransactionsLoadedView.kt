@@ -26,6 +26,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.format
+import kotlinx.datetime.format.char
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.back
@@ -93,7 +96,15 @@ internal fun TransactionsLoadedView(
                             ) {
                                 Text(
                                     modifier = Modifier.fillMaxWidth(),
-                                    text = transactionsByLocalDate.key.toString(),
+                                    text = transactionsByLocalDate.key.format(
+                                        format = LocalDate.Format {
+                                            day()
+                                            char('/')
+                                            monthNumber()
+                                            char('/')
+                                            year()
+                                        }
+                                    ),
                                     fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                                 )
 
