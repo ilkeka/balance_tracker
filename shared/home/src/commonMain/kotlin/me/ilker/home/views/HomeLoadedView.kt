@@ -40,6 +40,7 @@ import me.ilker.balance_tracker.resources.add
 import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.app_name
 import me.ilker.balance_tracker.resources.balance
+import me.ilker.balance_tracker.resources.category
 import me.ilker.balance_tracker.resources.description
 import me.ilker.balance_tracker.resources.expense_total
 import me.ilker.balance_tracker.resources.income_total
@@ -47,6 +48,7 @@ import me.ilker.balance_tracker.resources.latest_transactions
 import me.ilker.balance_tracker.resources.month_names
 import me.ilker.balance_tracker.resources.see_all
 import me.ilker.balance_tracker.sdk.TransactionType
+import me.ilker.balance_tracker.sdk.getValueForComposableUI
 import me.ilker.home.HomeState
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
@@ -283,10 +285,17 @@ internal fun HomeLoadedView(
                                                 .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
                                         ) {
                                             val amountString = stringResource(Res.string.amount)
+                                            val categoryString = stringResource(Res.string.category)
 
                                             Text(
                                                 modifier = Modifier.fillMaxWidth(),
                                                 text = "$amountString: ${transaction.amount}",
+                                                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                                            )
+
+                                            Text(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                text = "$categoryString: ${transaction.category.getValueForComposableUI()}",
                                                 fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                                             )
 

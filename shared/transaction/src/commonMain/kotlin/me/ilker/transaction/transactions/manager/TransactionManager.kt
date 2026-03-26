@@ -34,6 +34,7 @@ class TransactionManager(
             val transactionsSorted = transactions
                 .filter { transaction -> transaction.getLocalDate().yearMonth.toString() == yearMonth }
                 .sortedByDescending { it.dateTime }
+                .groupBy { transaction -> transaction.getLocalDate() }
 
             TransactionState.Loaded(
                 balance = run {

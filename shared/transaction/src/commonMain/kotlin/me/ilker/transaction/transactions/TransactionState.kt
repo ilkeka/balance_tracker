@@ -1,5 +1,6 @@
 package me.ilker.transaction.transactions
 
+import kotlinx.datetime.LocalDate
 import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.core.State
 
@@ -8,7 +9,7 @@ sealed class TransactionState : State {
 
     data class Loaded(
         val balance: BalanceUiModel?,
-        val transactions: List<TransactionDomainModel>
+        val transactions: Map<LocalDate, List<TransactionDomainModel>>
     ) : TransactionState() {
         data class BalanceUiModel(
             val balance: Double,
