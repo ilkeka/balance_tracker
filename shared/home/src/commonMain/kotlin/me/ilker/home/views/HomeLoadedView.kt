@@ -50,9 +50,11 @@ import me.ilker.balance_tracker.resources.month_names
 import me.ilker.balance_tracker.resources.see_all
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getValueForComposableUI
+import me.ilker.core.extensions.hasDecimals
 import me.ilker.home.HomeState
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.roundToInt
 
 @ExperimentalMaterial3Api
 @Composable
@@ -183,21 +185,39 @@ internal fun HomeLoadedView(
 
                                 Text(
                                     modifier = Modifier.fillMaxWidth(),
-                                    text = "${stringResource(Res.string.balance)}: ${balance.balance}",
+                                    text = with(balance.balance) {
+                                        if (this.hasDecimals()) {
+                                            "${stringResource(Res.string.balance)}: ${balance.balance}"
+                                        } else {
+                                            "${stringResource(Res.string.balance)}: ${balance.balance.roundToInt()}"
+                                        }
+                                    },
                                     fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                                     fontWeight = FontWeight.SemiBold
                                 )
 
                                 Text(
                                     modifier = Modifier.fillMaxWidth(),
-                                    text = "${stringResource(Res.string.income_total)}: ${balance.income}",
+                                    text = with(balance.income) {
+                                        if (this.hasDecimals()) {
+                                            "${stringResource(Res.string.income_total)}: ${balance.income}"
+                                        } else {
+                                            "${stringResource(Res.string.income_total)}: ${balance.income.roundToInt()}"
+                                        }
+                                    },
                                     fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                                     fontWeight = FontWeight.SemiBold
                                 )
 
                                 Text(
                                     modifier = Modifier.fillMaxWidth(),
-                                    text = "${stringResource(Res.string.expense_total)}: ${balance.expense}",
+                                    text = with(balance.expense) {
+                                        if (this.hasDecimals()) {
+                                            "${stringResource(Res.string.expense_total)}: ${balance.expense}"
+                                        } else {
+                                            "${stringResource(Res.string.expense_total)}: ${balance.expense.roundToInt()}"
+                                        }
+                                    },
                                     fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                                     fontWeight = FontWeight.SemiBold
                                 )

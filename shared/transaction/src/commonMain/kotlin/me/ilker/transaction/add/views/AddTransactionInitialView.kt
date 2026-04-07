@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -35,7 +34,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -448,10 +446,10 @@ internal fun AddTransactionInitialView(
                                             expandCategory = !expandCategory
                                         },
                                     colors = CardDefaults.cardColors(
-                                        contentColor = MaterialTheme.colorScheme.secondary,
-                                        containerColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        disabledContentColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.33f),
-                                        disabledContainerColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.33f),
+                                        contentColor = MaterialTheme.colorScheme.tertiary,
+                                        containerColor = MaterialTheme.colorScheme.onTertiary,
+                                        disabledContentColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.33f),
+                                        disabledContainerColor = MaterialTheme.colorScheme.onTertiary.copy(alpha = 0.33f),
                                     )
                                 ) {
                                     Text(
