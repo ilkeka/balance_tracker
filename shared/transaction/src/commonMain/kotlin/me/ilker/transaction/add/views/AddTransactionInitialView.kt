@@ -448,10 +448,10 @@ internal fun AddTransactionInitialView(
                                             expandCategory = !expandCategory
                                         },
                                     colors = CardDefaults.cardColors(
-                                        contentColor = MaterialTheme.colorScheme.secondary,
-                                        containerColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        disabledContentColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.33f),
-                                        disabledContainerColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.33f),
+                                        contentColor = MaterialTheme.colorScheme.tertiary,
+                                        containerColor = MaterialTheme.colorScheme.onTertiary,
+                                        disabledContentColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.33f),
+                                        disabledContainerColor = MaterialTheme.colorScheme.onTertiary.copy(alpha = 0.33f),
                                     )
                                 ) {
                                     Text(
