@@ -67,7 +67,7 @@ class HomeManager(
                     val balance = (income - expense).round(2)
                     val transactionsGropedByDateTime = transactionByYearMonth
                         .value
-                        .sortedByDescending { it.dateTime }
+                        .sortedByDescending { it.id }
                         .take(3)
                         .groupBy { transaction -> transaction.getLocalDate() }
 
