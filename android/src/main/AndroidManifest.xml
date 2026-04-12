@@ -3,10 +3,9 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_app"
+        android:icon="@mipmap/ic_launcher"
         android:label="Balance Tracker"
         android:name="me.ilker.balance_tracker.MainApplication"
-        android:roundIcon="@drawable/ic_app"
         android:supportsRtl="true"
         android:theme="@style/Theme.Material3Expressive.Dark.NoActionBar">
         <activity

@@ -43,6 +43,7 @@ import me.ilker.balance_tracker.resources.transaction_details
 import me.ilker.balance_tracker.resources.transaction_type
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getValueForComposableUI
+import me.ilker.core.extensions.toHumanReadableValue
 import me.ilker.transaction.details.TransactionDetailsState
 import org.jetbrains.compose.resources.stringResource
 
@@ -132,7 +133,7 @@ internal fun TransactionDetailsLoadedView(
                     )
 
                     Text(
-                        text = state.transaction.amount.toString(),
+                        text = state.transaction.amount.toHumanReadableValue(),
                         fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                         fontWeight = FontWeight.Normal,
                         color = MaterialTheme.colorScheme.onTertiary

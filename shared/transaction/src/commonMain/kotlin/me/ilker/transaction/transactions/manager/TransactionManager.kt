@@ -33,7 +33,7 @@ class TransactionManager(
         .map { transactions ->
             val transactionsSorted = transactions
                 .filter { transaction -> transaction.getLocalDate().yearMonth.toString() == yearMonth }
-                .sortedByDescending { it.dateTime }
+                .sortedByDescending { it.id }
                 .groupBy { transaction -> transaction.getLocalDate() }
 
             TransactionState.Loaded(
