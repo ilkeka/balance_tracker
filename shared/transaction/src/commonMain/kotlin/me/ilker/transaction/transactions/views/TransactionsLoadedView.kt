@@ -37,8 +37,10 @@ import me.ilker.balance_tracker.resources.description
 import me.ilker.balance_tracker.resources.nothing_yet
 import me.ilker.balance_tracker.resources.start_create_transaction
 import me.ilker.balance_tracker.resources.transactions
+import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getValueForComposableUI
+import me.ilker.core.extensions.toHumanReadableValue
 import me.ilker.transaction.transactions.TransactionState
 import org.jetbrains.compose.resources.stringResource
 
@@ -109,57 +111,10 @@ internal fun TransactionsLoadedView(
                                 )
 
                                 transactionsByLocalDate.value.forEach { transaction ->
-                                    val contentColor = when (transaction.type) {
-                                        TransactionType.Expense -> MaterialTheme.colorScheme.onError
-                                        TransactionType.Income -> MaterialTheme.colorScheme.onPrimary
-                                    }
-                                    val containerColor = when (transaction.type) {
-                                        TransactionType.Expense -> MaterialTheme.colorScheme.onErrorContainer
-                                        TransactionType.Income -> MaterialTheme.colorScheme.onPrimaryContainer
-                                    }
-
-                                    Card(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                onClick(transaction.id)
-                                            },
-                                        colors = CardDefaults.cardColors(
-                                            contentColor = contentColor,
-                                            containerColor = containerColor,
-                                            disabledContentColor = contentColor.copy(alpha = 0.33f),
-                                            disabledContainerColor = containerColor.copy(alpha = 0.33f),
-                                        )
-                                    ) {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
-                                        ) {
-                                            val amountString = stringResource(Res.string.amount)
-                                            val categoryString = stringResource(Res.string.category)
-
-                                            Text(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                text = "$amountString: ${transaction.amount}",
-                                                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
-                                            )
-
-                                            Text(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                text = "$categoryString: ${transaction.category.getValueForComposableUI()}",
-                                                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
-                                            )
-
-                                            transaction.description?.takeUnless { it.isBlank() }?.let { description ->
-                                                Text(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    text = "${stringResource(Res.string.description)}: $description",
-                                                    fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
-                                                )
-                                            }
-                                        }
-                                    }
+                                    Transaction(
+                                        transaction = transaction,
+                                        onClick = onClick
+                                    )
                                 }
                             }
                         }
@@ -190,5 +145,60 @@ internal fun TransactionsLoadedView(
                     )
                 }
             }
+    }
+}
+
+@Composable
+fun Transaction(transaction: TransactionDomainModel, onClick: (Long) -> Unit) {
+    val contentColor = when (transaction.type) {
+        TransactionType.Expense -> MaterialTheme.colorScheme.onError
+        TransactionType.Income -> MaterialTheme.colorScheme.onPrimary
+    }
+    val containerColor = when (transaction.type) {
+        TransactionType.Expense -> MaterialTheme.colorScheme.onErrorContainer
+        TransactionType.Income -> MaterialTheme.colorScheme.onPrimaryContainer
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                onClick(transaction.id)
+            },
+        colors = CardDefaults.cardColors(
+            contentColor = contentColor,
+            containerColor = containerColor,
+            disabledContentColor = contentColor.copy(alpha = 0.33f),
+            disabledContainerColor = containerColor.copy(alpha = 0.33f),
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+        ) {
+            val amountString = stringResource(Res.string.amount)
+            val categoryString = stringResource(Res.string.category)
+
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = "$amountString: ${transaction.amount.toHumanReadableValue()}",
+                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+            )
+
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = "$categoryString: ${transaction.category.getValueForComposableUI()}",
+                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+            )
+
+            transaction.description?.takeUnless { it.isBlank() }?.let { description ->
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "${stringResource(Res.string.description)}: $description",
+                    fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                )
+            }
+        }
     }
 }
