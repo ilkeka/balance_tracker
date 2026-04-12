@@ -48,13 +48,13 @@ import me.ilker.balance_tracker.resources.income_total
 import me.ilker.balance_tracker.resources.latest_transactions
 import me.ilker.balance_tracker.resources.month_names
 import me.ilker.balance_tracker.resources.see_all
+import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getValueForComposableUI
-import me.ilker.core.extensions.hasDecimals
+import me.ilker.core.extensions.toHumanReadableValue
 import me.ilker.home.HomeState
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.roundToInt
 
 @ExperimentalMaterial3Api
 @Composable
@@ -186,11 +186,7 @@ internal fun HomeLoadedView(
                                 Text(
                                     modifier = Modifier.fillMaxWidth(),
                                     text = with(balance.balance) {
-                                        if (this.hasDecimals()) {
-                                            "${stringResource(Res.string.balance)}: ${balance.balance}"
-                                        } else {
-                                            "${stringResource(Res.string.balance)}: ${balance.balance.roundToInt()}"
-                                        }
+                                        "${stringResource(Res.string.balance)}: ${this.toHumanReadableValue()}"
                                     },
                                     fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                                     fontWeight = FontWeight.SemiBold
@@ -199,11 +195,7 @@ internal fun HomeLoadedView(
                                 Text(
                                     modifier = Modifier.fillMaxWidth(),
                                     text = with(balance.income) {
-                                        if (this.hasDecimals()) {
-                                            "${stringResource(Res.string.income_total)}: ${balance.income}"
-                                        } else {
-                                            "${stringResource(Res.string.income_total)}: ${balance.income.roundToInt()}"
-                                        }
+                                        "${stringResource(Res.string.income_total)}: ${this.toHumanReadableValue()}"
                                     },
                                     fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                                     fontWeight = FontWeight.SemiBold
@@ -212,11 +204,7 @@ internal fun HomeLoadedView(
                                 Text(
                                     modifier = Modifier.fillMaxWidth(),
                                     text = with(balance.expense) {
-                                        if (this.hasDecimals()) {
-                                            "${stringResource(Res.string.expense_total)}: ${balance.expense}"
-                                        } else {
-                                            "${stringResource(Res.string.expense_total)}: ${balance.expense.roundToInt()}"
-                                        }
+                                        "${stringResource(Res.string.expense_total)}: ${this.toHumanReadableValue()}"
                                     },
                                     fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
                                     fontWeight = FontWeight.SemiBold
@@ -282,61 +270,14 @@ internal fun HomeLoadedView(
                             )
 
                             transactions.value.forEach { transaction ->
-                                val contentColor = when(transaction.type) {
-                                    TransactionType.Expense -> MaterialTheme.colorScheme.onError
-                                    TransactionType.Income -> MaterialTheme.colorScheme.onPrimary
-                                }
-                                val containerColor = when(transaction.type) {
-                                    TransactionType.Expense -> MaterialTheme.colorScheme.onErrorContainer
-                                    TransactionType.Income -> MaterialTheme.colorScheme.onPrimaryContainer
-                                }
-
                                 Column(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Card(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                onClick(transaction.id)
-                                            },
-                                        colors = CardDefaults.cardColors(
-                                            contentColor = contentColor,
-                                            containerColor = containerColor,
-                                            disabledContentColor = contentColor.copy(alpha = 0.33f),
-                                            disabledContainerColor = containerColor.copy(alpha = 0.33f),
-                                        )
-                                    ) {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
-                                        ) {
-                                            val amountString = stringResource(Res.string.amount)
-                                            val categoryString = stringResource(Res.string.category)
-
-                                            Text(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                text = "$amountString: ${transaction.amount}",
-                                                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
-                                            )
-
-                                            Text(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                text = "$categoryString: ${transaction.category.getValueForComposableUI()}",
-                                                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
-                                            )
-
-                                            transaction.description?.takeUnless { it.isBlank() }?.let { description ->
-                                                Text(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    text = "${stringResource(Res.string.description)}: $description",
-                                                    fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
-                                                )
-                                            }
-                                        }
-                                    }
+                                    Transaction(
+                                        transaction = transaction,
+                                        onClick = onClick
+                                    )
                                 }
                             }
                         }
@@ -351,5 +292,63 @@ internal fun HomeLoadedView(
                     .clickable { add() }
                     .padding(horizontal = 12.dp)
             )
+    }
+}
+
+@Composable
+private fun Transaction(
+    transaction: TransactionDomainModel,
+    onClick: (Long) -> Unit
+) {
+    val contentColor = when(transaction.type) {
+        TransactionType.Expense -> MaterialTheme.colorScheme.onError
+        TransactionType.Income -> MaterialTheme.colorScheme.onPrimary
+    }
+    val containerColor = when(transaction.type) {
+        TransactionType.Expense -> MaterialTheme.colorScheme.onErrorContainer
+        TransactionType.Income -> MaterialTheme.colorScheme.onPrimaryContainer
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                onClick(transaction.id)
+            },
+        colors = CardDefaults.cardColors(
+            contentColor = contentColor,
+            containerColor = containerColor,
+            disabledContentColor = contentColor.copy(alpha = 0.33f),
+            disabledContainerColor = containerColor.copy(alpha = 0.33f),
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
+        ) {
+            val amountString = stringResource(Res.string.amount)
+            val categoryString = stringResource(Res.string.category)
+
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = "$amountString: ${transaction.amount.toHumanReadableValue()}",
+                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+            )
+
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = "$categoryString: ${transaction.category.getValueForComposableUI()}",
+                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+            )
+
+            transaction.description?.takeUnless { it.isBlank() }?.let { description ->
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "${stringResource(Res.string.description)}: $description",
+                    fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                )
+            }
+        }
     }
 }
