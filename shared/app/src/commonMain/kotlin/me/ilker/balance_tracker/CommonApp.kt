@@ -39,13 +39,20 @@ import me.ilker.transaction.add.AddTransactionState
 import me.ilker.transaction.add.manager.AddTransactionManager
 import me.ilker.transaction.add.navigation.AddTransaction
 import me.ilker.transaction.add.navigation.AddTransactionNavigationEventInfo
-import me.ilker.transaction.details.TransactionDetails
+import me.ilker.transaction.details.navigation.TransactionDetails
 import me.ilker.transaction.details.TransactionDetailsIntent
 import me.ilker.transaction.details.TransactionDetailsScreen
 import me.ilker.transaction.details.TransactionDetailsSideEffect
 import me.ilker.transaction.details.TransactionDetailsState
 import me.ilker.transaction.details.manager.TransactionDetailsManager
 import me.ilker.transaction.details.navigation.TransactionDetailsNavigationEventInfo
+import me.ilker.transaction.edit.EditTransaction
+import me.ilker.transaction.edit.EditTransactionIntent
+import me.ilker.transaction.edit.EditTransactionNavigationEventInfo
+import me.ilker.transaction.edit.EditTransactionScreen
+import me.ilker.transaction.edit.EditTransactionSideEffect
+import me.ilker.transaction.edit.EditTransactionState
+import me.ilker.transaction.edit.manager.EditTransactionManager
 import me.ilker.transaction.transactions.TransactionState
 import me.ilker.transaction.transactions.TransactionsScreen
 import me.ilker.transaction.transactions.manager.TransactionManager
@@ -171,7 +178,37 @@ fun CommonApp() {
                     TransactionDetailsScreen(
                         state = state,
                         sideEffects = sideEffects,
+                        onEdit = { id -> navController.navigate(EditTransaction(id = id)) },
+                        onEditClicked = { id -> manager.sendIntent(TransactionDetailsIntent.EditTransaction(id = id)) },
                         onDelete = { manager.sendIntent(TransactionDetailsIntent.DeleteTransaction) },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<EditTransaction> { navBackStackEntry ->
+                    val route = navBackStackEntry.toRoute<EditTransaction>()
+                    val manager = remember {
+                        EditTransactionManager(
+                            id = route.id,
+                            sdk = sdk
+                        )
+                    }
+                    val state: State<EditTransactionState> = manager.state.collectAsStateWithLifecycle()
+                    val sideEffects: Flow<EditTransactionSideEffect> = manager.sideEffect.receiveAsFlow()
+                    val navEventState = rememberNavigationEventState(
+                        currentInfo = EditTransactionNavigationEventInfo(route = route)
+                    )
+
+                    NavigationBackHandler(
+                        state = navEventState,
+                        isBackEnabled = true,
+                        onBackCompleted = { navController.popBackStack() }
+                    )
+
+                    EditTransactionScreen(
+                        state = state,
+                        sideEffects = sideEffects,
+                        onDelete = { manager.sendIntent(EditTransactionIntent.DeleteTransaction) },
                         onBack = { navController.popBackStack() }
                     )
                 }

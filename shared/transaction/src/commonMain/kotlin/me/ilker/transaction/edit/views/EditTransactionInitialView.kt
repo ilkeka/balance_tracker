@@ -1,4 +1,4 @@
-package me.ilker.transaction.details.views
+package me.ilker.transaction.edit.views
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,7 +27,7 @@ import me.ilker.balance_tracker.resources.transaction_details
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal fun TransactionDetailsInitialView(
+internal fun EditTransactionInitialView(
     onBack: () -> Unit
 ) {
     Scaffold(

@@ -1,4 +1,4 @@
-package me.ilker.transaction.details
+package me.ilker.transaction.details.navigation
 
 import kotlinx.serialization.Serializable
 import me.ilker.core.Route

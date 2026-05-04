@@ -8,4 +8,16 @@ sealed interface TransactionDetailsSideEffect: SideEffect {
     ) : TransactionDetailsSideEffect
 
     data object Back : TransactionDetailsSideEffect
+
+    data class Edit(
+        val id: Long
+    ) : TransactionDetailsSideEffect
+
+    data class ShowError(
+        val code: ErrorCode
+    ) : TransactionDetailsSideEffect {
+        enum class ErrorCode(open val code: Int) {
+            NOT_FOUND(90001)
+        }
+    }
 }
