@@ -208,7 +208,17 @@ fun CommonApp() {
                     EditTransactionScreen(
                         state = state,
                         sideEffects = sideEffects,
-                        onDelete = { manager.sendIntent(EditTransactionIntent.DeleteTransaction) },
+                        onEdit = { amount, dateTime, type, category, description ->
+                            manager.sendIntent(
+                                EditTransactionIntent.Edit(
+                                    amount = amount,
+                                    dateTime = dateTime,
+                                    type = type,
+                                    category = category,
+                                    description = description
+                                )
+                            )
+                        },
                         onBack = { navController.popBackStack() }
                     )
                 }

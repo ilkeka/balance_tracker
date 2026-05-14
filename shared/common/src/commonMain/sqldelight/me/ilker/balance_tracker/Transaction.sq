@@ -14,6 +14,11 @@ insertTransaction:
 INSERT INTO Transactions(amount, dateTime, type, category, description)
 VALUES(?,?,?, ?,?);
 
+editTransaction:
+UPDATE Transactions
+SET amount = :amount, dateTime = :dateTime, type = :type, category = :category, description = :description
+WHERE id = :id;
+
 getTransaction:
 SELECT * FROM Transactions WHERE id = ?;
 

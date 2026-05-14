@@ -11,13 +11,17 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.delete_transaction_success_feedback
+import me.ilker.balance_tracker.resources.edit_transaction_success_feedback
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
+import me.ilker.balance_tracker.sdk.TransactionCategory
+import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.core.Manager
 import me.ilker.transaction.edit.EditTransactionIntent
 import me.ilker.transaction.edit.EditTransactionSideEffect
 import me.ilker.transaction.edit.EditTransactionState
 import org.jetbrains.compose.resources.getString
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class EditTransactionManager(
@@ -43,6 +47,13 @@ class EditTransactionManager(
     override fun sendIntent(intent: EditTransactionIntent) {
         when (intent) {
             EditTransactionIntent.DeleteTransaction -> deleteTransaction()
+            is EditTransactionIntent.Edit -> editTransaction(
+                amount = intent.amount,
+                dateTime = intent.dateTime,
+                type = intent.type,
+                category = intent.category,
+                description = intent.description
+            )
         }
     }
 
@@ -61,6 +72,33 @@ class EditTransactionManager(
             )
             delay(1.seconds)
             sideEffect.trySend(EditTransactionSideEffect.Back)
+        }
+    }
+
+    private fun editTransaction(
+        amount: Double,
+        dateTime: String,
+        type: TransactionType,
+        category: TransactionCategory,
+        description: String?
+    ) {
+        scope.launch {
+            val result = runCatching {
+                sdk.editTransaction(
+                    id = id,
+                    amount = amount,
+                    dateTime = dateTime,
+                    type = type,
+                    category = category,
+                    description = description
+                )
+            }
+
+            result.getOrNull()?.let {
+                sideEffect.trySend(EditTransactionSideEffect.Feedback(getString(Res.string.edit_transaction_success_feedback)))
+                delay(500.milliseconds)
+                sideEffect.trySend(EditTransactionSideEffect.Back)
+            }
         }
     }
 }

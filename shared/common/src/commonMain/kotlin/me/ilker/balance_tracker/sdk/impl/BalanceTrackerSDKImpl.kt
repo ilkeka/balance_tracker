@@ -45,6 +45,23 @@ class BalanceTrackerSDKImpl(
             description = description
         )
 
+    override suspend fun editTransaction(
+        id: Long,
+        amount: Double,
+        dateTime: String,
+        type: TransactionType,
+        category: TransactionCategory,
+        description: String?
+    ) = database
+        .editTransaction(
+            id = id,
+            amount = amount,
+            dateTime = dateTime,
+            type = type,
+            category = category,
+            description = description
+        )
+
     override suspend fun deleteTransaction(id: Long) = database.deleteTransaction(
         id = id
     )

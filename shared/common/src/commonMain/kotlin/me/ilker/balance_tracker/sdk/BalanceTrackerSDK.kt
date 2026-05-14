@@ -19,6 +19,16 @@ interface BalanceTrackerSDK {
         description: String?
     ): Long
 
+    @Throws(Exception::class)
+    suspend fun editTransaction(
+        id: Long,
+        amount: Double,
+        dateTime: String,
+        type: TransactionType,
+        category: TransactionCategory,
+        description: String?
+    ): Long
+
     suspend fun deleteTransaction(
         id: Long
     ): Long

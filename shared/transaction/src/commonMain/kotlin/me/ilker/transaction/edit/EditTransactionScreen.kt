@@ -7,6 +7,8 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import me.ilker.balance_tracker.sdk.TransactionCategory
+import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.transaction.edit.views.EditTransactionInitialView
 import me.ilker.transaction.edit.views.EditTransactionLoadedView
 
@@ -14,7 +16,13 @@ import me.ilker.transaction.edit.views.EditTransactionLoadedView
 fun EditTransactionScreen(
     state: State<EditTransactionState>,
     sideEffects: Flow<EditTransactionSideEffect>,
-    onDelete: () -> Unit,
+    onEdit: (
+        amount: Double,
+        dateTime: String,
+        type: TransactionType,
+        category: TransactionCategory,
+        description: String?
+    ) -> Unit,
     onBack: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -24,6 +32,7 @@ fun EditTransactionScreen(
             when (effect) {
                 EditTransactionSideEffect.Back -> onBack()
                 is EditTransactionSideEffect.TransactionDeleted -> snackbarHostState.showSnackbar(message = effect.text)
+                is EditTransactionSideEffect.Feedback -> snackbarHostState.showSnackbar(message = effect.text)
             }
         }
     }
@@ -32,7 +41,7 @@ fun EditTransactionScreen(
        is EditTransactionState.TransactionLoadedState -> EditTransactionLoadedView(
            state = currentState,
            snackbarHostState = snackbarHostState,
-           onDelete = onDelete,
+           onEdit = onEdit,
            onBack = onBack
        )
         EditTransactionState.InitialState -> EditTransactionInitialView(

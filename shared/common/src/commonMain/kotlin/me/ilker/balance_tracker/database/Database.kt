@@ -65,6 +65,22 @@ internal class DB(databaseDriverFactory: DatabaseDriverFactory) {
         description = description
     )
 
+    internal suspend fun editTransaction(
+        id: Long,
+        amount: Double,
+        dateTime: String,
+        type: TransactionType,
+        category: TransactionCategory,
+        description: String?
+    ) = dbQuery.editTransaction(
+        id = id,
+        amount = amount,
+        dateTime = dateTime,
+        type = type,
+        category = category,
+        description = description
+    )
+
     internal suspend fun deleteTransaction(
         id: Long
     ) = dbQuery.deleteTransaction(
