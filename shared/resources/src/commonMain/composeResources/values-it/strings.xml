@@ -24,6 +24,8 @@
     <string name="delete_transaction_success_feedback">Transazione eliminata correttamente!</string>
     <string name="details">Dettagli</string>
     <string name="edit">Modifica</string>
+    <string name="edit_transaction_success_feedback">Transazione modificata correttamente!</string>
+    <string name="error_90001">Non è possibile modificare la transazione a causa di un errore interno.\nIl codice è %1$s</string>
     <string name="expense">Uscita</string>
     <string name="expense_total">Uscite</string>
     <string name="description">Descrizione</string>

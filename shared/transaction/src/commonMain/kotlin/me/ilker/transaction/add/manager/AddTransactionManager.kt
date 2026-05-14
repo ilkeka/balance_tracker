@@ -19,6 +19,7 @@ import me.ilker.transaction.add.AddTransactionSideEffect
 import me.ilker.transaction.add.AddTransactionState
 import org.jetbrains.compose.resources.getString
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration.Companion.milliseconds
 
 class AddTransactionManager(
     private val sdk: BalanceTrackerSDK
@@ -62,7 +63,7 @@ class AddTransactionManager(
 
             result.getOrNull()?.let {
                 sideEffect.trySend(AddTransactionSideEffect.Feedback(getString(Res.string.add_transaction_success_feedback)))
-                delay(500)
+                delay(500.milliseconds)
                 sideEffect.trySend(AddTransactionSideEffect.Back)
             }
         }

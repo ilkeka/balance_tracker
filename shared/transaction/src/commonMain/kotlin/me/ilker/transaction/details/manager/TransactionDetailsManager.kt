@@ -43,6 +43,7 @@ class TransactionDetailsManager(
     override fun sendIntent(intent: TransactionDetailsIntent) {
         when (intent) {
             TransactionDetailsIntent.DeleteTransaction -> deleteTransaction()
+            is TransactionDetailsIntent.EditTransaction -> editTransaction(intent.id)
         }
     }
 
@@ -61,6 +62,20 @@ class TransactionDetailsManager(
             )
             delay(1.seconds)
             sideEffect.trySend(TransactionDetailsSideEffect.Back)
+        }
+    }
+
+    private fun editTransaction(id: Long) {
+        scope.launch {
+            sdk.getTransactionById(id = id)?.let {
+                sideEffect.trySend(TransactionDetailsSideEffect.Edit(id = id))
+            } ?: run {
+                sideEffect.trySend(
+                    TransactionDetailsSideEffect.ShowError(
+                        code = TransactionDetailsSideEffect.ShowError.ErrorCode.NOT_FOUND
+                    )
+                )
+            }
         }
     }
 }

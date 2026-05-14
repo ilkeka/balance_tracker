@@ -24,6 +24,8 @@
     <string name="delete_transaction_success_feedback">Transaction deleted successfully!</string>
     <string name="details">Details</string>
     <string name="edit">Edit</string>
+    <string name="edit_transaction_success_feedback">Edited transaction successfully!</string>
+    <string name="error_90001">Cannot edit the transaction due to an internal error.\nCode is %1$s</string>
     <string name="expense">Expense</string>
     <string name="expense_total">Total expense</string>
     <string name="description">Description</string>

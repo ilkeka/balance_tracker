@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -38,6 +39,7 @@ import me.ilker.balance_tracker.resources.delete
 import me.ilker.balance_tracker.resources.description
 import me.ilker.balance_tracker.resources.description_not_found
 import me.ilker.balance_tracker.resources.expense
+import me.ilker.balance_tracker.resources.ic_edit
 import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.transaction_details
 import me.ilker.balance_tracker.resources.transaction_type
@@ -45,6 +47,7 @@ import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getValueForComposableUI
 import me.ilker.core.extensions.toHumanReadableValue
 import me.ilker.transaction.details.TransactionDetailsState
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -52,6 +55,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun TransactionDetailsLoadedView(
     state: TransactionDetailsState.DetailsLoadedState,
     snackbarHostState: SnackbarHostState,
+    onEditClicked: (id: Long) -> Unit,
     onDelete: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -125,19 +129,35 @@ internal fun TransactionDetailsLoadedView(
                             vertical = 8.dp
                         )
                 ) {
-                    Text(
-                        text = stringResource(Res.string.amount),
-                        fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onTertiary
-                    )
+                    Row {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(Res.string.amount),
+                                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onTertiary
+                            )
 
-                    Text(
-                        text = state.transaction.amount.toHumanReadableValue(),
-                        fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
-                        fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.onTertiary
-                    )
+                            Text(
+                                text = state.transaction.amount.toHumanReadableValue(),
+                                fontSize = TextUnit(value = 16f, type = TextUnitType.Sp),
+                                fontWeight = FontWeight.Normal,
+                                color = MaterialTheme.colorScheme.onTertiary
+                            )
+                        }
+
+                        IconButton(
+                            modifier = Modifier.size(48.dp),
+                            onClick = { onEditClicked(state.transaction.id) },
+                            content = {
+                                Icon(
+                                    tint = MaterialTheme.colorScheme.primaryContainer,
+                                    painter = painterResource(Res.drawable.ic_edit),
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    }
 
                     Spacer(Modifier.height(16.dp))
 
