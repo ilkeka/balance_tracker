@@ -1,7 +1,5 @@
 package me.ilker.transaction.transactions.manager
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,14 +14,11 @@ import me.ilker.core.extensions.round
 import me.ilker.transaction.transactions.TransactionIntent
 import me.ilker.transaction.transactions.TransactionSideEffect
 import me.ilker.transaction.transactions.TransactionState
-import kotlin.coroutines.EmptyCoroutineContext
 
 class TransactionManager(
     sdk: BalanceTrackerSDK,
     yearMonth: String
 ) : Manager<TransactionState, TransactionIntent, TransactionSideEffect>() {
-    private val scope = CoroutineScope(EmptyCoroutineContext + SupervisorJob())
-
     override fun sendIntent(intent: TransactionIntent) {
 
     }

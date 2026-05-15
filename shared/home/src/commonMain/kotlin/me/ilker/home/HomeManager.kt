@@ -1,7 +1,5 @@
 package me.ilker.home
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,13 +14,10 @@ import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getLocalDate
 import me.ilker.core.Manager
 import me.ilker.core.extensions.round
-import kotlin.coroutines.EmptyCoroutineContext
 
 class HomeManager(
     sdk: BalanceTrackerSDK
 ) : Manager<HomeState, HomeIntent, HomeSideEffect>() {
-    private val scope = CoroutineScope(EmptyCoroutineContext + SupervisorJob())
-
     override fun sendIntent(intent: HomeIntent) {
         when (intent) {
             is HomeIntent.SetSelectedYearMonth -> handleSetSelectedYearMonth(intent.yearMonth)

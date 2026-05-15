@@ -1,7 +1,5 @@
 package me.ilker.transaction.add.manager
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,14 +16,11 @@ import me.ilker.transaction.add.AddTransactionIntent
 import me.ilker.transaction.add.AddTransactionSideEffect
 import me.ilker.transaction.add.AddTransactionState
 import org.jetbrains.compose.resources.getString
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 
 class AddTransactionManager(
     private val sdk: BalanceTrackerSDK
 ) : Manager<AddTransactionState, AddTransactionIntent, AddTransactionSideEffect>() {
-    private val scope = CoroutineScope(EmptyCoroutineContext + SupervisorJob())
-
     override fun sendIntent(intent: AddTransactionIntent) {
         when (intent) {
             is AddTransactionIntent.Add -> addTransaction(

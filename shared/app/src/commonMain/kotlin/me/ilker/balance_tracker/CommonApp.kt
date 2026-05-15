@@ -66,6 +66,7 @@ fun CommonApp() {
     AppTheme {
         val navController: NavHostController = rememberNavController()
         val sdk: BalanceTrackerSDK = koinInject()
+        val managerStore: ManagerStore = remember { mutableMapOf() }
 
         Scaffold(
             modifier = Modifier
@@ -83,8 +84,10 @@ fun CommonApp() {
                 popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(durationMillis = 0, easing = EaseIn)) },
                 popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(durationMillis = 0, easing = EaseOutBack)) }
             ) {
-                composable<Home> {
-                    val manager = remember { HomeManager(sdk = sdk) }
+                composable<Home> { navBackStackEntry ->
+                    val manager = rememberManager(entry = navBackStackEntry, store = managerStore) {
+                        HomeManager(sdk = sdk)
+                    }
                     val state = manager.state.collectAsStateWithLifecycle()
 
                     HomeScreen(
@@ -98,7 +101,7 @@ fun CommonApp() {
 
                 composable<Transactions> { navBackStackEntry ->
                     val route = navBackStackEntry.toRoute<Transactions>()
-                    val manager = remember {
+                    val manager = rememberManager(entry = navBackStackEntry, store = managerStore) {
                         TransactionManager(
                             sdk = sdk,
                             yearMonth = route.yearMonth
@@ -124,7 +127,12 @@ fun CommonApp() {
 
                 composable<AddTransaction> { navBackStackEntry ->
                     val route = navBackStackEntry.toRoute<AddTransaction>()
-                    val manager = remember { AddTransactionManager(sdk = sdk) }
+                    val manager = rememberManager(
+                        entry = navBackStackEntry,
+                        store = managerStore
+                    ) {
+                        AddTransactionManager(sdk = sdk)
+                    }
                     val state: State<AddTransactionState> = manager.state.collectAsStateWithLifecycle()
                     val sideEffects: Flow<AddTransactionSideEffect> = manager.sideEffect.receiveAsFlow()
                     val navEventState = rememberNavigationEventState(
@@ -157,7 +165,7 @@ fun CommonApp() {
 
                 composable<TransactionDetails> { navBackStackEntry ->
                     val route = navBackStackEntry.toRoute<TransactionDetails>()
-                    val manager = remember {
+                    val manager = rememberManager(entry = navBackStackEntry, store = managerStore) {
                         TransactionDetailsManager(
                             id = route.id,
                             sdk = sdk
@@ -187,7 +195,7 @@ fun CommonApp() {
 
                 composable<EditTransaction> { navBackStackEntry ->
                     val route = navBackStackEntry.toRoute<EditTransaction>()
-                    val manager = remember {
+                    val manager = rememberManager(entry = navBackStackEntry, store = managerStore) {
                         EditTransactionManager(
                             id = route.id,
                             sdk = sdk
