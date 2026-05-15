@@ -1,12 +1,12 @@
 package me.ilker.transaction.details.manager
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.ilker.balance_tracker.resources.Res
@@ -17,25 +17,27 @@ import me.ilker.transaction.details.TransactionDetailsIntent
 import me.ilker.transaction.details.TransactionDetailsSideEffect
 import me.ilker.transaction.details.TransactionDetailsState
 import org.jetbrains.compose.resources.getString
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration.Companion.seconds
 
 class TransactionDetailsManager(
     private val id: Long,
     private val sdk: BalanceTrackerSDK
 ): Manager<TransactionDetailsState, TransactionDetailsIntent, TransactionDetailsSideEffect>() {
-    private val scope = CoroutineScope(EmptyCoroutineContext + SupervisorJob())
-
     init {
         scope.launch {
             sdk
-                .getTransactionById(id = id)
-                ?.let { transactionDomainModel ->
-                    managerState.update {
-                        TransactionDetailsState.DetailsLoadedState(
-                            transaction = transactionDomainModel
-                        )
-                    }
+                .transactions
+                .map { sdkTransactions -> sdkTransactions.firstOrNull { it.id == id } }
+                .distinctUntilChanged()
+                .collect { transaction ->
+                    transaction
+                        ?.let { transactionDomainModel ->
+                            managerState.update {
+                                TransactionDetailsState.DetailsLoadedState(
+                                    transaction = transactionDomainModel
+                                )
+                            }
+                        }
                 }
         }
     }
