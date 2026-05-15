@@ -5,6 +5,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.ilker.balance_tracker.resources.Res
@@ -24,13 +26,18 @@ class TransactionDetailsManager(
     init {
         scope.launch {
             sdk
-                .getTransactionById(id = id)
-                ?.let { transactionDomainModel ->
-                    managerState.update {
-                        TransactionDetailsState.DetailsLoadedState(
-                            transaction = transactionDomainModel
-                        )
-                    }
+                .transactions
+                .map { sdkTransactions -> sdkTransactions.firstOrNull { it.id == id } }
+                .distinctUntilChanged()
+                .collect { transaction ->
+                    transaction
+                        ?.let { transactionDomainModel ->
+                            managerState.update {
+                                TransactionDetailsState.DetailsLoadedState(
+                                    transaction = transactionDomainModel
+                                )
+                            }
+                        }
                 }
         }
     }
