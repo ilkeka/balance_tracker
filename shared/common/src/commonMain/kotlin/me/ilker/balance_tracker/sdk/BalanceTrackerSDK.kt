@@ -1,9 +1,11 @@
 package me.ilker.balance_tracker.sdk
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 interface BalanceTrackerSDK {
     val transactions: Flow<List<TransactionDomainModel>>
+    val sessionEmail: StateFlow<String?>
 
     suspend fun getTransactionById(id: Long): TransactionDomainModel?
 
@@ -32,4 +34,7 @@ interface BalanceTrackerSDK {
     suspend fun deleteTransaction(
         id: Long
     ): Long
+
+    @Throws(Exception::class)
+    suspend fun authenticate(email: String, password: String)
 }

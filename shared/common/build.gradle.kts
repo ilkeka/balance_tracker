@@ -12,6 +12,17 @@ plugins {
     alias(libs.plugins.sqldelight)
 }
 
+val serverUrl: String = run {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) {
+        val prefix = "server.url="
+        f.readLines().find { it.startsWith(prefix) }?.substringAfter(prefix)?.takeIf { it.isNotEmpty() }
+            ?: "http://localhost:9090"
+    } else {
+        "http://localhost:9090"
+    }
+}
+
 kotlin {
     android {
         compilerOptions {
@@ -67,6 +78,10 @@ kotlin {
     }
 
     sourceSets {
+        commonMain {
+            kotlin.srcDir(layout.buildDirectory.dir("generated/serverUrl"))
+        }
+
         androidMain.dependencies {
             implementation(libs.koin.compose)
             implementation(libs.sqldelight.android.driver)
@@ -123,4 +138,23 @@ sqldelight {
             packageName.set("me.ilker.balance_tracker")
         }
     }
+}
+
+val generateServerUrl = tasks.register("generateServerUrl") {
+    val outputDir = layout.buildDirectory.dir("generated/serverUrl")
+    outputs.dir(outputDir)
+    val url = serverUrl
+    doLast {
+        val dir = outputDir.get().asFile.resolve("me/ilker/balance_tracker")
+        dir.mkdirs()
+        dir.resolve("Config.kt").writeText("""
+            package me.ilker.balance_tracker
+
+            const val serverUrl: String = "$url"
+        """.trimIndent() + "\n")
+    }
+}
+
+tasks.matching { it.name.startsWith("compile") }.configureEach {
+    dependsOn(generateServerUrl)
 }

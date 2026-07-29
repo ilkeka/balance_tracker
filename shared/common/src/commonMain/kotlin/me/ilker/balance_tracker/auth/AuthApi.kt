@@ -21,9 +21,7 @@ data class AuthRequest(val email: String, val password: String)
 @Serializable
 data class AuthResponse(val message: String)
 
-val authApi = AuthApi()
-
-class AuthApi(private val baseUrl: String = "http://localhost:9090") {
+class AuthApi(private val baseUrl: String) {
     private val client = HttpClient {
         install(HttpCookies)
     }

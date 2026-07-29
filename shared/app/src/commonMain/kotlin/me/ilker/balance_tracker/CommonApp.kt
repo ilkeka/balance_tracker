@@ -26,7 +26,6 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
-import me.ilker.balance_tracker.auth.authApi
 import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.theme.AppTheme
@@ -96,7 +95,7 @@ fun CommonApp() {
                         HomeManager(sdk = sdk)
                     }
                     val state = manager.state.collectAsStateWithLifecycle()
-                    val sessionEmailState = authApi.sessionEmail.collectAsStateWithLifecycle()
+                    val sessionEmailState = sdk.sessionEmail.collectAsStateWithLifecycle()
                     val sessionEmail = sessionEmailState.value
 
                     HomeScreen(
@@ -244,7 +243,7 @@ fun CommonApp() {
 
                 composable<Registration> { navBackStackEntry ->
                     val manager = rememberManager(entry = navBackStackEntry, store = managerStore) {
-                        RegistrationManager()
+                        RegistrationManager(sdk = sdk)
                     }
                     val state = manager.state.collectAsStateWithLifecycle()
                     val sideEffects = manager.sideEffect.receiveAsFlow()

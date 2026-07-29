@@ -11,7 +11,8 @@ actual val appModule = module {
         BalanceTrackerSDKImpl(
             driverFactory = DatabaseDriverFactory(
                 context = androidContext()
-            )
+            ),
+            baseUrl = serverUrl
         )
     }
 }
