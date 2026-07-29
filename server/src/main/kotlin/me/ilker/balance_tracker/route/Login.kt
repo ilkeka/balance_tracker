@@ -7,22 +7,18 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
-import kotlin.time.Clock
-import me.ilker.balance_tracker.Registration
+import me.ilker.balance_tracker.Login
 import me.ilker.balance_tracker.database.ServerDB
 import me.ilker.balance_tracker.models.LoginRequest
 import me.ilker.balance_tracker.models.MessageResponse
 import me.ilker.balance_tracker.models.UserSession
-import me.ilker.balance_tracker.passwordHash
+import me.ilker.balance_tracker.passwordVerify
 import org.koin.ktor.ext.inject
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
-@ExperimentalUuidApi
-internal fun Route.registration() {
+internal fun Route.login() {
     val db by inject<ServerDB>()
 
-    post<Registration> {
+    post<Login> {
         val request = runCatching { call.receiveNullable<LoginRequest>() }
             .getOrNull()
             ?: run {
@@ -33,30 +29,21 @@ internal fun Route.registration() {
                 return@post
             }
 
-        val existingUser = db.getUserByEmail(request.email.value)
+        val user = db.getUserByEmail(request.email.value)
 
-        if (existingUser != null) {
+        if (user == null || !passwordVerify(request.password.value, user.password)) {
             call.respond(
-                status = HttpStatusCode.Conflict,
-                message = MessageResponse("An account with this email already exists")
+                status = HttpStatusCode.Unauthorized,
+                message = MessageResponse("Invalid email or password")
             )
             return@post
         }
 
-        val id = Uuid.generateV4().toString()
-
-        db.createUser(
-            id = id,
-            email = request.email.value,
-            password = passwordHash(request.password.value),
-            createdAt = Clock.System.now().toString()
-        )
-
-        call.sessions.set(UserSession(userId = id, email = request.email.value))
+        call.sessions.set(UserSession(userId = user.id, email = user.email))
 
         call.respond(
-            status = HttpStatusCode.Created,
-            message = MessageResponse("Registration successful")
+            status = HttpStatusCode.OK,
+            message = MessageResponse("Login successful")
         )
     }
 }

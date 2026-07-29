@@ -1,19 +1,22 @@
 package me.ilker.balance_tracker.database.impl
 
+import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.ColumnAdapter
 import app.cash.sqldelight.EnumColumnAdapter
+import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import me.ilker.balance_tracker.ServerDatabase
 import me.ilker.balance_tracker.Transactions
-import me.ilker.balance_tracker.database.DatabaseDriverFactory
 import me.ilker.balance_tracker.database.ServerDB
 import me.ilker.balance_tracker.sdk.TransactionCategory
-import kotlin.Throws
 
-internal class ServerDBImpl(
-    databaseDriverFactory: DatabaseDriverFactory
-): ServerDB {
+internal class ServerDBImpl : ServerDB {
+    private val driver = JdbcSqliteDriver(
+        url = "jdbc:sqlite:Database.db",
+        schema = ServerDatabase.Schema.synchronous()
+    )
+
     private val database = ServerDatabase(
-        driver = databaseDriverFactory.createDriver(),
+        driver = driver,
         TransactionsAdapter = Transactions.Adapter(
             typeAdapter = EnumColumnAdapter(),
             categoryAdapter = object : ColumnAdapter<TransactionCategory, String> {
@@ -50,7 +53,7 @@ internal class ServerDBImpl(
         .getUser(id = id)
         .executeAsOneOrNull()
 
-    override suspend fun getUserByMail(
+    override suspend fun getUserByEmail(
         email: String
     ) = database
         .userQueries

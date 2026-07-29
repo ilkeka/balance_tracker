@@ -14,18 +14,14 @@ internal fun Application.configAuth() {
     install(Sessions) {
         cookie<UserSession>("user_session") {
             cookie.path = "/"
-            cookie.maxAgeInSeconds = 60
+            cookie.maxAgeInSeconds = 7 * 24 * 3600
         }
     }
 
     install(Authentication) {
         session<UserSession>("auth-session") {
             validate { session ->
-                if(session.name.startsWith("jet")) {
-                    session
-                } else {
-                    null
-                }
+                if (session.userId.isNotBlank()) session else null
             }
             challenge {
                 call.respond(HttpStatusCode.Unauthorized)

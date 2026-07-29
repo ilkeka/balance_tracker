@@ -4,4 +4,8 @@ import kotlinx.serialization.Serializable
 
 @JvmInline
 @Serializable
-value class Password(val value: String)
+value class Password(val value: String) {
+    init {
+        require(value.length >= 8) { "Password must be at least 8 characters" }
+    }
+}

@@ -16,6 +16,7 @@ import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,10 +61,12 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun HomeLoadedView(
     state: HomeState.Loaded,
+    sessionEmail: String? = null,
     setSelectedYearMonth: (yearMonth: YearMonth) -> Unit,
     add: () -> Unit,
     onTransactionsClicked: () -> Unit,
-    onClick: (id: Long) -> Unit
+    onClick: (id: Long) -> Unit,
+    onRegister: () -> Unit = {}
 ) {
     val balancePagerState = rememberPagerState(
         initialPage = state.balances.lastIndex.takeUnless { it < 0 } ?: 0,
@@ -87,13 +90,31 @@ internal fun HomeLoadedView(
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp)
                     .padding(top = 48.dp)
-                    .padding(bottom = 12.dp)
+                    .padding(bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = stringResource(Res.string.app_name),
                     fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
                 )
+                if (sessionEmail != null) {
+                    Text(
+                        text = sessionEmail,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Button(
+                        onClick = onRegister,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text("Register")
+                    }
+                }
             }
         },
         bottomBar = {

@@ -4,6 +4,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.netty.EngineMain
 import me.ilker.balance_tracker.config.configAuth
 import me.ilker.balance_tracker.config.configHttp
+import me.ilker.balance_tracker.config.configRateLimit
 import me.ilker.balance_tracker.config.configRouting
 import me.ilker.balance_tracker.config.configSerialization
 import me.ilker.balance_tracker.config.configStatusPages
@@ -24,6 +25,7 @@ fun main(args: Array<String>) {
 fun Application.module() {
     configHttp()
     configAuth()
+    configRateLimit()
     configSerialization()
     configStatusPages()
     configRouting()

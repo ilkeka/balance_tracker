@@ -27,6 +27,9 @@ internal fun Application.configStatusPages() {
         exception<BadRequestException> { call, _ ->
             call.respond(HttpStatusCode.BadRequest)
         }
+        exception<IllegalArgumentException> { call, cause ->
+            call.respond(HttpStatusCode.BadRequest, mapOf("message" to (cause.message ?: "Invalid input")))
+        }
         exception<Exception> { call, cause ->
             call.application.environment.log.error(cause)
             call.respond(HttpStatusCode.InternalServerError)
