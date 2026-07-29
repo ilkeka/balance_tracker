@@ -2,7 +2,7 @@ package me.ilker.auth
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import me.ilker.auth.views.RegistrationView
+import me.ilker.auth.views.AuthenticationView
 
 @Composable
 fun RegistrationScreen(
@@ -10,7 +10,7 @@ fun RegistrationScreen(
     onRegister: (email: String, password: String) -> Unit,
     onBack: () -> Unit
 ) {
-    RegistrationView(
+    AuthenticationView(
         state = state,
         onRegister = onRegister,
         onBack = onBack

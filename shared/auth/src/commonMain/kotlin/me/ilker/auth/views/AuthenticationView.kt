@@ -2,6 +2,7 @@ package me.ilker.auth.views
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,10 +17,12 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -34,18 +37,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import me.ilker.auth.AuthenticationResult
 import me.ilker.auth.RegistrationState
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.authenticate
 import me.ilker.balance_tracker.resources.authentication_failed
+import me.ilker.balance_tracker.resources.back
 import me.ilker.balance_tracker.resources.email
 import me.ilker.balance_tracker.resources.password
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun RegistrationView(
+internal fun AuthenticationView(
     state: State<RegistrationState>,
     onRegister: (email: String, password: String) -> Unit,
     onBack: () -> Unit
@@ -56,32 +63,39 @@ internal fun RegistrationView(
     var showPassword by remember { mutableStateOf(false) }
     val isFormValid = email.isNotBlank() && password.isNotBlank()
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                contentDescription = "Back"
-            )
+    Scaffold(
+        topBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(end = 12.dp)
+                    .padding(top = 48.dp)
+                    .padding(bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = stringResource(Res.string.back)
+                    )
+                }
+                Text(
+                    text = stringResource(Res.string.authenticate),
+                    fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
-
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = stringResource(Res.string.authenticate),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(Modifier.height(32.dp))
-
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = email,
