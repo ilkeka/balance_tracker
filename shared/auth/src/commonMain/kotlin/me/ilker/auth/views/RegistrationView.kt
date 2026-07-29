@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -46,6 +47,7 @@ internal fun RegistrationView(
     var password by remember { mutableStateOf("") }
     val currentState = state.value
     var showPassword by remember { mutableStateOf(false) }
+    val isFormValid = email.isNotBlank() && password.isNotBlank()
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -66,7 +68,7 @@ internal fun RegistrationView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Create Account",
+                text = "Authenticate",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -91,7 +93,13 @@ internal fun RegistrationView(
                 placeholder = { Text("Password", fontStyle = FontStyle.Italic) },
                 visualTransformation = if (showPassword) VisualTransformation.None
                     else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = androidx.compose.ui.text.input.ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { if (isFormValid) onRegister(email, password) }
+                ),
                 singleLine = true
             )
 
@@ -103,7 +111,7 @@ internal fun RegistrationView(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
-                enabled = currentState !is RegistrationState.Loading
+                enabled = currentState !is RegistrationState.Loading && isFormValid
             ) {
                 if (currentState is RegistrationState.Loading) {
                     CircularProgressIndicator(
@@ -111,7 +119,7 @@ internal fun RegistrationView(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Register")
+                    Text("Authenticate")
                 }
             }
 

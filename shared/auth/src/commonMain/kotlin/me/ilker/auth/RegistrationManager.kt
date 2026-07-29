@@ -26,13 +26,13 @@ class RegistrationManager : Manager<RegistrationState, RegistrationIntent, Regis
         managerState.value = RegistrationState.Loading(email, password)
         scope.launch {
             runCatching {
-                authApi.register(email, password)
+                authApi.authenticate(email, password)
             }.onSuccess {
-                managerState.value = RegistrationState.Success("Registration successful")
+                managerState.value = RegistrationState.Success("Authenticated")
                 sideEffect.trySend(RegistrationSideEffect.RegistrationComplete)
             }.onFailure { e ->
                 managerState.value = RegistrationState.Error(
-                    e.message ?: "Registration failed"
+                    e.message ?: "Authentication failed"
                 )
             }
         }

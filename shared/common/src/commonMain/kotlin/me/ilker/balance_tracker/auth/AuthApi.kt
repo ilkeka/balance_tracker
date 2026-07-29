@@ -33,23 +33,28 @@ class AuthApi(private val baseUrl: String = "http://localhost:9090") {
     private val _sessionEmail = MutableStateFlow<String?>(null)
     val sessionEmail: StateFlow<String?> = _sessionEmail.asStateFlow()
 
-    suspend fun register(email: String, password: String) {
+    suspend fun authenticate(email: String, password: String) {
         val response = client.post("$baseUrl/register") {
             contentType(ContentType.Application.Json)
             setBody(json.encodeToString(AuthRequest(email, password)))
         }
-        if (response.status != HttpStatusCode.Created) {
-            val msg = try {
-                json.decodeFromString<AuthResponse>(response.bodyAsText()).message
-            } catch (_: Exception) {
-                response.bodyAsText()
-            }
-            throw AuthException(msg)
+        if (response.status == HttpStatusCode.Created) {
+            _sessionEmail.value = email
+            return
         }
-        _sessionEmail.value = email
+        if (response.status == HttpStatusCode.Conflict) {
+            login(email, password)
+            return
+        }
+        val msg = try {
+            json.decodeFromString<AuthResponse>(response.bodyAsText()).message
+        } catch (_: Exception) {
+            response.bodyAsText()
+        }
+        throw AuthException(msg)
     }
 
-    suspend fun login(email: String, password: String) {
+    private suspend fun login(email: String, password: String) {
         val response = client.post("$baseUrl/login") {
             contentType(ContentType.Application.Json)
             setBody(json.encodeToString(AuthRequest(email, password)))
