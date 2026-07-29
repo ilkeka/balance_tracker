@@ -30,9 +30,9 @@ class RegistrationManager : Manager<RegistrationState, RegistrationIntent, Regis
             }.onSuccess {
                 managerState.value = RegistrationState.Success("Authenticated")
                 sideEffect.trySend(RegistrationSideEffect.RegistrationComplete)
-            }.onFailure { e ->
+            }.onFailure {
                 managerState.value = RegistrationState.Error(
-                    e.message ?: "Authentication failed"
+                    AuthenticationResult.Failed
                 )
             }
         }

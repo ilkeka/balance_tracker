@@ -35,7 +35,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import me.ilker.auth.AuthenticationResult
 import me.ilker.auth.RegistrationState
+import me.ilker.balance_tracker.resources.Res
+import me.ilker.balance_tracker.resources.authenticate
+import me.ilker.balance_tracker.resources.authentication_failed
+import me.ilker.balance_tracker.resources.email
+import me.ilker.balance_tracker.resources.password
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun RegistrationView(
@@ -68,7 +75,7 @@ internal fun RegistrationView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Authenticate",
+                text = stringResource(Res.string.authenticate),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -79,7 +86,7 @@ internal fun RegistrationView(
                 modifier = Modifier.fillMaxWidth(),
                 value = email,
                 onValueChange = { email = it },
-                placeholder = { Text("Email", fontStyle = FontStyle.Italic) },
+                placeholder = { Text(stringResource(Res.string.email), fontStyle = FontStyle.Italic) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true
             )
@@ -90,7 +97,7 @@ internal fun RegistrationView(
                 modifier = Modifier.fillMaxWidth(),
                 value = password,
                 onValueChange = { password = it },
-                placeholder = { Text("Password", fontStyle = FontStyle.Italic) },
+                placeholder = { Text(stringResource(Res.string.password), fontStyle = FontStyle.Italic) },
                 visualTransformation = if (showPassword) VisualTransformation.None
                     else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(
@@ -119,7 +126,7 @@ internal fun RegistrationView(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Authenticate")
+                    Text(stringResource(Res.string.authenticate))
                 }
             }
 
@@ -134,8 +141,11 @@ internal fun RegistrationView(
                     )
                 }
                 is RegistrationState.Error -> {
+                    val message = when (s.result) {
+                        AuthenticationResult.Failed -> stringResource(Res.string.authentication_failed)
+                    }
                     Text(
-                        text = s.message,
+                        text = message,
                         color = MaterialTheme.colorScheme.error,
                         fontStyle = FontStyle.Italic
                     )
