@@ -13,7 +13,7 @@ plugins {
 kotlin {
     android {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
+            jvmTarget.set(JvmTarget.JVM_24)
         }
 
         // https://kotlinlang.org/docs/multiplatform/whats-new-compose-180.html#support-for-multiplatform-resources-in-the-androidlibrary-target
