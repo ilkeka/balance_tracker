@@ -14,6 +14,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -47,7 +49,9 @@ import me.ilker.balance_tracker.resources.authenticate
 import me.ilker.balance_tracker.resources.authentication_failed
 import me.ilker.balance_tracker.resources.back
 import me.ilker.balance_tracker.resources.email
+import me.ilker.balance_tracker.resources.hide_password
 import me.ilker.balance_tracker.resources.password
+import me.ilker.balance_tracker.resources.show_password
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -114,6 +118,16 @@ internal fun AuthenticationView(
                 placeholder = { Text(stringResource(Res.string.password), fontStyle = FontStyle.Italic) },
                 visualTransformation = if (showPassword) VisualTransformation.None
                     else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { showPassword = !showPassword }) {
+                        Icon(
+                            imageVector = if (showPassword) Icons.Rounded.VisibilityOff
+                                else Icons.Rounded.Visibility,
+                            contentDescription = if (showPassword) stringResource(Res.string.hide_password)
+                                else stringResource(Res.string.show_password)
+                        )
+                    }
+                },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = androidx.compose.ui.text.input.ImeAction.Done

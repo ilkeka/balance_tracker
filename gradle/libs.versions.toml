@@ -29,6 +29,7 @@ jetbrains-compose-component-resources = { module = "org.jetbrains.compose.compon
 jetbrains-compose-desktop-jvm-linux-x64 = { module = "org.jetbrains.compose.desktop:desktop-jvm-linux-x64", version.ref = "jetbrains-compose" }
 jetbrains-compose-lifecycle-runtime = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "jetbrains-compose-lifecycle" }
 jetbrains-compose-materialicons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "jetbrains-compose-material" }
+jetbrains-compose-materialicons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "jetbrains-compose-material" }
 jetbrains-compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "jetbrains-compose-material3" }
 jetbrains-compose-navigation = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "jetbrains-compose-navigation" }
 jetbrains-compose-navigationevent = { module = "org.jetbrains.androidx.navigationevent:navigationevent-compose", version.ref = "jetbrains-compose-navigationevent" }

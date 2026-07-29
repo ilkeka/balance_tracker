@@ -44,6 +44,8 @@ Compose Multiplatform income/expense tracker. Targets: Android, Desktop (JVM), i
 - Use **Compose Multiplatform** only — no platform-native UI (XML layouts, SwiftUI, etc.)
 - Use the app's design system from `:shared:resources` for theme (`AppTheme`, `Colors.kt`) and Material 3 components (`material3`)
 - No custom composables that reimplement existing Material 3 or theme primitives
+- Never hardcode user-facing strings — always add them to `:shared:resources` `strings.xml` **and** provide translations for all defined languages (`values-*/strings.xml`)
+- Always keep `strings.xml` entries sorted alphabetically by `name` attribute
 
 ## Key quirks
 
