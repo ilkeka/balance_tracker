@@ -1,0 +1,29 @@
+CREATE TABLE LinkToken (
+    token TEXT NOT NULL PRIMARY KEY,
+    ownerId TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+);
+
+CREATE TABLE AccountLink (
+    id TEXT NOT NULL PRIMARY KEY,
+    ownerId TEXT NOT NULL,
+    linkedId TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+);
+
+insertLinkToken:
+INSERT INTO LinkToken(token, ownerId, createdAt)
+VALUES(?,?,?);
+
+getLinkToken:
+SELECT * FROM LinkToken WHERE token = ?;
+
+deleteLinkToken:
+DELETE FROM LinkToken WHERE token = ?;
+
+insertAccountLink:
+INSERT INTO AccountLink(id, ownerId, linkedId, createdAt)
+VALUES(?,?,?,?);
+
+getAccountLink:
+SELECT * FROM AccountLink WHERE ownerId = ? AND linkedId = ?;

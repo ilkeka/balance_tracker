@@ -63,5 +63,7 @@ Compose Multiplatform income/expense tracker. Targets: Android, Desktop (JVM), i
 
 ## Docker
 
-- Multi-stage: `eclipse-temurin:22-jdk` (build, Gradle 9.2.1), `eclipse-temurin:22-jre` (runtime)
-- Runs `server.jar` from `:server:fatJar`
+- Multi-stage: `eclipse-temurin:24-jdk` (build), `eclipse-temurin:24-jre` (runtime)
+- Builds via the Gradle wrapper: `./gradlew --no-daemon :server:buildFatJar`
+- Runtime: jar at `/app/server.jar`, `WORKDIR /data`, SQLite `Database.db` written relative to `/data`
+- Run: `docker run -d --name balance-tracker -p 9090:9090 -v /root/balance-tracker:/data --restart unless-stopped ilkeraslan0/balance_tracker:latest` — the volume must mount `/data` (not `/` or `/app`), otherwise it hides `server.jar`

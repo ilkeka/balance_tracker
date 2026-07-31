@@ -144,6 +144,7 @@ sqldelight {
 val generateServerUrl = tasks.register("generateServerUrl") {
     val outputDir = layout.buildDirectory.dir("generated/serverUrl")
     outputs.dir(outputDir)
+    inputs.property("serverUrl", serverUrl)
     val url = serverUrl
     doLast {
         val dir = outputDir.get().asFile.resolve("me/ilker/balance_tracker")

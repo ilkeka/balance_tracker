@@ -15,12 +15,14 @@ fun HomeScreen(
     add: () -> Unit,
     onTransactionsClicked: () -> Unit,
     onClick: (id: Long) -> Unit,
-    onRegister: () -> Unit
+    onRegister: () -> Unit,
+    onAccountLink: () -> Unit
 ) {
     when (val currentState = state.value) {
         HomeState.InitialState -> HomeInitialView(
             user = currentState.user,
-            onRegister = onRegister
+            onRegister = onRegister,
+            onAccountLink = onAccountLink
         )
         is HomeState.Loaded -> HomeLoadedView(
             state = currentState,
@@ -29,7 +31,8 @@ fun HomeScreen(
             add = add,
             onTransactionsClicked = onTransactionsClicked,
             onClick = onClick,
-            onRegister = onRegister
+            onRegister = onRegister,
+            onAccountLink = onAccountLink
         )
     }
 }

@@ -10,6 +10,8 @@ import io.ktor.server.resources.Resources
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
+import me.ilker.balance_tracker.route.link
+import me.ilker.balance_tracker.route.linkToken
 import me.ilker.balance_tracker.route.login
 import me.ilker.balance_tracker.route.registration
 import kotlin.uuid.ExperimentalUuidApi
@@ -36,5 +38,7 @@ internal fun Application.configRouting() {
             registration()
         }
         login()
+        linkToken()
+        link()
     }
 }

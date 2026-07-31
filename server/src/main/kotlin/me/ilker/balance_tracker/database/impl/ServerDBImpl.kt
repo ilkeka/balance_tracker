@@ -65,4 +65,56 @@ internal class ServerDBImpl : ServerDB {
         .userQueries
         .getUsers()
         .executeAsList()
+
+    override suspend fun createLinkToken(
+        token: String,
+        ownerId: String,
+        createdAt: String
+    ) = database
+        .linkQueries
+        .insertLinkToken(
+            token = token,
+            ownerId = ownerId,
+            createdAt = createdAt
+        )
+
+    override suspend fun getLinkToken(
+        token: String
+    ) = database
+        .linkQueries
+        .getLinkToken(token = token)
+        .executeAsOneOrNull()
+
+    override suspend fun deleteLinkToken(
+        token: String
+    ) {
+        database
+            .linkQueries
+            .deleteLinkToken(token = token)
+    }
+
+    override suspend fun createAccountLink(
+        id: String,
+        ownerId: String,
+        linkedId: String,
+        createdAt: String
+    ) = database
+        .linkQueries
+        .insertAccountLink(
+            id = id,
+            ownerId = ownerId,
+            linkedId = linkedId,
+            createdAt = createdAt
+        )
+
+    override suspend fun getAccountLink(
+        ownerId: String,
+        linkedId: String
+    ) = database
+        .linkQueries
+        .getAccountLink(
+            ownerId = ownerId,
+            linkedId = linkedId
+        )
+        .executeAsOneOrNull()
 }

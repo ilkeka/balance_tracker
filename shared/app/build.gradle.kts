@@ -32,6 +32,7 @@ kotlin {
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     dependencies {
+        implementation(projects.shared.accountlink)
         implementation(projects.shared.auth)
         implementation(projects.shared.common)
         implementation(projects.shared.core)
