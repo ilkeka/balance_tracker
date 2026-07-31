@@ -60,7 +60,7 @@ internal fun HomeInitialView(sessionEmail: String? = null, onRegister: () -> Uni
                             containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        Text("Authenticate")
+                        Text(stringResource(Res.string.authenticate))
                     }
                 }
             }

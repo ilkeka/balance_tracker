@@ -112,7 +112,7 @@ internal fun HomeLoadedView(
                             containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        Text("Authenticate")
+                        Text(stringResource(Res.string.authenticate))
                     }
                 }
             }
