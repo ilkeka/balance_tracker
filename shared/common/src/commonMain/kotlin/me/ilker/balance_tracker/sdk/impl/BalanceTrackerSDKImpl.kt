@@ -4,6 +4,8 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import me.ilker.balance_tracker.auth.AuthApi
 import me.ilker.balance_tracker.database.DB
 import me.ilker.balance_tracker.database.DatabaseDriverFactory
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
@@ -12,9 +14,13 @@ import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
 
 class BalanceTrackerSDKImpl(
-    driverFactory: DatabaseDriverFactory
+    driverFactory: DatabaseDriverFactory,
+    baseUrl: String
 ) : BalanceTrackerSDK {
     private val database = DB(driverFactory)
+    private val authApi = AuthApi(baseUrl)
+
+    override val sessionEmail: StateFlow<String?> = authApi.sessionEmail
 
     override val transactions: Flow<List<TransactionDomainModel>> = database
         .getTransactions()
@@ -65,4 +71,8 @@ class BalanceTrackerSDKImpl(
     override suspend fun deleteTransaction(id: Long) = database.deleteTransaction(
         id = id
     )
+
+    override suspend fun authenticate(email: String, password: String) {
+        authApi.authenticate(email, password)
+    }
 }

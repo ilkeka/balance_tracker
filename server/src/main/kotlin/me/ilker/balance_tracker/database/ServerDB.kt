@@ -15,7 +15,7 @@ interface ServerDB {
         id: String
     ): User?
 
-    suspend fun getUserByMail(
+    suspend fun getUserByEmail(
         email: String
     ): User?
 

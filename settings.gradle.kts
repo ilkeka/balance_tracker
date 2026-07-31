@@ -22,6 +22,7 @@ include(":server")
 include(":web")
 
 include(":shared:app")
+include(":shared:auth")
 include(":shared:common")
 include(":shared:core")
 include(":shared:home")

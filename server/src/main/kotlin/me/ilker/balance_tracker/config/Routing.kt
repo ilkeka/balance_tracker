@@ -4,10 +4,13 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
+import io.ktor.server.plugins.ratelimit.RateLimitName
+import io.ktor.server.plugins.ratelimit.rateLimit
 import io.ktor.server.resources.Resources
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
+import me.ilker.balance_tracker.route.login
 import me.ilker.balance_tracker.route.registration
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -29,6 +32,9 @@ internal fun Application.configRouting() {
                 status = HttpStatusCode.OK
             )
         }
-        registration()
+        rateLimit(RateLimitName("registration")) {
+            registration()
+        }
+        login()
     }
 }

@@ -1,9 +1,11 @@
 <resources>
     <string name="add">Add</string>
     <string name="add_transaction_success_feedback">Added transaction successfully!</string>
-    <string name="app_name">Balance Tracker</string>
     <string name="amount">Amount</string>
     <string name="amount_format">Decimal part should be represented with the dot. For instance: 10.42</string>
+    <string name="app_name">Balance Tracker</string>
+    <string name="authenticate">Authenticate</string>
+    <string name="authentication_failed">Authentication failed</string>
     <string name="back">Back</string>
     <string name="balance">Balance</string>
     <string name="category">Category</string>
@@ -22,14 +24,16 @@
     <string name="date">Date</string>
     <string name="delete">Delete</string>
     <string name="delete_transaction_success_feedback">Transaction deleted successfully!</string>
+    <string name="description">Description</string>
+    <string name="description_not_found">No description found for this transaction.</string>
     <string name="details">Details</string>
     <string name="edit">Edit</string>
     <string name="edit_transaction_success_feedback">Edited transaction successfully!</string>
+    <string name="email">Email</string>
     <string name="error_90001">Cannot edit the transaction due to an internal error.\nCode is %1$s</string>
     <string name="expense">Expense</string>
     <string name="expense_total">Total expense</string>
-    <string name="description">Description</string>
-    <string name="description_not_found">No description found for this transaction.</string>
+    <string name="hide_password">Hide password</string>
     <string name="income">Income</string>
     <string name="income_total">Total income</string>
     <string name="latest_transactions">Latest transactions</string>
@@ -49,8 +53,10 @@
     </string-array>
     <string name="new_transaction">New Transaction</string>
     <string name="nothing_yet">Nothing yet</string>
-    <string name="start_create_transaction">Start creating transactions in order to track and analyze them.</string>
+    <string name="password">Password</string>
     <string name="see_all">See all</string>
+    <string name="show_password">Show password</string>
+    <string name="start_create_transaction">Start creating transactions in order to track and analyze them.</string>
     <string name="transaction_details">Transaction details</string>
     <string name="transaction_type">Transaction type</string>
     <string name="transactions">Transactions</string>

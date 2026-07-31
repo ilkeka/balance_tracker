@@ -3,7 +3,7 @@ package me.ilker.balance_tracker.models
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class UserSession(
-    val userId: String,
-    val email: String
+data class LoginRequest(
+    val email: Email,
+    val password: Password
 )

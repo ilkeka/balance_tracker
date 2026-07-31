@@ -39,6 +39,14 @@ Compose Multiplatform income/expense tracker. Targets: Android, Desktop (JVM), i
 - **Data**: `BalanceTrackerSDK` interface, SQLDelight for local DB with per-platform drivers (Android: `AndroidSqliteDriver`, iOS: `NativeSqliteDriver`, JVM: `SqliteDriver`, WasmJS: `web-worker-driver`)
 - **Networking**: Ktor client in shared module (CIO engine)
 
+## UI conventions
+
+- Use **Compose Multiplatform** only — no platform-native UI (XML layouts, SwiftUI, etc.)
+- Use the app's design system from `:shared:resources` for theme (`AppTheme`, `Colors.kt`) and Material 3 components (`material3`)
+- No custom composables that reimplement existing Material 3 or theme primitives
+- Never hardcode user-facing strings — always add them to `:shared:resources` `strings.xml` **and** provide translations for all defined languages (`values-*/strings.xml`)
+- Always keep `strings.xml` entries sorted alphabetically by `name` attribute
+
 ## Key quirks
 
 - JVM target: `JVM_24` everywhere

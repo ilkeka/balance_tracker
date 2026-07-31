@@ -9,7 +9,8 @@ import org.koin.dsl.module
 internal actual val appModule = module {
     single<BalanceTrackerSDK> {
         BalanceTrackerSDKImpl(
-            driverFactory = DatabaseDriverFactory()
+            driverFactory = DatabaseDriverFactory(),
+            baseUrl = serverUrl
         )
     }
 }

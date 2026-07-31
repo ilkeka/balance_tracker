@@ -43,6 +43,8 @@ dependencies {
     implementation(libs.ktor.serialization.json)
     implementation(libs.ktor.server.auth)
     implementation(libs.ktor.server.config.yaml)
+    implementation(libs.sqldelight.sqlite.driver)
+    implementation(libs.ktor.server.rate.limit)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cors)

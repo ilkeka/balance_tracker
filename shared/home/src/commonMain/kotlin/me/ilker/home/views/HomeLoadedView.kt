@@ -16,6 +16,7 @@ import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +41,7 @@ import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.add
 import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.app_name
+import me.ilker.balance_tracker.resources.authenticate
 import me.ilker.balance_tracker.resources.balance
 import me.ilker.balance_tracker.resources.category
 import me.ilker.balance_tracker.resources.description
@@ -60,10 +62,12 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun HomeLoadedView(
     state: HomeState.Loaded,
+    user: HomeState.User,
     setSelectedYearMonth: (yearMonth: YearMonth) -> Unit,
     add: () -> Unit,
     onTransactionsClicked: () -> Unit,
-    onClick: (id: Long) -> Unit
+    onClick: (id: Long) -> Unit,
+    onRegister: () -> Unit = {}
 ) {
     val balancePagerState = rememberPagerState(
         initialPage = state.balances.lastIndex.takeUnless { it < 0 } ?: 0,
@@ -87,13 +91,31 @@ internal fun HomeLoadedView(
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp)
                     .padding(top = 48.dp)
-                    .padding(bottom = 12.dp)
+                    .padding(bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = stringResource(Res.string.app_name),
                     fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
                 )
+                user.sessionEmail?.let { sessionEmail ->
+                    Text(
+                        text = sessionEmail,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } ?: run {
+                    Button(
+                        onClick = onRegister,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text(stringResource(Res.string.authenticate))
+                    }
+                }
             }
         },
         bottomBar = {

@@ -16,13 +16,13 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_24)
         }
 
-        namespace = "me.ilker.balance_tracker.shared.app"
+        namespace = "me.ilker.balance_tracker.shared.auth"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
     }
 
     iosArm64()
     iosSimulatorArm64()
-    
+
     jvm()
 
     @OptIn(ExperimentalWasmDsl::class)
@@ -32,22 +32,17 @@ kotlin {
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     dependencies {
-        implementation(projects.shared.auth)
         implementation(projects.shared.common)
         implementation(projects.shared.core)
-        implementation(projects.shared.home)
         implementation(projects.shared.resources)
-        implementation(projects.shared.transaction)
 
         implementation(libs.jetbrains.compose.component.resources)
         implementation(libs.jetbrains.compose.materialicons.core)
+        implementation(libs.jetbrains.compose.materialicons.extended)
         implementation(libs.jetbrains.compose.material3)
-        implementation(libs.jetbrains.compose.navigation)
         implementation(libs.jetbrains.compose.navigationevent)
         implementation(libs.jetbrains.compose.lifecycle.runtime)
-        implementation(libs.koin.compose)
         implementation(libs.kotlinx.coroutines.core)
-        implementation(libs.kotlinx.datetime)
         implementation(libs.kotlinx.serialization.json)
 
         testImplementation(libs.kotlin.test)

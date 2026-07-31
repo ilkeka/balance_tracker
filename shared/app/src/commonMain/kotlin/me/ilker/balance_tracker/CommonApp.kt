@@ -12,6 +12,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -28,6 +29,11 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.theme.AppTheme
+import me.ilker.auth.Registration
+import me.ilker.auth.RegistrationIntent
+import me.ilker.auth.RegistrationManager
+import me.ilker.auth.RegistrationScreen
+import me.ilker.auth.RegistrationSideEffect
 import me.ilker.home.Home
 import me.ilker.home.HomeIntent
 import me.ilker.home.HomeManager
@@ -96,6 +102,7 @@ fun CommonApp() {
                         add = { navController.navigate(AddTransaction) },
                         onTransactionsClicked = { navController.navigate(Transactions(yearMonth = state.value.selectedDate.yearMonth.toString())) },
                         onClick = { id -> navController.navigate(TransactionDetails(id = id)) },
+                        onRegister = { navController.navigate(Registration) },
                     )
                 }
 
@@ -226,6 +233,31 @@ fun CommonApp() {
                                     description = description
                                 )
                             )
+                        },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<Registration> { navBackStackEntry ->
+                    val manager = rememberManager(entry = navBackStackEntry, store = managerStore) {
+                        RegistrationManager(sdk = sdk)
+                    }
+                    val state = manager.state.collectAsStateWithLifecycle()
+                    val sideEffects = manager.sideEffect.receiveAsFlow()
+
+                    LaunchedEffect(Unit) {
+                        sideEffects.collect { effect ->
+                            when (effect) {
+                                is RegistrationSideEffect.RegistrationComplete ->
+                                    navController.popBackStack()
+                            }
+                        }
+                    }
+
+                    RegistrationScreen(
+                        state = state,
+                        onRegister = { email, password ->
+                            manager.sendIntent(RegistrationIntent.Register(email = email, password = password))
                         },
                         onBack = { navController.popBackStack() }
                     )
