@@ -1,5 +1,6 @@
 package me.ilker.accountlink.scanner
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -11,7 +12,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import platform.AVFoundation.AVCaptureConnection
 import platform.AVFoundation.AVCaptureDevice
 import platform.AVFoundation.AVCaptureDeviceInput
-import platform.AVFoundation.AVCaptureMediaTypeVideo
+import platform.AVFoundation.AVMediaTypeVideo
 import platform.AVFoundation.AVCaptureMetadataOutput
 import platform.AVFoundation.AVCaptureMetadataOutputObjectsDelegateProtocol
 import platform.AVFoundation.AVCaptureOutput
@@ -22,7 +23,7 @@ import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVMetadataMachineReadableCodeObject
 import platform.AVFoundation.AVMetadataObjectTypeQRCode
 import platform.AVFoundation.requestAccessForMediaType
-import platform.CoreGraphics.CGRectZero
+import platform.CoreGraphics.CGRectMake
 import platform.UIKit.UIView
 import platform.darwin.NSObject
 
@@ -59,7 +60,7 @@ private class QrScannerDelegate(
     private var didDetect = false
 
     fun createView(): UIView {
-        val view = UIView(frame = CGRectZero)
+        val view = UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0))
         previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill
         view.layer.addSublayer(previewLayer)
         layout(view)
@@ -71,16 +72,16 @@ private class QrScannerDelegate(
     }
 
     fun start() {
-        val device = AVCaptureDevice.defaultDeviceWithMediaType(AVCaptureMediaTypeVideo) ?: return
-        AVCaptureDevice.requestAccessForMediaType(AVCaptureMediaTypeVideo) { granted ->
+        val device = AVCaptureDevice.defaultDeviceWithMediaType(AVMediaTypeVideo) ?: return
+        AVCaptureDevice.requestAccessForMediaType(AVMediaTypeVideo) { granted ->
             if (granted) {
-                val input = AVCaptureDeviceInput(device, error = null) ?: return@requestAccessForMediaType
+                val input = AVCaptureDeviceInput(device, error = null)
                 session.beginConfiguration()
                 session.sessionPreset = AVCaptureSessionPresetHigh
                 if (session.canAddInput(input)) session.addInput(input)
                 if (session.canAddOutput(metadataOutput)) {
                     session.addOutput(metadataOutput)
-                    metadataOutput.setMetadataObjectsDelegate(this, dispatchQueue = null)
+                    metadataOutput.setMetadataObjectsDelegate(this, queue = null)
                     metadataOutput.metadataObjectTypes = listOf(AVMetadataObjectTypeQRCode)
                 }
                 session.commitConfiguration()
