@@ -1,6 +1,17 @@
 <resources>
     <string name="add">Add</string>
     <string name="add_transaction_success_feedback">Added transaction successfully!</string>
+    <string name="account_link_done">Done</string>
+    <string name="account_link_failed">Account linking failed</string>
+    <string name="account_link_manual_hint">Or enter the code manually</string>
+    <string name="account_link_my_qr_tab">My QR</string>
+    <string name="account_link_qr_description">Your link code</string>
+    <string name="account_link_refresh">Refresh code</string>
+    <string name="account_link_scan_hint">Share this code to link accounts</string>
+    <string name="account_link_scan_tab">Scan</string>
+    <string name="account_link_success">Accounts linked successfully</string>
+    <string name="account_link_token_placeholder">Enter link token</string>
+    <string name="account_linking">Account linking</string>
     <string name="amount">Amount</string>
     <string name="amount_format">Decimal part should be represented with the dot. For instance: 10.42</string>
     <string name="app_name">Balance Tracker</string>
@@ -8,6 +19,8 @@
     <string name="authentication_failed">Authentication failed</string>
     <string name="back">Back</string>
     <string name="balance">Balance</string>
+    <string name="camera_permission_denied">Camera permission is required to scan QR codes</string>
+    <string name="camera_permission_grant">Grant camera permission</string>
     <string name="category">Category</string>
     <string name="category_bill">Bill</string>
     <string name="category_entertainment">Entertainment</string>
@@ -37,6 +50,7 @@
     <string name="income">Income</string>
     <string name="income_total">Total income</string>
     <string name="latest_transactions">Latest transactions</string>
+    <string name="link_account">Link account</string>
     <string-array name="month_names">
         <item>January</item>
         <item>February</item>

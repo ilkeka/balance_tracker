@@ -1,8 +1,6 @@
 package me.ilker.balance_tracker.auth
 
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -22,15 +20,10 @@ data class AuthRequest(val email: String, val password: String)
 @Serializable
 data class AuthResponse(val message: String)
 
-class AuthApi(private val baseUrl: String) {
-    private val client = HttpClient {
-        install(HttpCookies)
-        install(HttpTimeout) {
-            connectTimeoutMillis = 10_000
-            requestTimeoutMillis = 30_000
-        }
-    }
-
+class AuthApi(
+    private val client: HttpClient,
+    private val baseUrl: String
+) {
     private val json = Json { ignoreUnknownKeys = true }
 
     private val _sessionEmail = MutableStateFlow<String?>(null)

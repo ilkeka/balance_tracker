@@ -5,7 +5,9 @@ import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import me.ilker.balance_tracker.api.apiClient
 import me.ilker.balance_tracker.auth.AuthApi
+import me.ilker.balance_tracker.auth.LinkApi
 import me.ilker.balance_tracker.database.DB
 import me.ilker.balance_tracker.database.DatabaseDriverFactory
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
@@ -18,7 +20,9 @@ class BalanceTrackerSDKImpl(
     baseUrl: String
 ) : BalanceTrackerSDK {
     private val database = DB(driverFactory)
-    private val authApi = AuthApi(baseUrl)
+    private val client = apiClient
+    private val authApi = AuthApi(client, baseUrl)
+    private val linkApi = LinkApi(client, baseUrl)
 
     override val sessionEmail: StateFlow<String?> = authApi.sessionEmail
 
@@ -74,5 +78,11 @@ class BalanceTrackerSDKImpl(
 
     override suspend fun authenticate(email: String, password: String) {
         authApi.authenticate(email, password)
+    }
+
+    override suspend fun getLinkToken(): String = linkApi.getLinkToken()
+
+    override suspend fun linkAccount(token: String) {
+        linkApi.link(token)
     }
 }

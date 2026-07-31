@@ -14,12 +14,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.QrCode2
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -38,6 +42,7 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
 import me.ilker.balance_tracker.resources.Res
+import me.ilker.balance_tracker.resources.account_linking
 import me.ilker.balance_tracker.resources.add
 import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.app_name
@@ -67,7 +72,8 @@ internal fun HomeLoadedView(
     add: () -> Unit,
     onTransactionsClicked: () -> Unit,
     onClick: (id: Long) -> Unit,
-    onRegister: () -> Unit = {}
+    onRegister: () -> Unit = {},
+    onAccountLink: () -> Unit = {}
 ) {
     val balancePagerState = rememberPagerState(
         initialPage = state.balances.lastIndex.takeUnless { it < 0 } ?: 0,
@@ -101,11 +107,19 @@ internal fun HomeLoadedView(
                     modifier = Modifier.weight(1f)
                 )
                 user.sessionEmail?.let { sessionEmail ->
-                    Text(
-                        text = sessionEmail,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = sessionEmail,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        IconButton(onClick = onAccountLink) {
+                            Icon(
+                                imageVector = Icons.Rounded.QrCode2,
+                                contentDescription = stringResource(Res.string.account_linking)
+                            )
+                        }
+                    }
                 } ?: run {
                     Button(
                         onClick = onRegister,

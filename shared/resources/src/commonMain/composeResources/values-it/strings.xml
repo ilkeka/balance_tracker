@@ -1,6 +1,17 @@
 <resources>
     <string name="add">Aggiungi</string>
     <string name="add_transaction_success_feedback">Transazione aggiunta correttamente!</string>
+    <string name="account_link_done">Fatto</string>
+    <string name="account_link_failed">Collegamento account fallito</string>
+    <string name="account_link_manual_hint">Oppure inserisci il codice manualmente</string>
+    <string name="account_link_my_qr_tab">Il mio QR</string>
+    <string name="account_link_qr_description">Il tuo codice di collegamento</string>
+    <string name="account_link_refresh">Aggiorna codice</string>
+    <string name="account_link_scan_hint">Condividi questo codice per collegare gli account</string>
+    <string name="account_link_scan_tab">Scansiona</string>
+    <string name="account_link_success">Account collegati correttamente</string>
+    <string name="account_link_token_placeholder">Inserisci il token di collegamento</string>
+    <string name="account_linking">Collegamento account</string>
     <string name="amount">Importo</string>
     <string name="amount_format">La parte decimale dovrebbe essere rappresentata con il punto. Per esempio: 10.42</string>
     <string name="app_name">Balance Tracker</string>
@@ -8,6 +19,8 @@
     <string name="authentication_failed">Autenticazione fallita</string>
     <string name="back">Indietro</string>
     <string name="balance">Saldo</string>
+    <string name="camera_permission_denied">L\'autorizzazione alla fotocamera è necessaria per scansionare i QR code</string>
+    <string name="camera_permission_grant">Concedi l\'autorizzazione alla fotocamera</string>
     <string name="category">Categoria</string>
     <string name="category_bill">Bolletta</string>
     <string name="category_entertainment">Intrattenimento</string>
@@ -37,6 +50,7 @@
     <string name="income">Entrata</string>
     <string name="income_total">Entrate</string>
     <string name="latest_transactions">Ultime transazioni</string>
+    <string name="link_account">Collega account</string>
     <string-array name="month_names">
         <item>Gennaio</item>
         <item>Febbraio</item>
