@@ -95,12 +95,9 @@ fun CommonApp() {
                         HomeManager(sdk = sdk)
                     }
                     val state = manager.state.collectAsStateWithLifecycle()
-                    val sessionEmailState = sdk.sessionEmail.collectAsStateWithLifecycle()
-                    val sessionEmail = sessionEmailState.value
 
                     HomeScreen(
                         state = state,
-                        sessionEmail = sessionEmail,
                         setSelectedYearMonth = { value -> manager.sendIntent(HomeIntent.SetSelectedYearMonth(yearMonth = value)) },
                         add = { navController.navigate(AddTransaction) },
                         onTransactionsClicked = { navController.navigate(Transactions(yearMonth = state.value.selectedDate.yearMonth.toString())) },

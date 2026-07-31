@@ -4,6 +4,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -43,7 +44,11 @@ class HomeManager(
 
     init {
         scope.launch {
-            sdk.transactions.collect { transactions ->
+            combine(sdk.transactions, sdk.sessionEmail) { transactions, sessionEmail ->
+                transactions to sessionEmail
+            }.collect { (transactions, sessionEmail) ->
+                val user = HomeState.User(sessionEmail = sessionEmail)
+
                 val transactionsByYearMonth = transactions
                     .groupBy { transaction -> transaction.getLocalDate().yearMonth }
                     .asIterable()
@@ -76,10 +81,17 @@ class HomeManager(
                 }
 
                 currentState.update {
-                    HomeState.Loaded(
-                        selectedDate = currentState.value.selectedDate,
-                        balances = balances
-                    )
+                    when (it) {
+                        HomeState.InitialState -> HomeState.Loaded(
+                            selectedDate = it.selectedDate,
+                            user = user,
+                            balances = balances
+                        )
+                        is HomeState.Loaded -> it.copy(
+                            user = user,
+                            balances = balances
+                        )
+                    }
                 }
             }
         }

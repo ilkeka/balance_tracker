@@ -41,6 +41,7 @@ import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.add
 import me.ilker.balance_tracker.resources.amount
 import me.ilker.balance_tracker.resources.app_name
+import me.ilker.balance_tracker.resources.authenticate
 import me.ilker.balance_tracker.resources.balance
 import me.ilker.balance_tracker.resources.category
 import me.ilker.balance_tracker.resources.description
@@ -61,7 +62,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun HomeLoadedView(
     state: HomeState.Loaded,
-    sessionEmail: String? = null,
+    user: HomeState.User,
     setSelectedYearMonth: (yearMonth: YearMonth) -> Unit,
     add: () -> Unit,
     onTransactionsClicked: () -> Unit,
@@ -99,13 +100,13 @@ internal fun HomeLoadedView(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
-                if (sessionEmail != null) {
+                user.sessionEmail?.let { sessionEmail ->
                     Text(
                         text = sessionEmail,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                } else {
+                } ?: run {
                     Button(
                         onClick = onRegister,
                         colors = ButtonDefaults.buttonColors(

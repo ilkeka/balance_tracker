@@ -9,17 +9,25 @@ import me.ilker.core.State
 import kotlin.time.Clock
 
 sealed class HomeState(
-    open val selectedDate: LocalDate
+    open val selectedDate: LocalDate,
+    open val user: User
 ) : State {
+    data class User(
+        val sessionEmail: String?
+    )
+
     data object InitialState: HomeState(
-        selectedDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        selectedDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
+        user = User(sessionEmail = null)
     )
 
     data class Loaded(
         override val selectedDate: LocalDate,
+        override val user: User,
         val balances: List<BalanceUiModel>
     ) : HomeState(
-        selectedDate = selectedDate
+        selectedDate = selectedDate,
+        user = user
     ) {
         data class BalanceUiModel(
             val yearMonth: YearMonth,

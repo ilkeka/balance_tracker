@@ -25,11 +25,13 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.app_name
+import me.ilker.balance_tracker.resources.authenticate
+import me.ilker.home.HomeState
 import org.jetbrains.compose.resources.stringResource
 
 @ExperimentalMaterial3Api
 @Composable
-internal fun HomeInitialView(sessionEmail: String? = null, onRegister: () -> Unit = {}) {
+internal fun HomeInitialView(user: HomeState.User, onRegister: () -> Unit = {}) {
     Scaffold(
         modifier = Modifier,
         topBar = {
@@ -47,13 +49,13 @@ internal fun HomeInitialView(sessionEmail: String? = null, onRegister: () -> Uni
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
-                if (sessionEmail != null) {
+                user.sessionEmail?.let { sessionEmail ->
                     Text(
                         text = sessionEmail,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                } else {
+                } ?: run {
                     Button(
                         onClick = onRegister,
                         colors = ButtonDefaults.buttonColors(
