@@ -85,6 +85,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.koin.compose)
             implementation(libs.sqldelight.android.driver)
+            implementation(libs.ktor.client.okhttp)
         }
 
         iosMain.dependencies {
