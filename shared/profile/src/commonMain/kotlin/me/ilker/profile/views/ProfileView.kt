@@ -113,7 +113,10 @@ internal fun ProfileView(
                 )
             }
 
-            PrimaryTabRow(selectedTabIndex = selectedTab) {
+            PrimaryTabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            ) {
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
@@ -137,10 +140,6 @@ internal fun ProfileView(
                     text = stringResource(Res.string.account_link_failed),
                     onDismiss = onDismissMessage
                 )
-                else -> {}
-            }
-
-            when (val currentState = state.value) {
                 ProfileState.Loading -> Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -161,7 +160,6 @@ internal fun ProfileView(
                     linking = true,
                     onLink = onLink
                 )
-                else -> {}
             }
         }
     }

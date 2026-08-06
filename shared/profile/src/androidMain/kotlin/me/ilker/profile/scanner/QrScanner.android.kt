@@ -4,7 +4,9 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
@@ -14,7 +16,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -67,10 +71,15 @@ internal actual fun QrScanner(onScanned: (String) -> Unit) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp),
                 text = stringResource(Res.string.camera_permission_denied),
                 style = MaterialTheme.typography.bodyMedium
             )
+
             Spacer(Modifier.height(12.dp))
+
             Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
                 Text(stringResource(Res.string.camera_permission_grant))
             }
@@ -128,6 +137,7 @@ private class QrCodeAnalyzer(
     private val scanner = BarcodeScanning.getClient()
     private var processing = false
 
+    @OptIn(ExperimentalGetImage::class)
     override fun analyze(imageProxy: ImageProxy) {
         if (processing) {
             imageProxy.close()

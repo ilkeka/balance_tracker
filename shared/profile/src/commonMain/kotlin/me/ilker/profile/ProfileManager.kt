@@ -32,7 +32,7 @@ class ProfileManager(
     }
 
     private fun refreshToken() {
-        if (managerState.value is ProfileState.Loading) return
+        if (managerState.value is ProfileState.Loading && lastToken != null) return
 
         managerState.value = ProfileState.Loading
         scope.launch {
