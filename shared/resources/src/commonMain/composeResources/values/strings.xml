@@ -68,6 +68,7 @@
     <string name="new_transaction">New Transaction</string>
     <string name="nothing_yet">Nothing yet</string>
     <string name="password">Password</string>
+    <string name="profile">Profile</string>
     <string name="see_all">See all</string>
     <string name="show_password">Show password</string>
     <string name="start_create_transaction">Start creating transactions in order to track and analyze them.</string>
