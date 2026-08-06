@@ -22,7 +22,7 @@ data class LinkRequest(val token: String)
 @Serializable
 data class LinkResponse(val message: String)
 
-class LinkApi(
+internal class LinkApi(
     private val client: HttpClient,
     private val baseUrl: String
 ) {
@@ -48,10 +48,17 @@ class LinkApi(
         }
     }
 
-    private suspend fun decodeMessage(response: HttpResponse): String = try {
-        json.decodeFromString<LinkResponse>(response.bodyAsText()).message
-    } catch (_: Exception) {
-        response.bodyAsText()
+    private suspend fun decodeMessage(response: HttpResponse): String {
+        val text = response.bodyAsText()
+        return if (text.isBlank()) {
+            "Request failed (${response.status.value})"
+        } else {
+            try {
+                json.decodeFromString<LinkResponse>(text).message
+            } catch (_: Exception) {
+                text
+            }
+        }
     }
 }
 

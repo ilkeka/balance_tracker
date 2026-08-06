@@ -1,13 +1,13 @@
 package me.ilker.balance_tracker.route
 
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.auth.UserIdPrincipal
+import io.ktor.server.auth.principal
 import io.ktor.server.request.receiveNullable
 import io.ktor.server.resources.get
 import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.server.sessions.get
-import io.ktor.server.sessions.sessions
 import kotlin.time.Clock
 import me.ilker.balance_tracker.LinkRoute
 import me.ilker.balance_tracker.LinkTokenRoute
@@ -15,7 +15,6 @@ import me.ilker.balance_tracker.database.ServerDB
 import me.ilker.balance_tracker.models.LinkTokenRequest
 import me.ilker.balance_tracker.models.LinkTokenResponse
 import me.ilker.balance_tracker.models.MessageResponse
-import me.ilker.balance_tracker.models.UserSession
 import org.koin.ktor.ext.inject
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -25,20 +24,13 @@ internal fun Route.linkToken() {
     val db by inject<ServerDB>()
 
     get<LinkTokenRoute> {
-        val session = call.sessions.get<UserSession>()
-            ?: run {
-                call.respond(
-                    status = HttpStatusCode.Unauthorized,
-                    message = MessageResponse("Not authenticated")
-                )
-                return@get
-            }
+        val userId = call.principal<UserIdPrincipal>()!!.name
 
         val token = Uuid.generateV4().toString()
 
         db.createLinkToken(
             token = token,
-            ownerId = session.userId,
+            ownerId = userId,
             createdAt = Clock.System.now().toString()
         )
 
@@ -54,14 +46,7 @@ internal fun Route.link() {
     val db by inject<ServerDB>()
 
     post<LinkRoute> {
-        val session = call.sessions.get<UserSession>()
-            ?: run {
-                call.respond(
-                    status = HttpStatusCode.Unauthorized,
-                    message = MessageResponse("Not authenticated")
-                )
-                return@post
-            }
+        val userId = call.principal<UserIdPrincipal>()!!.name
 
         val request = runCatching { call.receiveNullable<LinkTokenRequest>() }
             .getOrNull()
@@ -82,7 +67,7 @@ internal fun Route.link() {
                 return@post
             }
 
-        if (linkToken.ownerId == session.userId) {
+        if (linkToken.ownerId == userId) {
             call.respond(
                 status = HttpStatusCode.BadRequest,
                 message = MessageResponse("You cannot link your account to yourself")
@@ -92,7 +77,7 @@ internal fun Route.link() {
 
         val existingLink = db.getAccountLink(
             ownerId = linkToken.ownerId,
-            linkedId = session.userId
+            linkedId = userId
         )
 
         if (existingLink != null) {
@@ -106,7 +91,7 @@ internal fun Route.link() {
         db.createAccountLink(
             id = Uuid.generateV4().toString(),
             ownerId = linkToken.ownerId,
-            linkedId = session.userId,
+            linkedId = userId,
             createdAt = Clock.System.now().toString()
         )
 

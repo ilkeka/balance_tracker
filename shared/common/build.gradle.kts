@@ -110,6 +110,7 @@ kotlin {
         implementation(projects.shared.core)
         implementation(projects.shared.resources)
 
+        implementation(libs.androidx.datastore.preferences)
         implementation(libs.jetbrains.compose.component.resources)
         implementation(libs.jetbrains.compose.material3)
         implementation(libs.jetbrains.compose.navigation)
@@ -119,6 +120,7 @@ kotlin {
         implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.datetime)
         implementation(libs.kotlinx.serialization.json)
+        implementation(libs.ktor.client.auth)
         implementation(libs.ktor.client.cio)
         implementation(libs.ktor.client.core)
         implementation(libs.sqldelight.coroutines.extensions)
