@@ -11,6 +11,7 @@ fun ProfileScreen(
     onRefreshToken: () -> Unit,
     onLink: (token: String) -> Unit,
     onDismissMessage: () -> Unit,
+    onLogout: () -> Unit,
     onBack: () -> Unit
 ) {
     ProfileView(
@@ -19,6 +20,7 @@ fun ProfileScreen(
         onRefreshToken = onRefreshToken,
         onLink = onLink,
         onDismissMessage = onDismissMessage,
+        onLogout = onLogout,
         onBack = onBack
     )
 }

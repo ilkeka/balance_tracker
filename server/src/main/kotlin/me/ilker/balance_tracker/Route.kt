@@ -13,3 +13,6 @@ class LinkTokenRoute
 
 @Resource("/link")
 class LinkRoute
+
+@Resource("/logout")
+class Logout

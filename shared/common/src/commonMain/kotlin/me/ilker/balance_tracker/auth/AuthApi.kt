@@ -68,6 +68,14 @@ internal class AuthApi(
         )
     }
 
+    @Throws(Exception::class)
+    suspend fun logout() {
+        val response = client.post("$baseUrl/logout")
+        if (response.status != HttpStatusCode.OK) {
+            throw AuthException(decodeMessage(response))
+        }
+    }
+
     private suspend fun decodeMessage(response: HttpResponse): String = try {
         json.decodeFromString<MessageResponse>(response.bodyAsText()).message
     } catch (_: Exception) {

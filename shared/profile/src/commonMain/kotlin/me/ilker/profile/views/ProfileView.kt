@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -55,6 +56,7 @@ import me.ilker.balance_tracker.resources.account_link_scan_hint
 import me.ilker.balance_tracker.resources.account_link_scan_tab
 import me.ilker.balance_tracker.resources.account_link_success
 import me.ilker.balance_tracker.resources.back
+import me.ilker.balance_tracker.resources.logout
 import me.ilker.balance_tracker.resources.profile
 import me.ilker.profile.ProfileState
 import me.ilker.profile.scanner.ManualTokenEntry
@@ -69,6 +71,7 @@ internal fun ProfileView(
     onRefreshToken: () -> Unit,
     onLink: (token: String) -> Unit,
     onDismissMessage: () -> Unit,
+    onLogout: () -> Unit,
     onBack: () -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -131,35 +134,58 @@ internal fun ProfileView(
                 )
             }
 
-            when (val currentState = state.value) {
-                is ProfileState.Linked -> MessageBanner(
-                    text = stringResource(Res.string.account_link_success),
-                    onDismiss = onDismissMessage
-                )
-                is ProfileState.Error -> MessageBanner(
-                    text = stringResource(Res.string.account_link_failed),
-                    onDismiss = onDismissMessage
-                )
-                ProfileState.Loading -> Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-                is ProfileState.Idle -> when (selectedTab) {
-                    0 -> MyQrContent(
-                        token = currentState.token,
-                        onRefresh = onRefreshToken
+            Box(
+                modifier = Modifier.weight(1f)
+            ) {
+                when (val currentState = state.value) {
+                    is ProfileState.Linked -> MessageBanner(
+                        text = stringResource(Res.string.account_link_success),
+                        onDismiss = onDismissMessage
                     )
-                    else -> ScanContent(
-                        linking = false,
+                    is ProfileState.Error -> MessageBanner(
+                        text = stringResource(Res.string.account_link_failed),
+                        onDismiss = onDismissMessage
+                    )
+                    ProfileState.Loading -> Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                    is ProfileState.Idle -> when (selectedTab) {
+                        0 -> MyQrContent(
+                            token = currentState.token,
+                            onRefresh = onRefreshToken
+                        )
+                        else -> ScanContent(
+                            linking = false,
+                            onLink = onLink
+                        )
+                    }
+                    ProfileState.Linking -> ScanContent(
+                        linking = true,
                         onLink = onLink
                     )
+                    ProfileState.LoggingOut -> Unit
                 }
-                ProfileState.Linking -> ScanContent(
-                    linking = true,
-                    onLink = onLink
-                )
+            }
+
+            val loggingOut = state.value is ProfileState.LoggingOut
+            OutlinedButton(
+                onClick = onLogout,
+                enabled = !loggingOut,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 16.dp)
+            ) {
+                if (loggingOut) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text(stringResource(Res.string.logout))
             }
         }
     }

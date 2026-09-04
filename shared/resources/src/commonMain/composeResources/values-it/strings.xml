@@ -51,6 +51,7 @@
     <string name="income_total">Entrate</string>
     <string name="latest_transactions">Ultime transazioni</string>
     <string name="link_account">Collega account</string>
+    <string name="logout">Esci</string>
     <string-array name="month_names">
         <item>Gennaio</item>
         <item>Febbraio</item>

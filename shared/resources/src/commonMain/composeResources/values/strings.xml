@@ -51,6 +51,7 @@
     <string name="income_total">Total income</string>
     <string name="latest_transactions">Latest transactions</string>
     <string name="link_account">Link account</string>
+    <string name="logout">Log out</string>
     <string-array name="month_names">
         <item>January</item>
         <item>February</item>

@@ -124,6 +124,8 @@ fun CommonApp() {
                         sideEffects.collect { effect ->
                             when (effect) {
                                 is ProfileSideEffect.LinkComplete -> Unit
+                                is ProfileSideEffect.LogoutComplete ->
+                                    navController.popBackStack(Home, inclusive = false)
                             }
                         }
                     }
@@ -134,6 +136,7 @@ fun CommonApp() {
                         onRefreshToken = { manager.sendIntent(ProfileIntent.RefreshToken) },
                         onLink = { token -> manager.sendIntent(ProfileIntent.Link(token = token)) },
                         onDismissMessage = { manager.sendIntent(ProfileIntent.DismissMessage) },
+                        onLogout = { manager.sendIntent(ProfileIntent.Logout) },
                         onBack = { navController.popBackStack() }
                     )
                 }

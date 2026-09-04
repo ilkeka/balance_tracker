@@ -102,6 +102,11 @@ internal class BalanceTrackerSDKImpl(
         authApi.authenticate(email, password)
     }
 
+    override suspend fun logout() {
+        runCatching { authApi.logout() }
+        authRepository.clear()
+    }
+
     override suspend fun getLinkToken(): String = linkApi.getLinkToken()
 
     override suspend fun linkAccount(token: String) {

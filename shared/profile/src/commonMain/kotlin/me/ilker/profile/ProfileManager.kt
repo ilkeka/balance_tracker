@@ -28,6 +28,7 @@ class ProfileManager(
             ProfileIntent.DismissMessage -> {
                 lastToken?.let { managerState.value = ProfileState.Idle(it) }
             }
+            ProfileIntent.Logout -> logout()
         }
     }
 
@@ -57,6 +58,21 @@ class ProfileManager(
             }.onSuccess {
                 managerState.value = ProfileState.Linked
                 sideEffect.trySend(ProfileSideEffect.LinkComplete)
+            }.onFailure {
+                managerState.value = ProfileState.Error(ProfileError.Failed)
+            }
+        }
+    }
+
+    private fun logout() {
+        if (managerState.value is ProfileState.LoggingOut) return
+
+        managerState.value = ProfileState.LoggingOut
+        scope.launch {
+            runCatching {
+                sdk.logout()
+            }.onSuccess {
+                sideEffect.trySend(ProfileSideEffect.LogoutComplete)
             }.onFailure {
                 managerState.value = ProfileState.Error(ProfileError.Failed)
             }

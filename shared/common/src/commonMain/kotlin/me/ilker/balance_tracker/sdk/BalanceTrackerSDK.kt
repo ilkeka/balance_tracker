@@ -40,6 +40,9 @@ interface BalanceTrackerSDK {
     suspend fun authenticate(email: String, password: String)
 
     @Throws(Exception::class)
+    suspend fun logout()
+
+    @Throws(Exception::class)
     suspend fun getLinkToken(): String
 
     @Throws(Exception::class)
