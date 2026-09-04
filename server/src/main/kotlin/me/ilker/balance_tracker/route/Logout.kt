@@ -15,7 +15,14 @@ internal fun Route.logout() {
     val db by inject<ServerDB>()
 
     post<Logout> {
-        val userId = call.principal<UserIdPrincipal>()!!.name
+        val userId = call.principal<UserIdPrincipal>()?.name ?: run {
+            call.respond(
+                status = HttpStatusCode.NotFound,
+                message = MessageResponse("No user id exists for this call.")
+            )
+            return@post
+        }
+
         db.deleteSessionTokenByUserId(userId)
 
         call.respond(

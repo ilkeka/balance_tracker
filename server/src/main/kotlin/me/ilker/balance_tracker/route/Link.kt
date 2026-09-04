@@ -24,7 +24,13 @@ internal fun Route.linkToken() {
     val db by inject<ServerDB>()
 
     get<LinkTokenRoute> {
-        val userId = call.principal<UserIdPrincipal>()!!.name
+        val userId = call.principal<UserIdPrincipal>()?.name ?: run {
+            call.respond(
+                status = HttpStatusCode.NotFound,
+                message = MessageResponse("No user id exists for this call.")
+            )
+            return@get
+        }
 
         val token = Uuid.generateV4().toString()
 
@@ -46,7 +52,13 @@ internal fun Route.link() {
     val db by inject<ServerDB>()
 
     post<LinkRoute> {
-        val userId = call.principal<UserIdPrincipal>()!!.name
+        val userId = call.principal<UserIdPrincipal>()?.name ?: run {
+            call.respond(
+                status = HttpStatusCode.NotFound,
+                message = MessageResponse("No user id exists for this call.")
+            )
+            return@post
+        }
 
         val request = runCatching { call.receiveNullable<LinkTokenRequest>() }
             .getOrNull()
