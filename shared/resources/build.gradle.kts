@@ -31,6 +31,7 @@ kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
+        binaries.executable()
         compilerOptions {
             freeCompilerArgs.add("-Xwasm-kclass-fqn")
         }
