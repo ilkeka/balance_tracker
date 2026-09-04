@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface BalanceTrackerSDK {
     val transactions: Flow<List<TransactionDomainModel>>
+    val authenticatedUser: StateFlow<AuthenticatedUser?>
     val sessionEmail: StateFlow<String?>
 
     suspend fun getTransactionById(id: Long): TransactionDomainModel?
@@ -37,6 +38,9 @@ interface BalanceTrackerSDK {
 
     @Throws(Exception::class)
     suspend fun authenticate(email: String, password: String)
+
+    @Throws(Exception::class)
+    suspend fun logout()
 
     @Throws(Exception::class)
     suspend fun getLinkToken(): String

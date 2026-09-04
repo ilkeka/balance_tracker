@@ -4,6 +4,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
+import io.ktor.server.auth.authenticate
 import io.ktor.server.plugins.ratelimit.RateLimitName
 import io.ktor.server.plugins.ratelimit.rateLimit
 import io.ktor.server.resources.Resources
@@ -13,6 +14,7 @@ import io.ktor.server.routing.routing
 import me.ilker.balance_tracker.route.link
 import me.ilker.balance_tracker.route.linkToken
 import me.ilker.balance_tracker.route.login
+import me.ilker.balance_tracker.route.logout
 import me.ilker.balance_tracker.route.registration
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -38,7 +40,10 @@ internal fun Application.configRouting() {
             registration()
         }
         login()
-        linkToken()
-        link()
+        authenticate("auth-bearer") {
+            linkToken()
+            link()
+            logout()
+        }
     }
 }

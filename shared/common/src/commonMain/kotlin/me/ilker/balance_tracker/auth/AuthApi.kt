@@ -3,13 +3,12 @@ package me.ilker.balance_tracker.auth
 import io.ktor.client.HttpClient
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -18,36 +17,35 @@ import kotlinx.serialization.json.Json
 data class AuthRequest(val email: String, val password: String)
 
 @Serializable
-data class AuthResponse(val message: String)
+data class AuthResponse(
+    val token: String,
+    val expiresAt: String,
+    val message: String
+)
 
-class AuthApi(
+@Serializable
+private data class MessageResponse(val message: String)
+
+internal class AuthApi(
     private val client: HttpClient,
-    private val baseUrl: String
+    private val baseUrl: String,
+    private val authRepository: AuthRepository
 ) {
     private val json = Json { ignoreUnknownKeys = true }
-
-    private val _sessionEmail = MutableStateFlow<String?>(null)
-    val sessionEmail: StateFlow<String?> = _sessionEmail.asStateFlow()
 
     suspend fun authenticate(email: String, password: String) {
         val response = client.post("$baseUrl/register") {
             contentType(ContentType.Application.Json)
             setBody(json.encodeToString(AuthRequest(email, password)))
         }
-        if (response.status == HttpStatusCode.Created) {
-            _sessionEmail.value = email
-            return
+        when (response.status) {
+            HttpStatusCode.Created -> {
+                saveSession(response, email)
+                return
+            }
+            HttpStatusCode.Conflict -> login(email, password)
+            else -> throw AuthException(decodeMessage(response))
         }
-        if (response.status == HttpStatusCode.Conflict) {
-            login(email, password)
-            return
-        }
-        val msg = try {
-            json.decodeFromString<AuthResponse>(response.bodyAsText()).message
-        } catch (_: Exception) {
-            response.bodyAsText()
-        }
-        throw AuthException(msg)
     }
 
     private suspend fun login(email: String, password: String) {
@@ -56,14 +54,32 @@ class AuthApi(
             setBody(json.encodeToString(AuthRequest(email, password)))
         }
         if (response.status != HttpStatusCode.OK) {
-            val msg = try {
-                json.decodeFromString<AuthResponse>(response.bodyAsText()).message
-            } catch (_: Exception) {
-                response.bodyAsText()
-            }
-            throw AuthException(msg)
+            throw AuthException(decodeMessage(response))
         }
-        _sessionEmail.value = email
+        saveSession(response, email)
+    }
+
+    private suspend fun saveSession(response: HttpResponse, email: String) {
+        val auth = json.decodeFromString<AuthResponse>(response.bodyAsText())
+        authRepository.save(
+            email = email,
+            token = auth.token,
+            expiresAt = Instant.parse(auth.expiresAt)
+        )
+    }
+
+    @Throws(Exception::class)
+    suspend fun logout() {
+        val response = client.post("$baseUrl/logout")
+        if (response.status != HttpStatusCode.OK) {
+            throw AuthException(decodeMessage(response))
+        }
+    }
+
+    private suspend fun decodeMessage(response: HttpResponse): String = try {
+        json.decodeFromString<MessageResponse>(response.bodyAsText()).message
+    } catch (_: Exception) {
+        response.bodyAsText()
     }
 }
 

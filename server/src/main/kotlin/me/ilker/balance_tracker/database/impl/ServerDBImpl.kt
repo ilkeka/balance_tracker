@@ -66,6 +66,35 @@ internal class ServerDBImpl : ServerDB {
         .getUsers()
         .executeAsList()
 
+    override suspend fun createSessionToken(
+        token: String,
+        userId: String,
+        expiresAt: String,
+        createdAt: String
+    ) = database
+        .sessionTokenQueries
+        .insertSessionToken(
+            token = token,
+            userId = userId,
+            expiresAt = expiresAt,
+            createdAt = createdAt
+        )
+
+    override suspend fun getSessionToken(
+        token: String
+    ) = database
+        .sessionTokenQueries
+        .getSessionToken(token = token)
+        .executeAsOneOrNull()
+
+    override suspend fun deleteSessionTokenByUserId(
+        userId: String
+    ) {
+        database
+            .sessionTokenQueries
+            .deleteSessionTokenByUserId(userId = userId)
+    }
+
     override suspend fun createLinkToken(
         token: String,
         ownerId: String,

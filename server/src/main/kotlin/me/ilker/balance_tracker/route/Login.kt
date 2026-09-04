@@ -5,16 +5,19 @@ import io.ktor.server.request.receiveNullable
 import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.server.sessions.sessions
-import io.ktor.server.sessions.set
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import me.ilker.balance_tracker.Login
 import me.ilker.balance_tracker.database.ServerDB
+import me.ilker.balance_tracker.models.AuthTokenResponse
 import me.ilker.balance_tracker.models.LoginRequest
 import me.ilker.balance_tracker.models.MessageResponse
-import me.ilker.balance_tracker.models.UserSession
 import me.ilker.balance_tracker.passwordVerify
 import org.koin.ktor.ext.inject
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
+@ExperimentalUuidApi
 internal fun Route.login() {
     val db by inject<ServerDB>()
 
@@ -39,11 +42,24 @@ internal fun Route.login() {
             return@post
         }
 
-        call.sessions.set(UserSession(userId = user.id, email = user.email))
+        val token = Uuid.generateV4().toString()
+        val expiresAt = Clock.System.now() + 30.days
+
+        db.deleteSessionTokenByUserId(user.id)
+        db.createSessionToken(
+            token = token,
+            userId = user.id,
+            expiresAt = expiresAt.toString(),
+            createdAt = Clock.System.now().toString()
+        )
 
         call.respond(
             status = HttpStatusCode.OK,
-            message = MessageResponse("Login successful")
+            message = AuthTokenResponse(
+                token = token,
+                expiresAt = expiresAt.toString(),
+                message = "Login successful"
+            )
         )
     }
 }

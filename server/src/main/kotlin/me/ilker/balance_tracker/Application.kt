@@ -2,7 +2,7 @@ package me.ilker.balance_tracker
 
 import io.ktor.server.application.Application
 import io.ktor.server.netty.EngineMain
-import me.ilker.balance_tracker.config.configAuth
+import me.ilker.balance_tracker.config.configAuthentication
 import me.ilker.balance_tracker.config.configHttp
 import me.ilker.balance_tracker.config.configRateLimit
 import me.ilker.balance_tracker.config.configRouting
@@ -23,8 +23,8 @@ fun main(args: Array<String>) {
 @ExperimentalUuidApi
 @Suppress("Unused")
 fun Application.module() {
+    configAuthentication()
     configHttp()
-    configAuth()
     configRateLimit()
     configSerialization()
     configStatusPages()

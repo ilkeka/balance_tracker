@@ -1,0 +1,16 @@
+CREATE TABLE SessionToken (
+    token TEXT NOT NULL PRIMARY KEY,
+    userId TEXT NOT NULL,
+    expiresAt TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+);
+
+getSessionToken:
+SELECT * FROM SessionToken WHERE token = ?;
+
+deleteSessionTokenByUserId:
+DELETE FROM SessionToken WHERE userId = ?;
+
+insertSessionToken:
+INSERT INTO SessionToken(token, userId, expiresAt, createdAt)
+VALUES(?,?,?,?);

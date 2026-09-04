@@ -28,15 +28,16 @@ kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
+        binaries.executable()
     }
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     dependencies {
-        implementation(projects.shared.accountlink)
         implementation(projects.shared.auth)
         implementation(projects.shared.common)
         implementation(projects.shared.core)
         implementation(projects.shared.home)
+        implementation(projects.shared.profile)
         implementation(projects.shared.resources)
         implementation(projects.shared.transaction)
 

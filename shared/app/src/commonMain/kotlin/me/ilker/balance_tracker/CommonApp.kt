@@ -29,11 +29,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.theme.AppTheme
-import me.ilker.accountlink.AccountLink
-import me.ilker.accountlink.AccountLinkIntent
-import me.ilker.accountlink.AccountLinkManager
-import me.ilker.accountlink.AccountLinkScreen
-import me.ilker.accountlink.AccountLinkSideEffect
 import me.ilker.auth.Registration
 import me.ilker.auth.RegistrationIntent
 import me.ilker.auth.RegistrationManager
@@ -43,6 +38,11 @@ import me.ilker.home.Home
 import me.ilker.home.HomeIntent
 import me.ilker.home.HomeManager
 import me.ilker.home.HomeScreen
+import me.ilker.profile.Profile
+import me.ilker.profile.ProfileIntent
+import me.ilker.profile.ProfileManager
+import me.ilker.profile.ProfileScreen
+import me.ilker.profile.ProfileSideEffect
 import me.ilker.transaction.add.AddTransactionIntent
 import me.ilker.transaction.add.AddTransactionScreen
 import me.ilker.transaction.add.AddTransactionSideEffect
@@ -108,7 +108,36 @@ fun CommonApp() {
                         onTransactionsClicked = { navController.navigate(Transactions(yearMonth = state.value.selectedDate.yearMonth.toString())) },
                         onClick = { id -> navController.navigate(TransactionDetails(id = id)) },
                         onRegister = { navController.navigate(Registration) },
-                        onAccountLink = { navController.navigate(AccountLink) },
+                        onProfile = { navController.navigate(Profile) },
+                    )
+                }
+
+                composable<Profile> { navBackStackEntry ->
+                    val manager = rememberManager(entry = navBackStackEntry, store = managerStore) {
+                        ProfileManager(sdk = sdk)
+                    }
+                    val state = manager.state.collectAsStateWithLifecycle()
+                    val email = sdk.sessionEmail.collectAsStateWithLifecycle()
+                    val sideEffects = manager.sideEffect.receiveAsFlow()
+
+                    LaunchedEffect(Unit) {
+                        sideEffects.collect { effect ->
+                            when (effect) {
+                                is ProfileSideEffect.LinkComplete -> Unit
+                                is ProfileSideEffect.LogoutComplete ->
+                                    navController.popBackStack(Home, inclusive = false)
+                            }
+                        }
+                    }
+
+                    ProfileScreen(
+                        state = state,
+                        email = email.value,
+                        onRefreshToken = { manager.sendIntent(ProfileIntent.RefreshToken) },
+                        onLink = { token -> manager.sendIntent(ProfileIntent.Link(token = token)) },
+                        onDismissMessage = { manager.sendIntent(ProfileIntent.DismissMessage) },
+                        onLogout = { manager.sendIntent(ProfileIntent.Logout) },
+                        onBack = { navController.popBackStack() }
                     )
                 }
 
@@ -265,30 +294,6 @@ fun CommonApp() {
                         onRegister = { email, password ->
                             manager.sendIntent(RegistrationIntent.Register(email = email, password = password))
                         },
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-
-                composable<AccountLink> { navBackStackEntry ->
-                    val manager = rememberManager(entry = navBackStackEntry, store = managerStore) {
-                        AccountLinkManager(sdk = sdk)
-                    }
-                    val state = manager.state.collectAsStateWithLifecycle()
-                    val sideEffects = manager.sideEffect.receiveAsFlow()
-
-                    LaunchedEffect(Unit) {
-                        sideEffects.collect { effect ->
-                            when (effect) {
-                                is AccountLinkSideEffect.LinkComplete -> Unit
-                            }
-                        }
-                    }
-
-                    AccountLinkScreen(
-                        state = state,
-                        onRefreshToken = { manager.sendIntent(AccountLinkIntent.RefreshToken) },
-                        onLink = { token -> manager.sendIntent(AccountLinkIntent.Link(token = token)) },
-                        onDismissMessage = { manager.sendIntent(AccountLinkIntent.DismissMessage) },
                         onBack = { navController.popBackStack() }
                     )
                 }

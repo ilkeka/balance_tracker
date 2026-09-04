@@ -2,6 +2,7 @@ package me.ilker.balance_tracker.database
 
 import me.ilker.balance_tracker.AccountLink
 import me.ilker.balance_tracker.LinkToken
+import me.ilker.balance_tracker.SessionToken
 import me.ilker.balance_tracker.User
 import kotlin.Throws
 
@@ -23,6 +24,21 @@ interface ServerDB {
 
     @Throws(Exception::class)
     suspend fun getUsers(): List<User>
+
+    suspend fun createSessionToken(
+        token: String,
+        userId: String,
+        expiresAt: String,
+        createdAt: String
+    ): Long
+
+    suspend fun getSessionToken(
+        token: String
+    ): SessionToken?
+
+    suspend fun deleteSessionTokenByUserId(
+        userId: String
+    )
 
     suspend fun createLinkToken(
         token: String,

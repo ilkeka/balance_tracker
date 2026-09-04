@@ -5,14 +5,13 @@ import io.ktor.server.request.receiveNullable
 import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.server.sessions.sessions
-import io.ktor.server.sessions.set
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import me.ilker.balance_tracker.Registration
 import me.ilker.balance_tracker.database.ServerDB
+import me.ilker.balance_tracker.models.AuthTokenResponse
 import me.ilker.balance_tracker.models.LoginRequest
 import me.ilker.balance_tracker.models.MessageResponse
-import me.ilker.balance_tracker.models.UserSession
 import me.ilker.balance_tracker.passwordHash
 import org.koin.ktor.ext.inject
 import kotlin.uuid.ExperimentalUuidApi
@@ -52,11 +51,24 @@ internal fun Route.registration() {
             createdAt = Clock.System.now().toString()
         )
 
-        call.sessions.set(UserSession(userId = id, email = request.email.value))
+        val token = Uuid.generateV4().toString()
+        val expiresAt = Clock.System.now() + 30.days
+
+        db.deleteSessionTokenByUserId(id)
+        db.createSessionToken(
+            token = token,
+            userId = id,
+            expiresAt = expiresAt.toString(),
+            createdAt = Clock.System.now().toString()
+        )
 
         call.respond(
             status = HttpStatusCode.Created,
-            message = MessageResponse("Registration successful")
+            message = AuthTokenResponse(
+                token = token,
+                expiresAt = expiresAt.toString(),
+                message = "Registration successful"
+            )
         )
     }
 }
