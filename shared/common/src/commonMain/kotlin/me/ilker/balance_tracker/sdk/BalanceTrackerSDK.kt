@@ -46,5 +46,8 @@ interface BalanceTrackerSDK {
     suspend fun getLinkToken(): String
 
     @Throws(Exception::class)
-    suspend fun linkAccount(token: String)
+    suspend fun getLinkedAccount(): LinkedAccount?
+
+    @Throws(Exception::class)
+    suspend fun linkAccount(token: String): LinkedAccount
 }

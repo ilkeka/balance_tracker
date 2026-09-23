@@ -22,6 +22,12 @@ data class LinkRequest(val token: String)
 @Serializable
 data class LinkResponse(val message: String)
 
+@Serializable
+data class LinkedAccountResponse(
+    val linkedAccountId: String,
+    val linkedAccountEmail: String
+)
+
 internal class LinkApi(
     private val client: HttpClient,
     private val baseUrl: String
@@ -38,7 +44,19 @@ internal class LinkApi(
     }
 
     @Throws(Exception::class)
-    suspend fun link(token: String) {
+    suspend fun getLinkedAccount(): LinkedAccountResponse? {
+        val response = client.get("$baseUrl/link")
+        if (response.status == HttpStatusCode.NotFound) {
+            return null
+        }
+        if (response.status != HttpStatusCode.OK) {
+            throw LinkException(decodeMessage(response))
+        }
+        return json.decodeFromString<LinkedAccountResponse>(response.bodyAsText())
+    }
+
+    @Throws(Exception::class)
+    suspend fun link(token: String): LinkedAccountResponse {
         val response = client.post("$baseUrl/link") {
             contentType(ContentType.Application.Json)
             setBody(json.encodeToString(LinkRequest(token)))
@@ -46,6 +64,7 @@ internal class LinkApi(
         if (response.status != HttpStatusCode.OK) {
             throw LinkException(decodeMessage(response))
         }
+        return json.decodeFromString<LinkedAccountResponse>(response.bodyAsText())
     }
 
     private suspend fun decodeMessage(response: HttpResponse): String {

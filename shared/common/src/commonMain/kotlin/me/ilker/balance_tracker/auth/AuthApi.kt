@@ -43,8 +43,8 @@ internal class AuthApi(
                 saveSession(response, email)
                 return
             }
-            HttpStatusCode.Conflict -> login(email, password)
-            else -> throw AuthException(decodeMessage(response))
+            HttpStatusCode.Conflict, HttpStatusCode.TooManyRequests -> login(email, password)
+            else -> throw AuthException(response.status.value, decodeMessage(response))
         }
     }
 
@@ -54,7 +54,7 @@ internal class AuthApi(
             setBody(json.encodeToString(AuthRequest(email, password)))
         }
         if (response.status != HttpStatusCode.OK) {
-            throw AuthException(decodeMessage(response))
+            throw AuthException(response.status.value, decodeMessage(response))
         }
         saveSession(response, email)
     }
@@ -72,7 +72,7 @@ internal class AuthApi(
     suspend fun logout() {
         val response = client.post("$baseUrl/logout")
         if (response.status != HttpStatusCode.OK) {
-            throw AuthException(decodeMessage(response))
+            throw AuthException(response.status.value, decodeMessage(response))
         }
     }
 
@@ -83,4 +83,4 @@ internal class AuthApi(
     }
 }
 
-class AuthException(message: String) : Exception(message)
+class AuthException(val statusCode: Int?, message: String) : Exception(message)

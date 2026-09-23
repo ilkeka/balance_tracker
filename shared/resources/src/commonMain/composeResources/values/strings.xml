@@ -1,6 +1,7 @@
 <resources>
     <string name="add">Add</string>
     <string name="add_transaction_success_feedback">Added transaction successfully!</string>
+    <string name="account_link_copied">Copied to clipboard</string>
     <string name="account_link_done">Done</string>
     <string name="account_link_failed">Account linking failed</string>
     <string name="account_link_manual_hint">Or enter the code manually</string>
@@ -17,6 +18,9 @@
     <string name="app_name">Balance Tracker</string>
     <string name="authenticate">Authenticate</string>
     <string name="authentication_failed">Authentication failed</string>
+    <string name="authentication_invalid_credentials">Invalid email or password</string>
+    <string name="authentication_invalid_input">Invalid email or password format</string>
+    <string name="authentication_rate_limited">Too many attempts. Try again in 15 minutes.</string>
     <string name="back">Back</string>
     <string name="balance">Balance</string>
     <string name="camera_permission_denied">Camera permission is required to scan QR codes</string>
@@ -49,8 +53,10 @@
     <string name="hide_password">Hide password</string>
     <string name="income">Income</string>
     <string name="income_total">Total income</string>
+    <string name="invalid_email">Enter a valid email address</string>
     <string name="latest_transactions">Latest transactions</string>
     <string name="link_account">Link account</string>
+    <string name="linked_account">Linked account</string>
     <string name="logout">Log out</string>
     <string-array name="month_names">
         <item>January</item>
@@ -69,6 +75,7 @@
     <string name="new_transaction">New Transaction</string>
     <string name="nothing_yet">Nothing yet</string>
     <string name="password">Password</string>
+    <string name="password_too_short">Password must be at least 8 characters</string>
     <string name="profile">Profile</string>
     <string name="see_all">See all</string>
     <string name="show_password">Show password</string>

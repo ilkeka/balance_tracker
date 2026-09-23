@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import me.ilker.balance_tracker.auth.AuthException
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.core.Manager
 
@@ -32,9 +33,20 @@ class RegistrationManager(private val sdk: BalanceTrackerSDK) : Manager<Registra
                 sideEffect.trySend(RegistrationSideEffect.RegistrationComplete)
             }.onFailure {
                 managerState.value = RegistrationState.Error(
-                    AuthenticationResult.Failed
+                    it.toAuthenticationResult()
                 )
             }
         }
     }
+
+    private fun Throwable.toAuthenticationResult(): AuthenticationResult =
+        when (this) {
+            is AuthException -> when (statusCode) {
+                400 -> AuthenticationResult.InvalidInput
+                401 -> AuthenticationResult.InvalidCredentials
+                429 -> AuthenticationResult.RateLimited
+                else -> AuthenticationResult.Failed
+            }
+            else -> AuthenticationResult.Failed
+        }
 }

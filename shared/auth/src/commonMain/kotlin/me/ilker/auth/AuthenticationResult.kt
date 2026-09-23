@@ -1,5 +1,8 @@
 package me.ilker.auth
 
 enum class AuthenticationResult {
-    Failed
+    Failed,
+    InvalidCredentials,
+    InvalidInput,
+    RateLimited
 }

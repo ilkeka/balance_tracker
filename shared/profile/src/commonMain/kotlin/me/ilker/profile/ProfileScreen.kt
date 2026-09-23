@@ -8,6 +8,7 @@ import me.ilker.profile.views.ProfileView
 fun ProfileScreen(
     state: State<ProfileState>,
     email: String?,
+    linkAttempted: Boolean,
     onRefreshToken: () -> Unit,
     onLink: (token: String) -> Unit,
     onDismissMessage: () -> Unit,
@@ -17,6 +18,7 @@ fun ProfileScreen(
     ProfileView(
         state = state,
         email = email,
+        linkAttempted = linkAttempted,
         onRefreshToken = onRefreshToken,
         onLink = onLink,
         onDismissMessage = onDismissMessage,

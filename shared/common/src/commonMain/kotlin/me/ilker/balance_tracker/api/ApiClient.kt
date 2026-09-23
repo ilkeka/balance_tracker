@@ -20,6 +20,11 @@ internal fun apiClient(authRepository: AuthRepository): HttpClient =
                         BearerTokens(accessToken = user.token, refreshToken = "")
                     }
                 }
+                refreshTokens {
+                    authRepository.authenticatedUser.value?.let { user ->
+                        BearerTokens(accessToken = user.token, refreshToken = "")
+                    }
+                }
             }
         }
     }

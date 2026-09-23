@@ -146,4 +146,14 @@ internal class ServerDBImpl : ServerDB {
             linkedId = linkedId
         )
         .executeAsOneOrNull()
+
+    override suspend fun getAccountLinkForUser(
+        userId: String
+    ) = database
+        .linkQueries
+        .getAccountLinkForUser(
+            ownerId = userId,
+            linkedId = userId
+        )
+        .executeAsOneOrNull()
 }
