@@ -14,6 +14,7 @@ import me.ilker.balance_tracker.LinkTokenRoute
 import me.ilker.balance_tracker.database.ServerDB
 import me.ilker.balance_tracker.models.LinkTokenRequest
 import me.ilker.balance_tracker.models.LinkTokenResponse
+import me.ilker.balance_tracker.models.LinkedAccountResponse
 import me.ilker.balance_tracker.models.MessageResponse
 import org.koin.ktor.ext.inject
 import kotlin.uuid.ExperimentalUuidApi
@@ -50,6 +51,35 @@ internal fun Route.linkToken() {
 @ExperimentalUuidApi
 internal fun Route.link() {
     val db by inject<ServerDB>()
+
+    get<LinkRoute> {
+        val userId = call.principal<UserIdPrincipal>()?.name ?: run {
+            call.respond(
+                status = HttpStatusCode.NotFound,
+                message = MessageResponse("No user id exists for this call.")
+            )
+            return@get
+        }
+
+        val link = db.getAccountLinkForUser(userId) ?: run {
+            call.respond(
+                status = HttpStatusCode.NotFound,
+                message = MessageResponse("No linked account found")
+            )
+            return@get
+        }
+
+        val linkedUserId = if (link.ownerId == userId) link.linkedId else link.ownerId
+        val linkedUser = db.getUser(linkedUserId)
+
+        call.respond(
+            status = HttpStatusCode.OK,
+            message = LinkedAccountResponse(
+                linkedAccountId = linkedUserId,
+                linkedAccountEmail = linkedUser?.email ?: ""
+            )
+        )
+    }
 
     post<LinkRoute> {
         val userId = call.principal<UserIdPrincipal>()?.name ?: run {
@@ -109,9 +139,14 @@ internal fun Route.link() {
 
         db.deleteLinkToken(request.token)
 
+        val ownerUser = db.getUser(linkToken.ownerId)
+
         call.respond(
             status = HttpStatusCode.OK,
-            message = MessageResponse("Account linked successfully")
+            message = LinkedAccountResponse(
+                linkedAccountId = linkToken.ownerId,
+                linkedAccountEmail = ownerUser?.email ?: ""
+            )
         )
     }
 }

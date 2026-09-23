@@ -65,4 +65,8 @@ interface ServerDB {
         ownerId: String,
         linkedId: String
     ): AccountLink?
+
+    suspend fun getAccountLinkForUser(
+        userId: String
+    ): AccountLink?
 }

@@ -27,3 +27,6 @@ VALUES(?,?,?,?);
 
 getAccountLink:
 SELECT * FROM AccountLink WHERE ownerId = ? AND linkedId = ?;
+
+getAccountLinkForUser:
+SELECT * FROM AccountLink WHERE ownerId = ? OR linkedId = ? LIMIT 1;

@@ -53,7 +53,7 @@ kotlin {
         implementation(libs.jetbrains.compose.material3)
         implementation(libs.jetbrains.compose.navigationevent)
         implementation(libs.jetbrains.compose.lifecycle.runtime)
-        implementation(libs.qrose)
+        implementation(libs.qrcode.kotlin)
         implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.serialization.json)
 

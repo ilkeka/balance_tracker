@@ -20,6 +20,7 @@ import me.ilker.balance_tracker.database.DB
 import me.ilker.balance_tracker.database.DatabaseDriverFactory
 import me.ilker.balance_tracker.sdk.AuthenticatedUser
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
+import me.ilker.balance_tracker.sdk.LinkedAccount
 import me.ilker.balance_tracker.sdk.TransactionCategory
 import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
@@ -109,7 +110,11 @@ internal class BalanceTrackerSDKImpl(
 
     override suspend fun getLinkToken(): String = linkApi.getLinkToken()
 
-    override suspend fun linkAccount(token: String) {
-        linkApi.link(token)
-    }
+    override suspend fun getLinkedAccount(): LinkedAccount? = linkApi
+        .getLinkedAccount()
+        ?.let { LinkedAccount(accountId = it.linkedAccountId, email = it.linkedAccountEmail) }
+
+    override suspend fun linkAccount(token: String): LinkedAccount = linkApi
+        .link(token)
+        .let { LinkedAccount(accountId = it.linkedAccountId, email = it.linkedAccountEmail) }
 }

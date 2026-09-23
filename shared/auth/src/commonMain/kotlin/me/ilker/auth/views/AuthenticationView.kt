@@ -48,10 +48,15 @@ import me.ilker.auth.RegistrationState
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.authenticate
 import me.ilker.balance_tracker.resources.authentication_failed
+import me.ilker.balance_tracker.resources.authentication_invalid_credentials
+import me.ilker.balance_tracker.resources.authentication_invalid_input
+import me.ilker.balance_tracker.resources.authentication_rate_limited
 import me.ilker.balance_tracker.resources.back
 import me.ilker.balance_tracker.resources.email
 import me.ilker.balance_tracker.resources.hide_password
+import me.ilker.balance_tracker.resources.invalid_email
 import me.ilker.balance_tracker.resources.password
+import me.ilker.balance_tracker.resources.password_too_short
 import me.ilker.balance_tracker.resources.show_password
 import org.jetbrains.compose.resources.stringResource
 
@@ -66,7 +71,9 @@ internal fun AuthenticationView(
     var password by remember { mutableStateOf("") }
     val currentState = state.value
     var showPassword by remember { mutableStateOf(false) }
-    val isFormValid = email.isNotBlank() && password.isNotBlank()
+    val isEmailValid = isValidEmail(email)
+    val isPasswordValid = (password.length >= 8)
+    val isFormValid = isEmailValid && isPasswordValid
 
     Scaffold(
         topBar = {
@@ -108,7 +115,13 @@ internal fun AuthenticationView(
                 onValueChange = { email = it },
                 placeholder = { Text(stringResource(Res.string.email), fontStyle = FontStyle.Italic) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                singleLine = true
+                singleLine = true,
+                isError = email.isNotBlank() && !isEmailValid,
+                supportingText = {
+                    if (email.isNotBlank() && !isEmailValid) {
+                        Text(stringResource(Res.string.invalid_email))
+                    }
+                }
             )
 
             Spacer(Modifier.height(16.dp))
@@ -135,16 +148,22 @@ internal fun AuthenticationView(
                     imeAction = androidx.compose.ui.text.input.ImeAction.Done
                 ),
                 keyboardActions = KeyboardActions(
-                    onDone = { if (isFormValid) onRegister(email, password) }
+                    onDone = { if (isFormValid) onRegister(email.trim(), password) }
                 ),
-                singleLine = true
+                singleLine = true,
+                isError = password.isNotBlank() && !isPasswordValid,
+                supportingText = {
+                    if (password.isNotBlank() && !isPasswordValid) {
+                        Text(stringResource(Res.string.password_too_short))
+                    }
+                }
             )
 
             Spacer(Modifier.height(24.dp))
 
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { onRegister(email, password) },
+                onClick = { onRegister(email.trim(), password) },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
@@ -173,6 +192,9 @@ internal fun AuthenticationView(
                 is RegistrationState.Error -> {
                     val message = when (s.result) {
                         AuthenticationResult.Failed -> stringResource(Res.string.authentication_failed)
+                        AuthenticationResult.InvalidCredentials -> stringResource(Res.string.authentication_invalid_credentials)
+                        AuthenticationResult.InvalidInput -> stringResource(Res.string.authentication_invalid_input)
+                        AuthenticationResult.RateLimited -> stringResource(Res.string.authentication_rate_limited)
                     }
                     Text(
                         text = message,
@@ -184,4 +206,13 @@ internal fun AuthenticationView(
             }
         }
     }
+}
+
+internal fun isValidEmail(value: String): Boolean {
+    val trimmed = value.trim()
+    if (trimmed.isBlank()) return false
+    if ('@' !in trimmed || trimmed.indexOf('@') != trimmed.lastIndexOf('@')) return false
+    val (local, domain) = trimmed.split("@")
+    return local.isNotBlank() &&
+        domain.contains('.') && !domain.startsWith('.') && !domain.endsWith('.')
 }

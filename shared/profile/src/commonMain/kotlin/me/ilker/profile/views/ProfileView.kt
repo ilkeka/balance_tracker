@@ -2,6 +2,7 @@ package me.ilker.profile.views
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,21 +32,26 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import io.github.alexzhirkevich.qrose.rememberQrCodePainter
+import kotlinx.coroutines.delay
 import me.ilker.balance_tracker.resources.Res
+import me.ilker.balance_tracker.resources.account_link_copied
 import me.ilker.balance_tracker.resources.account_link_done
 import me.ilker.balance_tracker.resources.account_link_failed
 import me.ilker.balance_tracker.resources.account_link_manual_hint
@@ -54,10 +60,12 @@ import me.ilker.balance_tracker.resources.account_link_qr_description
 import me.ilker.balance_tracker.resources.account_link_refresh
 import me.ilker.balance_tracker.resources.account_link_scan_hint
 import me.ilker.balance_tracker.resources.account_link_scan_tab
-import me.ilker.balance_tracker.resources.account_link_success
 import me.ilker.balance_tracker.resources.back
+import me.ilker.balance_tracker.resources.email
+import me.ilker.balance_tracker.resources.linked_account
 import me.ilker.balance_tracker.resources.logout
 import me.ilker.balance_tracker.resources.profile
+import me.ilker.balance_tracker.sdk.LinkedAccount
 import me.ilker.profile.ProfileState
 import me.ilker.profile.scanner.ManualTokenEntry
 import me.ilker.profile.scanner.QrScanner
@@ -68,6 +76,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun ProfileView(
     state: State<ProfileState>,
     email: String?,
+    linkAttempted: Boolean,
     onRefreshToken: () -> Unit,
     onLink: (token: String) -> Unit,
     onDismissMessage: () -> Unit,
@@ -106,67 +115,90 @@ internal fun ProfileView(
                 .padding(paddingValues)
         ) {
             email?.let {
-                Text(
-                    text = it,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(Res.string.email),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    
+                    Text(
+                        text = it,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
-            PrimaryTabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
-            ) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = { Text(stringResource(Res.string.account_link_my_qr_tab)) },
-                    icon = { Icon(Icons.Rounded.QrCode2, contentDescription = null) }
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = { Text(stringResource(Res.string.account_link_scan_tab)) },
-                    icon = { Icon(Icons.Rounded.QrCodeScanner, contentDescription = null) }
-                )
-            }
+            when (val currentState = state.value) {
+                is ProfileState.Linked -> {
+                    Spacer(Modifier.height(8.dp))
+                    LinkedAccountContent(account = currentState.linkedAccount)
+                    Spacer(Modifier.weight(1f))
+                }
+                else -> {
+                    val showTabs = currentState !is ProfileState.Loading
+                    if (showTabs) {
+                        PrimaryTabRow(
+                            selectedTabIndex = selectedTab,
+                            containerColor = MaterialTheme.colorScheme.background
+                        ) {
+                            Tab(
+                                selected = selectedTab == 0,
+                                onClick = { selectedTab = 0 },
+                                text = { Text(stringResource(Res.string.account_link_my_qr_tab)) },
+                                icon = { Icon(Icons.Rounded.QrCode2, contentDescription = null) }
+                            )
+                            Tab(
+                                selected = selectedTab == 1,
+                                onClick = { selectedTab = 1 },
+                                text = { Text(stringResource(Res.string.account_link_scan_tab)) },
+                                icon = { Icon(Icons.Rounded.QrCodeScanner, contentDescription = null) }
+                            )
+                        }
+                    }
 
-            Box(
-                modifier = Modifier.weight(1f)
-            ) {
-                when (val currentState = state.value) {
-                    is ProfileState.Linked -> MessageBanner(
-                        text = stringResource(Res.string.account_link_success),
-                        onDismiss = onDismissMessage
-                    )
-                    is ProfileState.Error -> MessageBanner(
-                        text = stringResource(Res.string.account_link_failed),
-                        onDismiss = onDismissMessage
-                    )
-                    ProfileState.Loading -> Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                    Box(
+                        modifier = Modifier.weight(1f)
                     ) {
-                        CircularProgressIndicator()
+                        when (currentState) {
+                            is ProfileState.Linked -> Unit
+                            is ProfileState.Error -> if (linkAttempted) {
+                                MessageBanner(
+                                    text = stringResource(Res.string.account_link_failed),
+                                    onDismiss = onDismissMessage
+                                )
+                            }
+                            ProfileState.Loading -> Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                            is ProfileState.Idle -> when (selectedTab) {
+                                0 -> MyQrContent(
+                                    token = currentState.token,
+                                    onRefresh = onRefreshToken
+                                )
+                                else -> ScanContent(
+                                    linking = false,
+                                    onLink = onLink
+                                )
+                            }
+                            ProfileState.Linking -> ScanContent(
+                                linking = true,
+                                onLink = onLink
+                            )
+                            ProfileState.LoggingOut -> Unit
+                        }
                     }
-                    is ProfileState.Idle -> when (selectedTab) {
-                        0 -> MyQrContent(
-                            token = currentState.token,
-                            onRefresh = onRefreshToken
-                        )
-                        else -> ScanContent(
-                            linking = false,
-                            onLink = onLink
-                        )
-                    }
-                    ProfileState.Linking -> ScanContent(
-                        linking = true,
-                        onLink = onLink
-                    )
-                    ProfileState.LoggingOut -> Unit
                 }
             }
 
@@ -227,12 +259,37 @@ private fun MyQrContent(
 
         Spacer(Modifier.height(8.dp))
 
+        val clipboardManager = LocalClipboardManager.current
+        var copied by remember { mutableStateOf(false) }
+
         Text(
             text = token,
+            modifier = Modifier
+                .clickable {
+                    clipboardManager.setText(AnnotatedString(token))
+                    copied = true
+                }
+                .padding(horizontal = 8.dp, vertical = 4.dp),
             style = MaterialTheme.typography.bodySmall,
             fontStyle = FontStyle.Italic,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        if (copied) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = stringResource(Res.string.account_link_copied),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        LaunchedEffect(copied) {
+            if (copied) {
+                delay(2000)
+                copied = false
+            }
+        }
 
         Spacer(Modifier.height(24.dp))
 
@@ -281,6 +338,32 @@ private fun ScanContent(
             Spacer(Modifier.height(12.dp))
             CircularProgressIndicator()
         }
+    }
+}
+
+@Composable
+private fun LinkedAccountContent(
+    account: LinkedAccount
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = stringResource(Res.string.linked_account),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.titleMedium,
+        )
+
+        Text(
+            text = account.accountId,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
