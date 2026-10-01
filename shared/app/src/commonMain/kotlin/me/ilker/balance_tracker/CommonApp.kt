@@ -12,13 +12,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -123,16 +120,6 @@ fun CommonApp() {
                     val email = sdk.sessionEmail.collectAsStateWithLifecycle()
                     val linkAttempted = manager.linkAttempted.collectAsStateWithLifecycle()
                     val sideEffects = manager.sideEffect.receiveAsFlow()
-
-                    DisposableEffect(navBackStackEntry) {
-                        val observer = LifecycleEventObserver { _, event ->
-                            if (event == Lifecycle.Event.ON_RESUME) {
-                                manager.sendIntent(ProfileIntent.RefreshToken)
-                            }
-                        }
-                        navBackStackEntry.lifecycle.addObserver(observer)
-                        onDispose { navBackStackEntry.lifecycle.removeObserver(observer) }
-                    }
 
                     LaunchedEffect(Unit) {
                         sideEffects.collect { effect ->

@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.sdk.LinkedAccount
 import me.ilker.core.Manager
+import me.ilker.core.ManagerLifecycleEvent
 
 class ProfileManager(
     private val sdk: BalanceTrackerSDK
@@ -20,8 +21,10 @@ class ProfileManager(
     private val _linkAttempted = MutableStateFlow(false)
     val linkAttempted: StateFlow<Boolean> = _linkAttempted.asStateFlow()
 
-    init {
-        refreshToken()
+    override fun onLifecycleEvent(event: ManagerLifecycleEvent) {
+        if (event == ManagerLifecycleEvent.Resumed) {
+            refreshToken()
+        }
     }
 
     override fun sendIntent(intent: ProfileIntent) {

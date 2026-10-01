@@ -2,6 +2,7 @@
     <string name="add">Add</string>
     <string name="add_transaction_success_feedback">Added transaction successfully!</string>
     <string name="account_link_copied">Copied to clipboard</string>
+    <string name="account_link_copy_code">Copy code</string>
     <string name="account_link_done">Done</string>
     <string name="account_link_failed">Account linking failed</string>
     <string name="account_link_manual_hint">Or enter the code manually</string>
@@ -73,6 +74,7 @@
         <item>December</item>
     </string-array>
     <string name="new_transaction">New Transaction</string>
+    <string name="not_signed_in">Not signed in</string>
     <string name="nothing_yet">Nothing yet</string>
     <string name="password">Password</string>
     <string name="password_too_short">Password must be at least 8 characters</string>
