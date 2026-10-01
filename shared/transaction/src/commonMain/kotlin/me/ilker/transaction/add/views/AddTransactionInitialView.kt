@@ -1,37 +1,48 @@
 package me.ilker.transaction.add.views
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.interaction.Interaction
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.DateRange
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDatePickerState
@@ -45,17 +56,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import kotlin.time.Instant
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format.char
@@ -73,15 +82,19 @@ import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.new_transaction
 import me.ilker.balance_tracker.resources.transaction_type
 import me.ilker.balance_tracker.sdk.TransactionCategory
-import me.ilker.core.extensions.round
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getValueForComposableUI
-import me.ilker.balance_tracker.sdk.getValueForUI
-import org.jetbrains.compose.resources.getString
+import me.ilker.core.extensions.round
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
+import kotlin.time.Instant
 
-@OptIn(ExperimentalComposeUiApi::class)
+private val CardShape = RoundedCornerShape(24.dp)
+private val CardPadding = 20.dp
+private val ScreenPadding = 16.dp
+private val CardSpacing = 12.dp
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AddTransactionInitialView(
     snackbarHostState: SnackbarHostState,
@@ -96,104 +109,35 @@ internal fun AddTransactionInitialView(
 ) {
     val amountInputState = rememberTextFieldState()
     val categoryState: MutableState<TransactionCategory> = remember { mutableStateOf(TransactionCategory.Predefined.Other) }
-    val categoryInputState = rememberTextFieldState()
-    val categoryScrollState = rememberScrollState()
-    val typeState = remember { mutableStateOf(TransactionType.Expense) }
-    val typeInputState = rememberTextFieldState()
-    var expandType by remember { mutableStateOf(false) }
-    var expandCategory by remember { mutableStateOf(false) }
+    val typeState: MutableState<TransactionType> = remember { mutableStateOf(TransactionType.Expense) }
+    val descriptionState = rememberTextFieldState()
     var expandDate by remember { mutableStateOf(false) }
+    var expandCategory by remember { mutableStateOf(false) }
     var currentSelectedDateMillis by rememberSaveable { mutableStateOf(Clock.System.now().toEpochMilliseconds()) }
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = currentSelectedDateMillis)
-    val descriptionState = rememberTextFieldState()
-    val dateState by remember(currentSelectedDateMillis) {
-        mutableStateOf(
-            TextFieldState(
-                with(
-                    LocalDateTime.Format {
-                        day()
-                        char('/')
-                        monthNumber()
-                        char('/')
-                        year()
-                    }
-                ) {
-                    format(
-                        Instant
-                            .fromEpochMilliseconds(currentSelectedDateMillis)
-                            .toLocalDateTime(TimeZone.currentSystemDefault())
-                    )
-                }
+
+    val selectedDateText = remember(currentSelectedDateMillis) {
+        with(
+            LocalDateTime.Format {
+                day()
+                char('/')
+                monthNumber()
+                char('/')
+                year()
+            }
+        ) {
+            format(
+                Instant
+                    .fromEpochMilliseconds(currentSelectedDateMillis)
+                    .toLocalDateTime(TimeZone.currentSystemDefault())
             )
-        )
+        }
     }
+
     val submitEnabledState by remember(amountInputState) {
         derivedStateOf {
             amountInputState.text.isNotBlank() && amountInputState.text.toString()
                 .toDoubleOrNull() != null
-        }
-    }
-
-    val amountInteractionSource = remember {
-        object : MutableInteractionSource {
-            override val interactions = MutableSharedFlow<Interaction>(
-                extraBufferCapacity = 16,
-                onBufferOverflow = BufferOverflow.DROP_OLDEST,
-            )
-
-            override suspend fun emit(interaction: Interaction) {
-                when (interaction) {
-                    is PressInteraction.Press -> expandType = !expandType
-                }
-
-                interactions.emit(interaction)
-            }
-
-            override fun tryEmit(interaction: Interaction): Boolean {
-                return interactions.tryEmit(interaction)
-            }
-        }
-    }
-
-    val categoryInteractionSource = remember {
-        object : MutableInteractionSource {
-            override val interactions = MutableSharedFlow<Interaction>(
-                extraBufferCapacity = 16,
-                onBufferOverflow = BufferOverflow.DROP_OLDEST,
-            )
-
-            override suspend fun emit(interaction: Interaction) {
-                when (interaction) {
-                    is PressInteraction.Press -> expandCategory = !expandCategory
-                }
-
-                interactions.emit(interaction)
-            }
-
-            override fun tryEmit(interaction: Interaction): Boolean {
-                return interactions.tryEmit(interaction)
-            }
-        }
-    }
-
-    val dateInteractionSource = remember {
-        object : MutableInteractionSource {
-            override val interactions = MutableSharedFlow<Interaction>(
-                extraBufferCapacity = 16,
-                onBufferOverflow = BufferOverflow.DROP_OLDEST,
-            )
-
-            override suspend fun emit(interaction: Interaction) {
-                when (interaction) {
-                    is PressInteraction.Press -> expandDate = !expandDate
-                }
-
-                interactions.emit(interaction)
-            }
-
-            override fun tryEmit(interaction: Interaction): Boolean {
-                return interactions.tryEmit(interaction)
-            }
         }
     }
 
@@ -206,24 +150,8 @@ internal fun AddTransactionInitialView(
         }
     }
 
-    LaunchedEffect(typeState.value) {
-        val typeString = when (typeState.value) {
-            TransactionType.Expense -> getString(Res.string.expense)
-            TransactionType.Income -> getString(Res.string.income)
-        }
-        typeInputState.edit {
-            replace(0, length, typeString)
-        }
-    }
-
-    LaunchedEffect(categoryState.value) {
-        categoryInputState.edit {
-            replace(0, length, categoryState.value.getValueForUI())
-        }
-    }
-
     Scaffold(
-        modifier = Modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
@@ -231,9 +159,8 @@ internal fun AddTransactionInitialView(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(end = 12.dp)
-                    .padding(top = 48.dp)
-                    .padding(bottom = 12.dp),
+                    .padding(horizontal = 8.dp)
+                    .padding(top = 48.dp, bottom = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
@@ -244,6 +171,8 @@ internal fun AddTransactionInitialView(
                         contentDescription = stringResource(Res.string.back)
                     )
                 }
+
+                Spacer(Modifier.width(4.dp))
 
                 Text(
                     text = stringResource(Res.string.new_transaction),
@@ -256,209 +185,175 @@ internal fun AddTransactionInitialView(
             Button(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .padding(horizontal = ScreenPadding, vertical = CardPadding),
                 onClick = {
                     amountInputState.text.toString().toDoubleOrNull()?.round(2)?.let { amount ->
                         onAdd(
                             amount,
-                            dateState.text.toString(),
+                            selectedDateText,
                             typeState.value,
                             categoryState.value,
                             descriptionState.text.toString()
                         )
                     }
                 },
-                colors = ButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.33f),
-                    disabledContainerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.33f),
-                ),
                 enabled = submitEnabledState,
+                shape = RoundedCornerShape(16.dp),
                 content = {
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = null
+                    )
+
+                    Spacer(Modifier.width(8.dp))
+
                     Text(stringResource(Res.string.add))
                 }
             )
         }
     ) { paddingValues ->
-        Spacer(Modifier.height(16.dp))
-
         LazyColumn(
-            modifier = Modifier.padding(paddingValues),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentPadding = PaddingValues(
+                start = ScreenPadding,
+                end = ScreenPadding,
+                top = 8.dp,
+                bottom = 8.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(CardSpacing)
         ) {
             item {
-                TextField(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                    state = amountInputState,
-                    placeholder = {
-                        Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = stringResource(Res.string.amount),
-                            fontStyle = FontStyle.Italic
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Decimal
-                    ),
-                    supportingText = {
-                        Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = stringResource(Res.string.amount_format),
-                            fontStyle = FontStyle.Normal,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                )
-            }
+                FormCard {
+                    FormLabel(text = stringResource(Res.string.transaction_type))
 
-            item {
-                TextField(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                    state = dateState,
-                    readOnly = true,
-                    interactionSource = dateInteractionSource,
-                    placeholder = {
-                        Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = stringResource(Res.string.date),
-                            fontStyle = FontStyle.Italic
-                        )
-                    }
-                )
-            }
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        SegmentedButton(
+                            selected = typeState.value == TransactionType.Expense,
+                            onClick = { typeState.value = TransactionType.Expense },
+                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                            colors = SegmentedButtonDefaults.colors(
+                                activeContainerColor = MaterialTheme.colorScheme.errorContainer,
+                                activeContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                activeBorderColor = MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Text(stringResource(Res.string.expense))
+                        }
 
-            if (expandDate) {
-                item {
-                    DatePicker(
-                        state = datePickerState,
-                        showModeToggle = false
-                    )
+                        SegmentedButton(
+                            selected = typeState.value == TransactionType.Income,
+                            onClick = { typeState.value = TransactionType.Income },
+                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                            colors = SegmentedButtonDefaults.colors(
+                                activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                activeBorderColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Text(stringResource(Res.string.income))
+                        }
+                    }
                 }
             }
 
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { expandType = !expandType }
-                ) {
+                FormCard {
+                    FormLabel(text = stringResource(Res.string.amount))
+
                     TextField(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp),
-                        state = typeInputState,
-                        readOnly = true,
-                        interactionSource = amountInteractionSource,
+                        modifier = Modifier.fillMaxWidth(),
+                        state = amountInputState,
                         placeholder = {
                             Text(
                                 modifier = Modifier.fillMaxWidth(),
-                                text = stringResource(Res.string.transaction_type),
-                                fontStyle = FontStyle.Italic
+                                text = stringResource(Res.string.amount),
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = TextUnit(value = 32f, type = TextUnitType.Sp)
+                            )
+                        },
+                        textStyle = MaterialTheme.typography.headlineMedium.copy(
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        lineLimits = TextFieldLineLimits.SingleLine,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal
+                        ),
+                        supportingText = {
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = stringResource(Res.string.amount_format),
+                                textAlign = TextAlign.Center
                             )
                         }
                     )
                 }
             }
 
-            if (expandType) {
-                item {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        with(stringResource(Res.string.expense)) {
-                            Text(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        typeState.value = TransactionType.Expense
-                                        expandType = !expandType
-                                    }
-                                    .padding(vertical = 4.dp),
-                                text = this@with,
-                                fontStyle = FontStyle.Italic
-                            )
-                        }
+            item {
+                FormCard {
+                    FormLabel(text = stringResource(Res.string.date))
 
+                    SelectRow(
+                        icon = Icons.Rounded.DateRange,
+                        value = selectedDateText,
+                        expanded = expandDate,
+                        onClick = { expandDate = !expandDate }
+                    )
+
+                    if (expandDate) {
                         HorizontalDivider(
-                            modifier = Modifier.fillMaxWidth(),
-                            thickness = 2.dp,
-                            color = MaterialTheme.colorScheme.tertiary
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
                         )
 
-                        with(stringResource(Res.string.income)) {
-                            Text(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        typeState.value = TransactionType.Income
-                                        expandType = !expandType
-                                    }
-                                    .padding(vertical = 4.dp),
-                                text = this@with,
-                                fontStyle = FontStyle.Italic
+                        DatePicker(
+                            modifier = Modifier.fillMaxWidth(),
+                            state = datePickerState,
+                            showModeToggle = false,
+                            title = null,
+                            colors = DatePickerDefaults.colors(
+                                containerColor = Color.Transparent
                             )
-                        }
+                        )
                     }
                 }
             }
 
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { expandCategory = !expandCategory }
-                ) {
-                    TextField(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp),
-                        state = categoryInputState,
-                        readOnly = true,
-                        interactionSource = categoryInteractionSource,
-                        placeholder = {
-                            Text(
-                                modifier = Modifier.fillMaxWidth(),
-                                text = stringResource(Res.string.category),
-                                fontStyle = FontStyle.Italic
-                            )
-                        }
-                    )
-                }
-            }
+                FormCard {
+                    FormLabel(text = stringResource(Res.string.category))
 
-            if (expandCategory) {
-                item {
-                    Row(
-                        modifier = Modifier
-                            .horizontalScroll(categoryScrollState)
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        TransactionCategory.Predefined.entries.forEach { category ->
-                            with(category.getValueForComposableUI()) {
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            categoryState.value = category
-                                            expandCategory = !expandCategory
-                                        },
-                                    colors = CardDefaults.cardColors(
-                                        contentColor = MaterialTheme.colorScheme.tertiary,
-                                        containerColor = MaterialTheme.colorScheme.onTertiary,
-                                        disabledContentColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.33f),
-                                        disabledContainerColor = MaterialTheme.colorScheme.onTertiary.copy(alpha = 0.33f),
-                                    )
-                                ) {
-                                    Text(
-                                        modifier = Modifier
-                                            .padding(4.dp),
-                                        text = this@with,
-                                        fontStyle = FontStyle.Italic
-                                    )
-                                }
+                    SelectRow(
+                        icon = Icons.AutoMirrored.Rounded.List,
+                        value = categoryState.value.getValueForComposableUI(),
+                        expanded = expandCategory,
+                        onClick = { expandCategory = !expandCategory }
+                    )
+
+                    if (expandCategory) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            TransactionCategory.Predefined.entries.forEach { category ->
+                                FilterChip(
+                                    selected = categoryState.value == category,
+                                    onClick = {
+                                        categoryState.value = category
+                                        expandCategory = false
+                                    },
+                                    label = { Text(category.getValueForComposableUI()) }
+                                )
                             }
                         }
                     }
@@ -466,21 +361,99 @@ internal fun AddTransactionInitialView(
             }
 
             item {
-                TextField(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                    state = descriptionState,
-                    placeholder = {
-                        Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = stringResource(Res.string.description),
-                            fontStyle = FontStyle.Italic
+                FormCard {
+                    FormLabel(text = stringResource(Res.string.description))
+
+                    TextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        state = descriptionState,
+                        placeholder = {
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = stringResource(Res.string.description)
+                            )
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text
                         )
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text
                     )
-                )
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun FormCard(content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(CardPadding),
+            verticalArrangement = Arrangement.spacedBy(CardSpacing),
+            content = content
+        )
+    }
+}
+
+@Composable
+private fun FormLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+private fun SelectRow(
+    icon: ImageVector,
+    value: String,
+    expanded: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = MaterialTheme.colorScheme.onSurface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+
+            Spacer(Modifier.width(12.dp))
+
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+
+            Icon(
+                imageVector = if (expanded) {
+                    Icons.Rounded.KeyboardArrowUp
+                } else {
+                    Icons.Rounded.KeyboardArrowDown
+                },
+                contentDescription = null
+            )
         }
     }
 }
