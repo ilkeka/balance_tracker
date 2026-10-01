@@ -7,6 +7,15 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.coroutines.EmptyCoroutineContext
 
+enum class ManagerLifecycleEvent {
+    Created,
+    Started,
+    Resumed,
+    Paused,
+    Stopped,
+    Destroyed
+}
+
 abstract class Manager<STATE: State, INTENT: Intent, SIDE_EFFECT: SideEffect> {
     protected val scope: CoroutineScope = CoroutineScope(EmptyCoroutineContext + SupervisorJob())
 
@@ -15,6 +24,8 @@ abstract class Manager<STATE: State, INTENT: Intent, SIDE_EFFECT: SideEffect> {
     abstract val state: StateFlow<STATE>
 
     abstract val sideEffect: Channel<SIDE_EFFECT>
+
+    open fun onLifecycleEvent(event: ManagerLifecycleEvent) = Unit
 
     fun close() {
         scope.cancel()

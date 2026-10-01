@@ -14,11 +14,23 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.Logout
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.QrCode2
 import androidx.compose.material.icons.rounded.QrCodeScanner
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -43,15 +55,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.account_link_copied
+import me.ilker.balance_tracker.resources.account_link_copy_code
 import me.ilker.balance_tracker.resources.account_link_done
 import me.ilker.balance_tracker.resources.account_link_failed
 import me.ilker.balance_tracker.resources.account_link_manual_hint
@@ -60,16 +73,23 @@ import me.ilker.balance_tracker.resources.account_link_qr_description
 import me.ilker.balance_tracker.resources.account_link_refresh
 import me.ilker.balance_tracker.resources.account_link_scan_hint
 import me.ilker.balance_tracker.resources.account_link_scan_tab
+import me.ilker.balance_tracker.resources.account_link_success
+import me.ilker.balance_tracker.resources.account_linking
 import me.ilker.balance_tracker.resources.back
 import me.ilker.balance_tracker.resources.email
 import me.ilker.balance_tracker.resources.linked_account
 import me.ilker.balance_tracker.resources.logout
+import me.ilker.balance_tracker.resources.not_signed_in
 import me.ilker.balance_tracker.resources.profile
 import me.ilker.balance_tracker.sdk.LinkedAccount
+import me.ilker.profile.clipboard.rememberCopyToClipboard
 import me.ilker.profile.ProfileState
 import me.ilker.profile.scanner.ManualTokenEntry
 import me.ilker.profile.scanner.QrScanner
 import org.jetbrains.compose.resources.stringResource
+
+private val CardShape = RoundedCornerShape(24.dp)
+private val CardPadding = 20.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,141 +103,240 @@ internal fun ProfileView(
     onLogout: () -> Unit,
     onBack: () -> Unit
 ) {
+    val currentState = state.value
+    val linkedAccount = (currentState as? ProfileState.Linked)?.linkedAccount
+    val loggingOut = currentState is ProfileState.LoggingOut
     var selectedTab by remember { mutableIntStateOf(0) }
 
+    LaunchedEffect(currentState) {
+        if (currentState is ProfileState.Linking) selectedTab = 1
+    }
+
     Scaffold(
-        topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(end = 12.dp)
-                    .padding(top = 48.dp)
-                    .padding(bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = stringResource(Res.string.back)
-                    )
-                }
-                Text(
-                    text = stringResource(Res.string.profile),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
+        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = { ProfileTopBar(onBack = onBack) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = CardPadding)
+                .padding(bottom = CardPadding),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            email?.let {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = stringResource(Res.string.email),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    
-                    Text(
-                        text = it,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+            AccountCard(email = email, linkedAccount = linkedAccount)
+
+            when (currentState) {
+                ProfileState.Loading -> LoadingCard()
+                is ProfileState.Error -> if (linkAttempted) {
+                    MessageBanner(
+                        text = stringResource(Res.string.account_link_failed),
+                        onDismiss = onDismissMessage
                     )
                 }
+                is ProfileState.Idle,
+                ProfileState.Linking -> AccountLinkSection(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                    linking = currentState is ProfileState.Linking,
+                    token = (currentState as? ProfileState.Idle)?.token,
+                    onRefreshToken = onRefreshToken,
+                    onLink = onLink
+                )
+                is ProfileState.Linked -> LinkSuccessCard()
+                ProfileState.LoggingOut -> Unit
             }
 
-            when (val currentState = state.value) {
-                is ProfileState.Linked -> {
-                    Spacer(Modifier.height(8.dp))
-                    LinkedAccountContent(account = currentState.linkedAccount)
-                    Spacer(Modifier.weight(1f))
-                }
-                else -> {
-                    val showTabs = currentState !is ProfileState.Loading
-                    if (showTabs) {
-                        PrimaryTabRow(
-                            selectedTabIndex = selectedTab,
-                            containerColor = MaterialTheme.colorScheme.background
-                        ) {
-                            Tab(
-                                selected = selectedTab == 0,
-                                onClick = { selectedTab = 0 },
-                                text = { Text(stringResource(Res.string.account_link_my_qr_tab)) },
-                                icon = { Icon(Icons.Rounded.QrCode2, contentDescription = null) }
-                            )
-                            Tab(
-                                selected = selectedTab == 1,
-                                onClick = { selectedTab = 1 },
-                                text = { Text(stringResource(Res.string.account_link_scan_tab)) },
-                                icon = { Icon(Icons.Rounded.QrCodeScanner, contentDescription = null) }
-                            )
-                        }
-                    }
+            LogoutButton(
+                loggingOut = loggingOut,
+                onLogout = onLogout
+            )
+        }
+    }
+}
 
-                    Box(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        when (currentState) {
-                            is ProfileState.Linked -> Unit
-                            is ProfileState.Error -> if (linkAttempted) {
-                                MessageBanner(
-                                    text = stringResource(Res.string.account_link_failed),
-                                    onDismiss = onDismissMessage
-                                )
-                            }
-                            ProfileState.Loading -> Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                            is ProfileState.Idle -> when (selectedTab) {
-                                0 -> MyQrContent(
-                                    token = currentState.token,
-                                    onRefresh = onRefreshToken
-                                )
-                                else -> ScanContent(
-                                    linking = false,
-                                    onLink = onLink
-                                )
-                            }
-                            ProfileState.Linking -> ScanContent(
-                                linking = true,
-                                onLink = onLink
-                            )
-                            ProfileState.LoggingOut -> Unit
-                        }
-                    }
-                }
-            }
+@Composable
+private fun ProfileTopBar(onBack: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 12.dp)
+            .padding(top = 48.dp)
+            .padding(bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBack) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                contentDescription = stringResource(Res.string.back)
+            )
+        }
+        Text(
+            text = stringResource(Res.string.profile),
+            fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
 
-            val loggingOut = state.value is ProfileState.LoggingOut
-            OutlinedButton(
-                onClick = onLogout,
-                enabled = !loggingOut,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 16.dp)
+@Composable
+private fun AccountCard(
+    email: String?,
+    linkedAccount: LinkedAccount?
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(CardPadding),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(56.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
-                if (loggingOut) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(Modifier.width(8.dp))
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    val initials = email?.let(::initialsOf)
+
+                    if (initials != null) {
+                        Text(
+                            text = initials,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.Person,
+                            contentDescription = null,
+                            modifier = Modifier.size(28.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
-                Text(stringResource(Res.string.logout))
+            }
+
+            Spacer(Modifier.width(16.dp))
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = email ?: stringResource(Res.string.not_signed_in),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Text(
+                    text = linkedAccount?.let {
+                        "${stringResource(Res.string.linked_account)}: ${it.accountId}"
+                    } ?: stringResource(Res.string.email),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LoadingCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 48.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+    }
+}
+
+@Composable
+private fun AccountLinkSection(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    linking: Boolean,
+    token: String?,
+    onRefreshToken: () -> Unit,
+    onLink: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = stringResource(Res.string.account_linking),
+            modifier = Modifier.padding(start = 4.dp),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CardShape,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            )
+        ) {
+            Column {
+                PrimaryTabRow(
+                    selectedTabIndex = selectedTab,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    divider = {}
+                ) {
+                    Tab(
+                        selected = selectedTab == 0,
+                        enabled = !linking,
+                        onClick = { onTabSelected(0) },
+                        text = { Text(stringResource(Res.string.account_link_my_qr_tab)) },
+                        icon = { Icon(Icons.Rounded.QrCode2, contentDescription = null) }
+                    )
+                    Tab(
+                        selected = selectedTab == 1,
+                        enabled = !linking,
+                        onClick = { onTabSelected(1) },
+                        text = { Text(stringResource(Res.string.account_link_scan_tab)) },
+                        icon = { Icon(Icons.Rounded.QrCodeScanner, contentDescription = null) }
+                    )
+                }
+
+                when (selectedTab) {
+                    0 if token != null -> MyQrContent(
+                        token = token,
+                        onRefresh = onRefreshToken
+                    )
+                    0 -> Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                    else -> ScanContent(
+                        linking = linking,
+                        onLink = onLink
+                    )
+                }
             }
         }
     }
@@ -229,72 +348,125 @@ private fun MyQrContent(
     onRefresh: () -> Unit
 ) {
     val qrPainter = rememberQrCodePainter(token)
+    val copyToClipboard = rememberCopyToClipboard()
+    var copied by remember { mutableStateOf(false) }
+
+    LaunchedEffect(copied) {
+        if (copied) {
+            delay(2000)
+            copied = false
+        }
+    }
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .fillMaxWidth()
+            .padding(horizontal = CardPadding, vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(20.dp),
             color = Color.White
         ) {
             Image(
                 painter = qrPainter,
                 contentDescription = stringResource(Res.string.account_link_qr_description),
                 modifier = Modifier
-                    .padding(16.dp)
-                    .size(240.dp)
+                    .padding(20.dp)
+                    .size(220.dp)
             )
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
 
         Text(
             text = stringResource(Res.string.account_link_scan_hint),
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        val clipboardManager = LocalClipboardManager.current
-        var copied by remember { mutableStateOf(false) }
-
-        Text(
-            text = token,
-            modifier = Modifier
-                .clickable {
-                    clipboardManager.setText(AnnotatedString(token))
-                    copied = true
-                }
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.bodySmall,
-            fontStyle = FontStyle.Italic,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        if (copied) {
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = stringResource(Res.string.account_link_copied),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
+        Spacer(Modifier.height(16.dp))
 
-        LaunchedEffect(copied) {
-            if (copied) {
-                delay(2000)
-                copied = false
+        Surface(
+            modifier = Modifier.clickable {
+                copyToClipboard(token)
+                copied = true
+            },
+            shape = RoundedCornerShape(14.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHighest
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.ContentCopy,
+                    contentDescription = stringResource(Res.string.account_link_copy_code),
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(Modifier.width(12.dp))
+
+                Text(
+                    text = token,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
 
-        Spacer(Modifier.height(24.dp))
+        CopiedLabel(
+            visible = copied,
+            text = stringResource(Res.string.account_link_copied)
+        )
 
-        OutlinedButton(onClick = onRefresh) {
+        Spacer(Modifier.height(20.dp))
+
+        OutlinedButton(
+            onClick = onRefresh,
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Refresh,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+
+            Spacer(Modifier.width(8.dp))
+
             Text(stringResource(Res.string.account_link_refresh))
+        }
+    }
+}
+
+@Composable
+private fun CopiedLabel(
+    visible: Boolean,
+    text: String
+) {
+    if (visible) {
+        Spacer(Modifier.height(12.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Rounded.CheckCircle,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(Modifier.width(8.dp))
+
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
@@ -306,28 +478,27 @@ private fun ScanContent(
 ) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
+            .fillMaxWidth()
+            .padding(horizontal = CardPadding, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Box(
             modifier = Modifier
-                .size(280.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .fillMaxWidth()
+                .height(240.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
         ) {
             QrScanner(onScanned = onLink)
         }
 
-        Spacer(Modifier.height(16.dp))
-
         Text(
             text = stringResource(Res.string.account_link_manual_hint),
-            style = MaterialTheme.typography.bodyMedium
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-
-        Spacer(Modifier.height(12.dp))
 
         ManualTokenEntry(
             enabled = !linking,
@@ -335,35 +506,41 @@ private fun ScanContent(
         )
 
         if (linking) {
-            Spacer(Modifier.height(12.dp))
             CircularProgressIndicator()
         }
     }
 }
 
 @Composable
-private fun LinkedAccountContent(
-    account: LinkedAccount
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth()
+private fun LinkSuccessCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     ) {
-        Text(
-            text = stringResource(Res.string.linked_account),
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.titleMedium,
-        )
+                .padding(CardPadding),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.CheckCircle,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
 
-        Text(
-            text = account.accountId,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+            Spacer(Modifier.width(12.dp))
+
+            Text(
+                text = stringResource(Res.string.account_link_success),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
 
@@ -372,20 +549,93 @@ private fun MessageBanner(
     text: String,
     onDismiss: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = text,
-            modifier = Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer
         )
-        TextButton(onClick = onDismiss) {
-            Text(stringResource(Res.string.account_link_done))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = CardPadding, end = 8.dp, top = 12.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.ErrorOutline,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+
+            Spacer(Modifier.width(12.dp))
+
+            Text(
+                text = text,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            ) {
+                Text(stringResource(Res.string.account_link_done))
+            }
         }
     }
+}
+
+@Composable
+private fun LogoutButton(
+    loggingOut: Boolean,
+    onLogout: () -> Unit
+) {
+    OutlinedButton(
+        onClick = onLogout,
+        enabled = !loggingOut,
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = MaterialTheme.colorScheme.error,
+            disabledContentColor = MaterialTheme.colorScheme.error.copy(alpha = 0.33f),
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        if (loggingOut) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.error
+            )
+
+            Spacer(Modifier.width(8.dp))
+        } else {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.Logout,
+                contentDescription = stringResource(Res.string.logout),
+                modifier = Modifier.size(18.dp)
+            )
+
+            Spacer(Modifier.width(8.dp))
+        }
+
+        Text(stringResource(Res.string.logout))
+    }
+}
+
+private fun initialsOf(email: String): String? {
+    val localPart = email.substringBefore("@").trim()
+
+    if (localPart.isEmpty()) return null
+
+    return localPart
+        .split('.', '_', '-')
+        .mapNotNull { part -> part.trim().firstOrNull() }
+        .take(2)
+        .joinToString(separator = "") { it.uppercaseChar().toString() }
+        .takeIf { it.isNotEmpty() }
 }
