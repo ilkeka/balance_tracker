@@ -21,20 +21,7 @@ import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Label
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Autorenew
-import androidx.compose.material.icons.rounded.CardGiftcard
-import androidx.compose.material.icons.rounded.CurrencyExchange
-import androidx.compose.material.icons.rounded.DirectionsCar
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Flight
-import androidx.compose.material.icons.rounded.MoreHoriz
-import androidx.compose.material.icons.rounded.Movie
-import androidx.compose.material.icons.rounded.Payments
-import androidx.compose.material.icons.rounded.Receipt
-import androidx.compose.material.icons.rounded.ShoppingBag
-import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -51,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -71,6 +57,7 @@ import me.ilker.balance_tracker.resources.see_all
 import me.ilker.balance_tracker.sdk.TransactionCategory
 import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
+import me.ilker.balance_tracker.sdk.getIcon
 import me.ilker.balance_tracker.sdk.getValueForComposableUI
 import me.ilker.core.extensions.toHumanReadableValue
 import me.ilker.home.HomeState
@@ -470,22 +457,6 @@ private fun Transaction(
             )
         }
     }
-}
-
-private fun TransactionCategory.getIcon(): ImageVector = when (this) {
-    TransactionCategory.Predefined.Bill -> Icons.Rounded.Receipt
-    TransactionCategory.Predefined.Entertainment -> Icons.Rounded.Movie
-    TransactionCategory.Predefined.Gift -> Icons.Rounded.CardGiftcard
-    TransactionCategory.Predefined.Grocery -> Icons.Rounded.ShoppingCart
-    TransactionCategory.Predefined.Health -> Icons.Rounded.Favorite
-    TransactionCategory.Predefined.Other -> Icons.Rounded.MoreHoriz
-    TransactionCategory.Predefined.Reimbursement -> Icons.Rounded.CurrencyExchange
-    TransactionCategory.Predefined.Salary -> Icons.Rounded.Payments
-    TransactionCategory.Predefined.Shopping -> Icons.Rounded.ShoppingBag
-    TransactionCategory.Predefined.Subscription -> Icons.Rounded.Autorenew
-    TransactionCategory.Predefined.Transportation -> Icons.Rounded.DirectionsCar
-    TransactionCategory.Predefined.Travel -> Icons.Rounded.Flight
-    is TransactionCategory.Custom -> Icons.AutoMirrored.Rounded.Label
 }
 
 @Composable
