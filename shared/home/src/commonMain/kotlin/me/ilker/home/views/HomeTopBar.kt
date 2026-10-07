@@ -1,16 +1,13 @@
 package me.ilker.home.views
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -24,15 +21,17 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.app_name
-import me.ilker.balance_tracker.resources.authenticate
+import me.ilker.balance_tracker.resources.sync_devices
+import me.ilker.home.HomeState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Bluetooth
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 internal fun HomeTopBar(
-    sessionEmail: String?,
-    onRegister: () -> Unit,
-    onProfile: () -> Unit
+    device: HomeState.Device,
+    onSync: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -48,52 +47,40 @@ internal fun HomeTopBar(
             modifier = Modifier.weight(1f)
         )
 
-        sessionEmail?.let { sessionEmail ->
-            Surface(
-                onClick = onProfile,
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                contentColor = MaterialTheme.colorScheme.onSurface
+        Surface(
+            onClick = onSync,
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ) {
+            Row(
+                modifier = Modifier.padding(
+                    start = 10.dp,
+                    end = 14.dp,
+                    top = 6.dp,
+                    bottom = 6.dp
+                ),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.padding(
-                        start = 6.dp,
-                        end = 14.dp,
-                        top = 6.dp,
-                        bottom = 6.dp
-                    ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        modifier = Modifier.size(28.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                text = sessionEmail.firstOrNull()?.uppercase() ?: "",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+                Icon(
+                    imageVector = Icons.Rounded.Bluetooth,
+                    contentDescription = stringResource(Res.string.sync_devices),
+                    modifier = Modifier.size(20.dp)
+                )
 
-                    Spacer(Modifier.width(8.dp))
-
-                    Text(
-                        text = sessionEmail,
-                        style = MaterialTheme.typography.labelLarge,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.widthIn(max = 140.dp)
-                    )
-                }
-            }
-        } ?: run {
-            Button(onClick = onRegister) {
-                Text(stringResource(Res.string.authenticate))
+                Text(
+                    text = device.deviceId.take(DeviceIdVisibleChars).uppercase(),
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .widthIn(max = 90.dp)
+                )
             }
         }
     }
 }
+
+/** Enough of the id to tell two devices apart without turning the top bar into a UUID display. */
+private const val DeviceIdVisibleChars = 6

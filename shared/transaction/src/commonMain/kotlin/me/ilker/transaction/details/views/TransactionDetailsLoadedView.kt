@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.rounded.Create
 import androidx.compose.material.icons.rounded.DateRange
@@ -25,7 +24,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -39,11 +37,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import me.ilker.balance_tracker.resources.Res
-import me.ilker.balance_tracker.resources.back
 import me.ilker.balance_tracker.resources.category
 import me.ilker.balance_tracker.resources.date
 import me.ilker.balance_tracker.resources.delete
@@ -56,12 +51,12 @@ import me.ilker.balance_tracker.resources.transaction_details
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getValueForComposableUI
 import me.ilker.core.extensions.toHumanReadableValue
+import me.ilker.transaction.common.CardPadding
+import me.ilker.transaction.common.CardShape
+import me.ilker.transaction.common.ScreenPadding
+import me.ilker.transaction.common.TransactionTopBar
 import me.ilker.transaction.details.TransactionDetailsState
 import org.jetbrains.compose.resources.stringResource
-
-private val CardShape = RoundedCornerShape(24.dp)
-private val CardPadding = 20.dp
-private val ScreenPadding = 16.dp
 
 @Composable
 internal fun TransactionDetailsLoadedView(
@@ -75,8 +70,14 @@ internal fun TransactionDetailsLoadedView(
     val isExpense = transaction.type == TransactionType.Expense
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        topBar = { DetailsTopBar(onBack = onBack) },
+        topBar = {
+            TransactionTopBar(
+                title = stringResource(Res.string.transaction_details),
+                onBack = onBack
+            )
+        },
         bottomBar = {
             Button(
                 modifier = Modifier
@@ -181,31 +182,6 @@ internal fun TransactionDetailsLoadedView(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun DetailsTopBar(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp)
-            .padding(top = 48.dp)
-            .padding(bottom = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                contentDescription = stringResource(Res.string.back)
-            )
-        }
-
-        Text(
-            text = stringResource(Res.string.transaction_details),
-            fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
-            fontWeight = FontWeight.Bold
-        )
     }
 }
 

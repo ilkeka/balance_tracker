@@ -1,29 +1,22 @@
 package me.ilker.transaction.edit.views
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import me.ilker.balance_tracker.resources.Res
-import me.ilker.balance_tracker.resources.back
-import me.ilker.balance_tracker.resources.transaction_details
+import me.ilker.balance_tracker.resources.edit_transaction
+import me.ilker.transaction.common.CardSpacing
+import me.ilker.transaction.common.ScreenPadding
+import me.ilker.transaction.common.SkeletonBar
+import me.ilker.transaction.common.SkeletonCard
+import me.ilker.transaction.common.TransactionTopBar
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -31,54 +24,37 @@ internal fun EditTransactionInitialView(
     onBack: () -> Unit
 ) {
     Scaffold(
-        modifier = Modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
-                    .padding(top = 48.dp)
-                    .padding(bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = onBack,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = stringResource(Res.string.back)
-                    )
-                }
-                Text(
-                    text = stringResource(Res.string.transaction_details),
-                    fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            TransactionTopBar(
+                title = stringResource(Res.string.edit_transaction),
+                onBack = onBack
+            )
         }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement
-                .spacedBy(12.dp)
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentPadding = PaddingValues(
+                start = ScreenPadding,
+                end = ScreenPadding,
+                top = 8.dp,
+                bottom = 24.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(CardSpacing)
         ) {
-            repeat(3) {
-                item {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(64.dp)
-                        )
-                    }
-                }
+            items(count = 5) {
+                FormFieldSkeleton()
             }
         }
+    }
+}
+
+@Composable
+private fun FormFieldSkeleton() {
+    SkeletonCard {
+        SkeletonBar(height = 12.dp)
+        SkeletonBar(height = 52.dp)
     }
 }

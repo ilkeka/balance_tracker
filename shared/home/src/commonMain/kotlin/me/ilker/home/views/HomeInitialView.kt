@@ -32,17 +32,15 @@ import me.ilker.home.HomeState
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HomeInitialView(
-    user: HomeState.User,
-    onRegister: () -> Unit = {},
-    onProfile: () -> Unit = {}
+    device: HomeState.Device,
+    onSync: () -> Unit = {}
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             HomeTopBar(
-                sessionEmail = user.sessionEmail,
-                onRegister = onRegister,
-                onProfile = onProfile
+                device = device,
+                onSync = onSync
             )
         }
     ) { paddingValues ->

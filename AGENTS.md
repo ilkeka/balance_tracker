@@ -2,7 +2,7 @@
 
 ## Project
 
-Compose Multiplatform income/expense tracker. Targets: Android, Desktop (JVM), iOS, Web (Wasm/JS), Server (Ktor).
+Compose Multiplatform income/expense tracker. Targets: Android, Desktop (JVM), iOS, Web (Wasm/JS), with optional Ktor server for local development. Device-to-device sync is the default for sharing data across devices (no cloud account required).
 
 ## Build & Run
 

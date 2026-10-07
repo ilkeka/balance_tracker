@@ -1,12 +1,15 @@
 package me.ilker.balance_tracker.sdk
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
+import me.ilker.balance_tracker.sync.LinkedDevice
+import me.ilker.balance_tracker.sync.SyncImportResult
+import me.ilker.balance_tracker.sync.SyncSnapshot
 
 interface BalanceTrackerSDK {
     val transactions: Flow<List<TransactionDomainModel>>
-    val authenticatedUser: StateFlow<AuthenticatedUser?>
-    val sessionEmail: StateFlow<String?>
+
+    /** Stable id for this installation, used as the merge tiebreak and to identify a peer. */
+    suspend fun deviceId(): String
 
     suspend fun getTransactionById(id: Long): TransactionDomainModel?
 
@@ -36,18 +39,34 @@ interface BalanceTrackerSDK {
         id: Long
     ): Long
 
-    @Throws(Exception::class)
-    suspend fun authenticate(email: String, password: String)
+    /**
+     * The full syncable state of this device. Exchange is always full, in both directions, so there
+     * is no per-peer cursor to persist.
+     */
+    suspend fun exportSyncSnapshot(): SyncSnapshot
 
+    /**
+     * Merges a snapshot received from a paired device. Records are combined per `syncId` rather
+     * than replacing local state, so transactions the peer had never seen are kept.
+     */
     @Throws(Exception::class)
-    suspend fun logout()
+    suspend fun importSyncSnapshot(snapshot: SyncSnapshot): SyncImportResult
 
-    @Throws(Exception::class)
-    suspend fun getLinkToken(): String
+    /** Stored shared secret for the paired device, or null when nothing is paired yet. */
+    suspend fun getPairingSecret(): ByteArray?
 
-    @Throws(Exception::class)
-    suspend fun getLinkedAccount(): LinkedAccount?
+    /**
+     * The paired device as last seen, or null when nothing is paired yet. [fingerprint] lets both
+     * users confirm an approval prompt refers to the device in their hand.
+     */
+    suspend fun getLinkedDevice(): LinkedDevice?
 
-    @Throws(Exception::class)
-    suspend fun linkAccount(token: String): LinkedAccount
+    suspend fun savePairingSecret(secret: ByteArray, linkedDevice: LinkedDevice?)
+
+    suspend fun clearPairingSecret()
+
+    /** Name this device publishes to nearby peers; empty until the user picks one. */
+    suspend fun deviceAlias(): String
+
+    suspend fun saveDeviceAlias(alias: String)
 }

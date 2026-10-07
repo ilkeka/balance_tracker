@@ -7,23 +7,46 @@ CREATE TABLE Transactions (
     dateTime TEXT NOT NULL,
     type TEXT AS TransactionType NOT NULL,
     category TEXT AS TransactionCategory NOT NULL,
-    description TEXT
+    description TEXT,
+    syncId TEXT NOT NULL,
+    version INTEGER NOT NULL DEFAULT 0,
+    originId TEXT NOT NULL,
+    isDeleted INTEGER NOT NULL DEFAULT 0
 );
 
+CREATE UNIQUE INDEX idx_transactions_sync_id ON Transactions(syncId);
+
 insertTransaction:
-INSERT INTO Transactions(amount, dateTime, type, category, description)
-VALUES(?,?,?, ?,?);
+INSERT INTO Transactions(amount, dateTime, type, category, description, syncId, version, originId, isDeleted)
+VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 editTransaction:
 UPDATE Transactions
-SET amount = :amount, dateTime = :dateTime, type = :type, category = :category, description = :description
+SET amount = :amount, dateTime = :dateTime, type = :type, category = :category, description = :description, version = :version
+WHERE id = :id AND isDeleted = 0;
+
+softDeleteTransaction:
+UPDATE Transactions
+SET isDeleted = 1, version = :version
 WHERE id = :id;
 
 getTransaction:
-SELECT * FROM Transactions WHERE id = ?;
+SELECT id, amount, dateTime, type, category, description FROM Transactions
+WHERE id = ? AND isDeleted = 0;
 
 getTransactions:
-SELECT * FROM Transactions;
+SELECT id, amount, dateTime, type, category, description FROM Transactions
+WHERE isDeleted = 0;
 
-deleteTransaction:
-DELETE FROM Transactions WHERE id = ?;
+getTransactionBySyncId:
+SELECT id, amount, dateTime, type, category, description, syncId, version, originId, isDeleted FROM Transactions
+WHERE syncId = ?;
+
+getAllSyncedTransactions:
+SELECT id, amount, dateTime, type, category, description, syncId, version, originId, isDeleted FROM Transactions;
+
+updateSyncedTransaction:
+UPDATE Transactions
+SET amount = :amount, dateTime = :dateTime, type = :type, category = :category, description = :description,
+    version = :version, originId = :originId, isDeleted = :isDeleted
+WHERE syncId = :syncId;
