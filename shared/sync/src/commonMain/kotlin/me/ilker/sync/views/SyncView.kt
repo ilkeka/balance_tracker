@@ -647,7 +647,8 @@ internal fun PairingCodeDialog(
     val painter = rememberQrCodePainter(code)
 
     androidx.compose.material3.ModalBottomSheet(
-        onDismissRequest = onDismiss
+        onDismissRequest = onDismiss,
+        sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
         Column(
             modifier = Modifier
