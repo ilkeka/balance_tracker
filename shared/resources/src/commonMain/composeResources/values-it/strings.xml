@@ -78,8 +78,14 @@
     <string name="sync_pair_device">Associa un altro dispositivo</string>
     <string name="sync_pair_qr_description">Scansiona questo codice sull'altro dispositivo per collegarli. Funziona una volta sola e nulla viene inviato a un server.</string>
     <string name="sync_pair_qr_title">Associa un dispositivo</string>
-    <string name="sync_pair_scan_hint">Scansiona il codice mostrato sull'altro dispositivo</string>
+    <string name="sync_pair_scan_hint">Scansiona il codice QR</string>
     <string name="sync_paired_with">Dispositivo associato</string>
+    <string name="sync_permission_close">Chiudi</string>
+    <string name="sync_permission_continue">Continua</string>
+    <string name="sync_permission_denied_message">Queste autorizzazioni sono necessarie per trovare un dispositivo vicino. Puoi concederle in seguito dalle impostazioni di sistema.</string>
+    <string name="sync_permission_message">Per trovare e sincronizzare un dispositivo vicino, Balance Tracker richiede l\'autorizzazione per il Bluetooth e la posizione.</string>
+    <string name="sync_permission_title">Autorizzazione necessaria</string>
+    <string name="sync_scan_close">Chiudi scanner</string>
     <string name="sync_scanning">Ricerca dei dispositivi vicini</string>
     <string name="sync_start">Sincronizza ora</string>
     <string name="sync_success">Sincronizzazione completata</string>

@@ -103,11 +103,16 @@ private class AndroidBleSyncLink(
             dataCharacteristic = service.getCharacteristic(SyncService.Data)
         }
 
-        adapter.bluetoothLeAdvertiser?.startAdvertising(
-            advertiseSettings(),
-            advertiseData(descriptor),
-            advertiseCallback()
-        )
+        adapter.bluetoothLeAdvertiser?.let { advertiser ->
+            // Stopped before restarting rather than left in place: the same link is reused across scan
+            // windows, and a second registration would fail with "already started" while the previous
+            // callback kept the advertisement alive after the sheet was closed.
+            advertiseCallback?.let { previous -> runCatching { advertiser.stopAdvertising(previous) } }
+
+            val callback = advertiseCallback()
+            advertiseCallback = callback
+            runCatching { advertiser.startAdvertising(advertiseSettings(), advertiseData(descriptor), callback) }
+        }
     }
 
     /**

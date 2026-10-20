@@ -131,7 +131,8 @@ internal fun SyncLoadedView(
     onExport: () -> Unit,
     onImport: (String) -> Unit,
     onUnpair: () -> Unit,
-    onScanRequested: () -> Unit,
+    onPairScanRequested: () -> Unit,
+    onImportScanRequested: () -> Unit,
     onClose: () -> Unit
 ) {
     Scaffold(
@@ -192,7 +193,8 @@ internal fun SyncLoadedView(
                 !state.paired && !state.isPairingInProgress -> item(key = "pairing") {
                     PairingSection(
                         onPair = onPair,
-                        onPairWith = onPairWith
+                        onPairWith = onPairWith,
+                        onScanRequested = onPairScanRequested
                     )
                 }
 
@@ -231,7 +233,7 @@ internal fun SyncLoadedView(
                     DocumentSection(
                         onExport = onExport,
                         onImport = onImport,
-                        onScanRequested = onScanRequested
+                        onScanRequested = onImportScanRequested
                     )
                 }
             }
@@ -590,7 +592,8 @@ private fun BusyIndicator(phase: SyncPhase?) {
 @Composable
 private fun PairingSection(
     onPair: () -> Unit,
-    onPairWith: (String) -> Unit
+    onPairWith: (String) -> Unit,
+    onScanRequested: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -624,6 +627,23 @@ private fun PairingSection(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
+            OutlinedButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                onClick = onScanRequested,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.QrCode,
+                    contentDescription = null
+                )
+
+                Spacer(Modifier.width(8.dp))
+
+                Text(stringResource(Res.string.sync_pair_scan_hint))
+            }
+
             ManualPairingCodeEntry(
                 enabled = true,
                 onScanned = onPairWith
@@ -648,7 +668,9 @@ internal fun PairingCodeDialog(
 
     androidx.compose.material3.ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f)
     ) {
         Column(
             modifier = Modifier

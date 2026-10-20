@@ -78,8 +78,14 @@
     <string name="sync_pair_device">Pair with another device</string>
     <string name="sync_pair_qr_description">Scan this code on your other device to link them. It works once and nothing is sent to a server.</string>
     <string name="sync_pair_qr_title">Pair a device</string>
-    <string name="sync_pair_scan_hint">Scan the code shown on the other device</string>
+    <string name="sync_pair_scan_hint">Scan QR code</string>
     <string name="sync_paired_with">Paired device</string>
+    <string name="sync_permission_close">Close</string>
+    <string name="sync_permission_continue">Continue</string>
+    <string name="sync_permission_denied_message">These permissions are required to find a nearby device. You can grant them later in system settings.</string>
+    <string name="sync_permission_message">To find and sync with a nearby device, Balance Tracker needs permission to use Bluetooth and location.</string>
+    <string name="sync_permission_title">Permission needed</string>
+    <string name="sync_scan_close">Close scanner</string>
     <string name="sync_scanning">Looking for nearby devices</string>
     <string name="sync_start">Sync now</string>
     <string name="sync_success">Sync complete</string>

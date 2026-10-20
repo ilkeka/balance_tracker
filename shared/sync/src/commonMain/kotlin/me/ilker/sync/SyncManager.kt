@@ -1,5 +1,6 @@
 package me.ilker.sync
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -50,6 +51,15 @@ class SyncManager(
 
     private var link: SyncLink? = null
 
+    /**
+     * The fingerprint of the peer this device is pairing with, while a pairing is in flight.
+     *
+     * Both sides hold the same secret once the code has been exchanged, so the digest names the
+     * device that showed the code. Matching it while scanning is what makes the automatic connection
+     * safe instead of picking whichever stranger happened to advertise first.
+     */
+    private var pairingFingerprint: String? = null
+
     override val state: StateFlow<SyncState> = currentState.asStateFlow()
     override val sideEffect = Channel<SyncSideEffect>(capacity = Channel.BUFFERED)
 
@@ -69,7 +79,12 @@ class SyncManager(
             SyncIntent.Unpair -> unpair()
             SyncIntent.OpenScanner -> currentState.update { it.copy(isScannerVisible = true) }
             SyncIntent.CloseScanner -> currentState.update { it.copy(isScannerVisible = false) }
-            SyncIntent.DismissPairingCode -> currentState.update { it.copy(pairingCode = null, isPairingInProgress = false) }
+            SyncIntent.DismissPairingCode -> {
+                // The code is only useful while the other device can find this one, and keeping the
+                // radio on behind a closed sheet would leave an advertisement nobody can pair with.
+                stopDiscovering()
+                currentState.update { it.copy(pairingCode = null, isPairingInProgress = false) }
+            }
             SyncIntent.DismissOutcome -> currentState.update { it.copy(outcome = null) }
         }
     }
@@ -100,6 +115,11 @@ class SyncManager(
             currentState.update {
                 it.copy(paired = false, isPairingInProgress = true, pairingCode = code)
             }
+
+            // Advertising starts while the code is still on screen: the other device adopts the secret
+            // and scans as soon as it reads the code, so this side has to be reachable by then. Desktop
+            // and web have no radio, and pair out of band instead, so there is nothing to open there.
+            if (currentState.value.liveSyncSupported) ensureLink()
         }
     }
 
@@ -114,6 +134,7 @@ class SyncManager(
                 }
 
             sdk.savePairingSecret(secret, linkedDevice = null)
+            pairingFingerprint = deviceFingerprint(secret)
             currentState.update {
                 it.copy(
                     paired = true,
@@ -124,9 +145,28 @@ class SyncManager(
             }
 
             // Pairing exists to enable a sync, so continue straight into one rather than making the
-            // user ask for it a second time.
-            syncNow()
+            // user ask for it a second time. The code carries the secret, not the peer's address, so
+            // the device that showed it still has to be found by scanning.
+            discover()
         }
+    }
+
+    /**
+     * Opens the link and starts advertising, or reuses the one already running.
+     *
+     * Advertising and serving are shared by every attempt, while a session is one connection, so the
+     * link outlives an individual scan window and is only dropped when the screen is left.
+     *
+     * @return false when the link could not be opened, after reporting the failure as an outcome.
+     */
+    private suspend fun ensureLink(): Boolean {
+        val wasOpen = link != null
+        val current = runCatching { startLink() }.getOrElse {
+            fail(it)
+            return false
+        }
+        if (!wasOpen) listenForIncomingSessions(current)
+        return true
     }
 
     /**
@@ -148,19 +188,16 @@ class SyncManager(
         }
 
         scope.launch {
-            val created = runCatching { startLink() }.getOrElse {
-                fail(it)
-                return@launch
-            }
-            link = created
+            if (!ensureLink()) return@launch
+            val created = link ?: return@launch
             currentState.update { it.copy(isDiscovering = true, outcome = null) }
 
-            listenForIncomingSessions(created)
             scanWindow(created)
         }
     }
 
     private fun stopDiscovering() {
+        pairingFingerprint = null
         link?.stop()
         link = null
         // Cancelled rather than left to run out its clock: the radio is already stopped above, and a
@@ -180,7 +217,8 @@ class SyncManager(
      * Runs a full scan window, filling the picker as devices appear.
      *
      * Discovery does not stop early once something is found: the user chooses from the list, so
-     * returning on the first hit would hide the device they actually meant.
+     * returning on the first hit would hide the device they actually meant. The one exception is a
+     * pairing that is still in flight, which knows the exact peer it is looking for.
      */
     private suspend fun scanWindow(current: SyncLink) {
         // Scoped to the window and closed when it ends. A channel owned by the manager instead would
@@ -188,9 +226,13 @@ class SyncManager(
         val found = Channel<DiscoveredDevice>(Channel.UNLIMITED)
         scanJob = scope.launch {
             try {
-                runCatching {
-                    current.discover(timeoutMillis = ScanWindowMillis) { device -> found.send(device) }
-                }.onFailure { fail(it) }
+                current.discover(timeoutMillis = ScanWindowMillis) { device -> found.send(device) }
+            } catch (cancellation: CancellationException) {
+                // A window cut short on purpose, because pairing already found its peer; closing the
+                // scan is the requested outcome and not something to report as a failure.
+                throw cancellation
+            } catch (throwable: Throwable) {
+                fail(throwable)
             } finally {
                 found.close()
                 scanJob = null
@@ -207,7 +249,23 @@ class SyncManager(
                         .filterNot { existing -> existing.id == nearby.id } + nearby
                 )
             }
+
+            // Only the device the secret just came from can advertise a matching fingerprint, so a
+            // hit here is the peer that showed the code and the sync can start without a second tap.
+            if (pairingFingerprint != null && nearby.fingerprint == pairingFingerprint) {
+                pairingFingerprint = null
+                stopScanning()
+                selectDevice(nearby.id)
+                syncNow()
+            }
         }
+    }
+
+    /** Ends the scan window without tearing down the link, which a session may already be using. */
+    private fun stopScanning() {
+        scanJob?.cancel()
+        scanJob = null
+        currentState.update { it.copy(isDiscovering = false) }
     }
 
     /** Accepts incoming sessions for as long as the screen is up, one at a time. */
@@ -292,19 +350,14 @@ class SyncManager(
         }
 
         scope.launch {
+            if (!ensureLink()) return@launch
+            val current = link ?: return@launch
+
             busy(SyncPhase.Connecting)
 
             val secret = sdk.getPairingSecret()
             if (secret == null) {
                 fail(SyncProtocolException.Unauthenticated)
-                return@launch
-            }
-
-            // Syncing without having tapped the picker still has to work, so the link is created on
-            // demand rather than requiring a discovery round trip first.
-            val current = link ?: runCatching { startLink() }.getOrNull()?.also { link = it }
-            if (current == null) {
-                currentState.update { it.copy(isSyncing = false, phase = null) }
                 return@launch
             }
 
@@ -344,6 +397,12 @@ class SyncManager(
 
             is SyncSessionResult.Completed -> {
                 rememberLinkedDevice(outcome.peer)
+                // The code has served its purpose once a peer proved it holds the secret, so the
+                // pairing sheet is closed instead of being left over the result.
+                currentState.update { it.copy(pairingCode = null, isPairingInProgress = false) }
+                // Nothing else is expected over this link now, and advertising is started again on
+                // demand, so the radio is turned off rather than left on until the screen closes.
+                stopDiscovering()
                 outcome.peerSnapshot?.let { merge(it) }
                     ?: currentState.update {
                         it.copy(isSyncing = false, phase = null, outcome = SyncOutcome.UpToDate)
@@ -446,8 +505,17 @@ class SyncManager(
         fingerprint = deviceFingerprint(secret)
     )
 
-    private suspend fun startLink(): SyncLink = createSyncLink().also { created ->
-        created.start(requireLocalDescriptor(requireSecret()))
+    /**
+     * Opens the link if it is not open yet and (re)starts advertising.
+     *
+     * The existing link is reused rather than replaced: the GATT server and its accept loop belong to
+     * it, and starting a second one would leave the first advertising until its own timeout.
+     */
+    private suspend fun startLink(): SyncLink {
+        val current = link ?: createSyncLink()
+        current.start(requireLocalDescriptor(requireSecret()))
+        link = current
+        return current
     }
 
     private suspend fun requireSecret(): ByteArray =

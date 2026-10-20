@@ -2,8 +2,6 @@ package me.ilker.sync.qr
 
 import android.Manifest
 import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
@@ -12,16 +10,7 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -29,20 +18,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
-import me.ilker.balance_tracker.resources.Res
-import me.ilker.balance_tracker.resources.camera_permission_denied
-import me.ilker.balance_tracker.resources.camera_permission_grant
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal actual fun QrScanner(onScanned: (String) -> Unit) {
@@ -52,40 +35,13 @@ internal actual fun QrScanner(onScanned: (String) -> Unit) {
     val currentOnScanned = rememberUpdatedState(onScanned)
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
 
-    var hasCameraPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        hasCameraPermission = granted
-    }
-
-    if (!hasCameraPermission) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp),
-                text = stringResource(Res.string.camera_permission_denied),
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
-                Text(stringResource(Res.string.camera_permission_grant))
-            }
-        }
-        return
-    }
+    // The screen asks for the camera before it shows the scanner; this only guards against the
+    // permission being revoked while the app was in the background.
+    val cameraGranted = ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.CAMERA
+    ) == PackageManager.PERMISSION_GRANTED
+    if (!cameraGranted) return
 
     DisposableEffect(Unit) {
         onDispose {
@@ -136,6 +92,7 @@ private class QrCodeAnalyzer(
 ) : ImageAnalysis.Analyzer {
     private val scanner = BarcodeScanning.getClient()
     private var processing = false
+    private var delivered = false
 
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(imageProxy: ImageProxy) {
@@ -153,12 +110,18 @@ private class QrCodeAnalyzer(
         val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
         scanner.process(inputImage)
             .addOnSuccessListener { barcodes ->
+                // The analyzer keeps running until the camera is unbound, so without this the same code
+                // would be handed over on every frame while the screen is closing.
+                if (delivered) return@addOnSuccessListener
                 barcodes
                     .firstOrNull {
                         it.format == Barcode.FORMAT_QR_CODE && !it.rawValue.isNullOrBlank()
                     }
                     ?.rawValue
-                    ?.let(onScanned)
+                    ?.let { value ->
+                        delivered = true
+                        onScanned(value)
+                    }
             }
             .addOnCompleteListener {
                 processing = false

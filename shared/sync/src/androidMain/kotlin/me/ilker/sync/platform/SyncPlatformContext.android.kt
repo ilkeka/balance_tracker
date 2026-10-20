@@ -53,12 +53,14 @@ internal actual fun RequestNearbyDevicePermissions(onResult: (granted: Boolean) 
 }
 
 private fun Context.missingNearbyDevicePermissions(): List<String> = buildList {
-    // Below API 31 the Bluetooth permissions are install-time, so there is nothing left to request.
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return@buildList
-
-    add(Manifest.permission.BLUETOOTH_CONNECT)
-    add(Manifest.permission.BLUETOOTH_SCAN)
-    add(Manifest.permission.BLUETOOTH_ADVERTISE)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        add(Manifest.permission.BLUETOOTH_CONNECT)
+        add(Manifest.permission.BLUETOOTH_SCAN)
+        add(Manifest.permission.BLUETOOTH_ADVERTISE)
+    } else {
+        add(Manifest.permission.ACCESS_FINE_LOCATION)
+        add(Manifest.permission.ACCESS_COARSE_LOCATION)
+    }
 }.filterNot(::hasPermission)
 
 private fun Context.hasPermission(permission: String): Boolean =
