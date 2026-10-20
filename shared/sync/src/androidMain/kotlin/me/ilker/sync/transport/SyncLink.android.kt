@@ -376,7 +376,12 @@ private class AndroidBleSyncLink(
     }
 
     private companion object {
-        const val AdvertisingTimeoutMillis = 30_000
+        /**
+         * Long enough for both people to open the screen and pick each other, short enough that a
+         * forgotten screen cannot leave the radio on indefinitely. The sync screen stops the link
+         * itself when it is left, so this is the backstop rather than the usual lifetime.
+         */
+        const val AdvertisingTimeoutMillis = 300_000
     }
 }
 

@@ -65,3 +65,14 @@ private fun Context.missingNearbyDevicePermissions(): List<String> = buildList {
 
 private fun Context.hasPermission(permission: String): Boolean =
     ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
+
+/**
+ * Read from the application context the screen installs, so it answers without a composition.
+ *
+ * False while the screen is not composed: there is nothing to open then, and the caller treats that
+ * the same as a missing permission.
+ */
+internal actual fun hasNearbyDevicePermissions(): Boolean {
+    val context = AndroidContextHolder.context ?: return false
+    return context.missingNearbyDevicePermissions().isEmpty()
+}

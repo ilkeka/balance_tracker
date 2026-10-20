@@ -25,7 +25,7 @@ enum class SyncFailure {
     /** The radio works but nothing matching this app advertised nearby. */
     NoDevicesNearby,
 
-    /** A pairing code that is not shaped like one, or whose embedded digest does not match. */
+    /** A pasted pairing code that is not shaped like one, or whose embedded digest does not match. */
     UnreadableCode,
 
     /** The link dropped or never completed the exchange. */
@@ -59,6 +59,18 @@ data class NearbyDevice(
     val fingerprint: String
 )
 
+/**
+ * A device waiting for this one to confirm a Bluetooth pairing.
+ *
+ * [code] is the six characters both users compare. Unlike the code shown by the old QR flow, it is
+ * not a secret: it only names the session so two people in the same room can tell they are pairing
+ * with each other.
+ */
+data class PairingPrompt(
+    val device: NearbyDevice,
+    val code: String
+)
+
 /** A device asking to sync, held on screen until the user answers. */
 data class IncomingRequest(
     val device: NearbyDevice,
@@ -81,8 +93,13 @@ data class SyncState(
     val liveSyncSupported: Boolean = false,
     val isSyncing: Boolean = false,
     val phase: SyncPhase? = null,
+    /** Set on targets without a radio while a one-time code is being shown for a document sync. */
     val pairingCode: String? = null,
     val isPairingInProgress: Boolean = false,
+    /** Non-null while the two devices are comparing the code that will link them over Bluetooth. */
+    val pairingPrompt: PairingPrompt? = null,
+    /** True between tapping a nearby device and the pairing handshake finishing. */
+    val isPairing: Boolean = false,
     val isDiscovering: Boolean = false,
     val nearbyDevices: List<NearbyDevice> = emptyList(),
     val selectedDeviceId: String? = null,
@@ -90,18 +107,28 @@ data class SyncState(
     val incomingRequest: IncomingRequest? = null,
     val isIncomingRequestAnswered: Boolean = false,
     val outgoingCode: String? = null,
-    val isScannerVisible: Boolean = false,
     val outcome: SyncOutcome? = null
 ) : me.ilker.core.State
 
 sealed interface SyncIntent : Intent {
     data object Load : SyncIntent
 
-    /** Mints a fresh one-time secret and shows it as a QR code for the other device to scan. */
+    /**
+     * Mints a fresh one-time secret and shows it as text.
+     *
+     * Only offered where there is no radio to pair over, because a device with Bluetooth pairs by
+     * finding the other one instead of copying a code.
+     */
     data object Pair : SyncIntent
 
-    /** Adopts a secret read off the other device, either scanned or pasted. */
+    /** Adopts a secret created on another device, either pasted here or typed in. */
     data class PairWith(val code: String) : SyncIntent
+
+    /** Connects to a nearby device and asks both users to confirm the same code. */
+    data class PairDevice(val deviceId: String) : SyncIntent
+
+    data object AcceptPairing : SyncIntent
+    data object RejectPairing : SyncIntent
 
     /** Starts advertising and scanning for nearby devices. */
     data object Discover : SyncIntent
@@ -122,15 +149,10 @@ sealed interface SyncIntent : Intent {
     data object Export : SyncIntent
     data class Import(val code: String) : SyncIntent
     data object Unpair : SyncIntent
-    data object OpenScanner : SyncIntent
-    data object CloseScanner : SyncIntent
     data object DismissPairingCode : SyncIntent
     data object DismissOutcome : SyncIntent
 }
 
 sealed interface SyncSideEffect : SideEffect {
     data class CopyToClipboard(val value: String) : SyncSideEffect
-
-    /** Asks the platform layer for the runtime Bluetooth permissions. */
-    data object RequestBluetoothPermission : SyncSideEffect
 }

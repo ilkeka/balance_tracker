@@ -162,11 +162,6 @@ class SyncPayloadCodecTest {
 class PairingCodeTest {
 
     @Test
-    fun aPairingCodeIsShortEnoughForAQrCode() = runTestCompat {
-        assertTrue(PairingPayload.create().length < 80)
-    }
-
-    @Test
     fun twoIndependentPairingCodesDiffer() = runTestCompat {
         assertTrue(PairingPayload.create() != PairingPayload.create())
     }

@@ -196,8 +196,9 @@ class PairingPayloadTest {
     }
 
     /**
-     * A camera or a mistyped character can yield a code of the right shape but the wrong secret. The
-     * embedded digest catches that here rather than as an opaque authentication failure during a sync.
+     * A mistyped or mistranscribed character can yield a code of the right shape but the wrong
+     * secret. The embedded digest catches that here rather than as an opaque authentication failure
+     * during a sync.
      */
     @Test
     fun aMisreadCodeIsRejected() = runTest {
@@ -218,14 +219,6 @@ class PairingPayloadTest {
     @Test
     fun anArbitraryStringIsRejected() = runTest {
         assertFailsWith<IllegalArgumentException> { PairingPayload.decode("not a pairing code") }
-    }
-
-    @Test
-    fun fingerprintIsShortAndStable() = runTest {
-        val secret = PairingPayload.decode(PairingPayload.create())
-
-        assertEquals(6, PairingPayload.fingerprint(secret).length)
-        assertEquals(PairingPayload.fingerprint(secret), PairingPayload.fingerprint(secret))
     }
 }
 

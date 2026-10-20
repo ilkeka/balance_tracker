@@ -1,17 +1,17 @@
 package me.ilker.sync.protocol
 
-import kotlin.random.Random
-
 private const val Scheme = "btsync"
 
 /**
- * The one-time secret shared by QR pairing, in the form that goes into the code.
+ * A one-time secret in the form that can be copied between devices without a radio.
  *
- * Format: `btsync:1:<base64 secret>:<base64 digest prefix>`.
+ * Phones pair by finding each other over Bluetooth. Desktop and web builds have no radio in this
+ * build, so they hand the same secret over as text instead: one side creates it, the other pastes
+ * it. The format is `btsync:1:<base64 secret>:<base64 digest prefix>`.
  *
- * The digest prefix lets the scanning device reject a misread code immediately with a clear message
+ * The digest prefix lets the pasting device reject a mistyped code immediately with a clear message
  * instead of failing later with an opaque authentication error. Both devices store the secret
- * afterwards, so the pairing only has to happen once.
+ * afterwards, so the hand-off only has to happen once.
  */
 internal object PairingPayload {
     private const val SecretSizeBytes = 32
@@ -28,7 +28,7 @@ internal object PairingPayload {
             .joinToString(":")
     }
 
-    /** Returns the secret, or throws if the code is malformed or was misread. */
+    /** Returns the secret, or throws if the code is malformed or was mistyped. */
     suspend fun decode(payload: String): ByteArray {
         val parts = payload.trim().split(":")
         require(parts.size == 4 && parts[0] == Scheme) { "not a pairing code" }
@@ -43,11 +43,4 @@ internal object PairingPayload {
 
         return secret
     }
-
-    /** Short, human-readable prefix so two devices can be told apart without a full exchange. */
-    fun fingerprint(secret: ByteArray): String = secret.copyOf(3).toHex().uppercase()
 }
-
-internal fun randomBytes(size: Int): ByteArray = Random.nextBytes(size)
-
-internal fun randomNonce(): String = randomBytes(16).toHex()

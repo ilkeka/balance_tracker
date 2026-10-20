@@ -39,7 +39,7 @@ import me.ilker.sync.SyncScreen
 import me.ilker.sync.SyncSideEffect
 import me.ilker.sync.navigation.Sync
 import me.ilker.sync.navigation.SyncNavigationEventInfo
-import me.ilker.sync.qr.rememberCopyToClipboard
+import me.ilker.sync.clipboard.rememberCopyToClipboard
 import me.ilker.transaction.add.AddTransactionIntent
 import me.ilker.transaction.add.AddTransactionScreen
 import me.ilker.transaction.add.AddTransactionSideEffect
@@ -255,7 +255,6 @@ fun CommonApp() {
                         manager.sideEffect.receiveAsFlow().collect { effect ->
                             when (effect) {
                                 is SyncSideEffect.CopyToClipboard -> copyToClipboard(effect.value)
-                                SyncSideEffect.RequestBluetoothPermission -> Unit
                             }
                         }
                     }
@@ -276,6 +275,9 @@ fun CommonApp() {
                         onDiscover = { manager.sendIntent(SyncIntent.Discover) },
                         onStopDiscovering = { manager.sendIntent(SyncIntent.StopDiscovering) },
                         onSelectDevice = { deviceId -> manager.sendIntent(SyncIntent.SelectDevice(deviceId)) },
+                        onPairDevice = { deviceId -> manager.sendIntent(SyncIntent.PairDevice(deviceId)) },
+                        onAcceptPairing = { manager.sendIntent(SyncIntent.AcceptPairing) },
+                        onRejectPairing = { manager.sendIntent(SyncIntent.RejectPairing) },
                         onAcceptIncoming = { manager.sendIntent(SyncIntent.AcceptIncoming) },
                         onRejectIncoming = { manager.sendIntent(SyncIntent.RejectIncoming) },
                         onPair = { manager.sendIntent(SyncIntent.Pair) },
@@ -284,9 +286,6 @@ fun CommonApp() {
                         onImport = { code -> manager.sendIntent(SyncIntent.Import(code)) },
                         onUnpair = { manager.sendIntent(SyncIntent.Unpair) },
                         onDismissPairingCode = { manager.sendIntent(SyncIntent.DismissPairingCode) },
-                        onToggleScanner = { visible ->
-                            manager.sendIntent(if (visible) SyncIntent.OpenScanner else SyncIntent.CloseScanner)
-                        },
                         onClose = { navController.popBackStack() }
                     )
                 }

@@ -1,4 +1,4 @@
-package me.ilker.sync.qr
+package me.ilker.sync.views
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,19 +14,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import me.ilker.balance_tracker.resources.Res
-import me.ilker.balance_tracker.resources.sync_pair_button
-import me.ilker.balance_tracker.resources.sync_pair_code_placeholder
-import org.jetbrains.compose.resources.stringResource
 
 /**
- * Fallback used on targets with no camera, matching how the scanner already degrades on desktop and
- * web. The pairing code is short enough to read across a desk or paste from a message.
+ * A one-line field for a code that was copied from another device.
+ *
+ * Used both for pairing with a target that has no radio and for importing a document payload, so the
+ * labels come from the caller instead of naming one of the two flows.
  */
 @Composable
-internal fun ManualPairingCodeEntry(
+internal fun ManualCodeEntry(
+    placeholder: String,
+    action: String,
     enabled: Boolean,
-    onScanned: (String) -> Unit
+    onSubmit: (String) -> Unit
 ) {
     var code by remember { mutableStateOf("") }
 
@@ -37,17 +37,17 @@ internal fun ManualPairingCodeEntry(
             onValueChange = { code = it },
             enabled = enabled,
             singleLine = true,
-            placeholder = { Text(stringResource(Res.string.sync_pair_code_placeholder)) }
+            placeholder = { Text(placeholder) }
         )
 
         Spacer(Modifier.height(12.dp))
 
         Button(
             modifier = Modifier.fillMaxWidth(),
-            onClick = { code.trim().takeIf { it.isNotBlank() }?.let(onScanned) },
+            onClick = { code.trim().takeIf { it.isNotBlank() }?.let(onSubmit) },
             enabled = enabled && code.isNotBlank()
         ) {
-            Text(stringResource(Res.string.sync_pair_button))
+            Text(action)
         }
     }
 }

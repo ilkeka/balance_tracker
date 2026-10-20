@@ -22,3 +22,12 @@ internal expect fun BindSyncPlatformContext()
  */
 @Composable
 internal expect fun RequestNearbyDevicePermissions(onResult: (granted: Boolean) -> Unit)
+
+/**
+ * Whether the nearby-device permissions are already held.
+ *
+ * Checked when the sync screen opens so an unpaired phone can start advertising without putting a
+ * permission prompt in front of a screen the user has not asked anything of yet. Targets that need
+ * nothing report true.
+ */
+internal expect fun hasNearbyDevicePermissions(): Boolean

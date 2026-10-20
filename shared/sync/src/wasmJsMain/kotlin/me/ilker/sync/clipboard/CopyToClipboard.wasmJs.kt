@@ -1,4 +1,4 @@
-package me.ilker.sync.qr
+package me.ilker.sync.clipboard
 
 import androidx.compose.runtime.Composable
 import kotlin.js.ExperimentalWasmJsInterop

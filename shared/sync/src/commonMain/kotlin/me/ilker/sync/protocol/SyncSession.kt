@@ -12,7 +12,8 @@ import me.ilker.sync.transport.SyncTransport
  * here, because the receiver has to be able to refuse before any ledger data crosses the link. The
  * stages are therefore explicit rather than folded into one symmetric swap:
  *
- * 1. both sides write [Hello] immediately, so neither has to win a race to speak first
+ * 1. the initiator writes [Hello] first, so the receiver can tell a sync from a pairing before it
+ *    answers; the receiver then writes its own [Hello]
  * 2. the initiator writes [Request], carrying the metadata the receiver needs to decide
  * 3. the receiver writes [Accept] or [Reject]
  * 4. both sides write their sealed snapshot
@@ -121,6 +122,8 @@ internal sealed interface SyncSessionResult {
  * @param request set on the initiating side, null on the receiving side.
  * @param onRequest called on the receiving side with the initiator's metadata. Suspending, because
  *   the user has to see the request and answer it before the session can continue.
+ * @param peerHello the initiator's already-read hello, when this side received the connection and had
+ *   to inspect the first message to know it was a sync at all.
  * @return [SyncSessionResult.Completed] carrying the peer's snapshot, or
  *   [SyncSessionResult.Declined] if the peer rejected or turned out to be this device.
  */
@@ -130,7 +133,8 @@ internal suspend fun runSyncSession(
     secret: ByteArray,
     snapshot: SyncSnapshot,
     request: SyncMessage.Request?,
-    onRequest: suspend (IncomingSyncRequest) -> Boolean
+    onRequest: suspend (IncomingSyncRequest) -> Boolean,
+    peerHello: SyncMessage.Hello? = null
 ): SyncSessionResult {
     transport.open()
     try {
@@ -138,19 +142,19 @@ internal suspend fun runSyncSession(
 
         link.send(SyncMessage.Hello(device = local, proof = proof(secret, local.deviceId)))
 
-        val peerHello = link.read() as? SyncMessage.Hello ?: throw SyncProtocolException.Unauthenticated
-        if (peerHello.device.deviceId == local.deviceId) return SyncSessionResult.Declined
-        if (!verify(secret, peerHello)) throw SyncProtocolException.Unauthenticated
+        val peer = peerHello ?: (link.read() as? SyncMessage.Hello ?: throw SyncProtocolException.Unauthenticated)
+        if (peer.device.deviceId == local.deviceId) return SyncSessionResult.Declined
+        if (!verify(secret, peer)) throw SyncProtocolException.Unauthenticated
         // Taken from the hello rather than the request: the hello is what the peer proved, and both
         // sides describe themselves before either asks for anything.
-        val peer = peerHello.device
+        val peerDevice = peer.device
 
         if (request != null) {
             link.send(request)
             return when (link.read()) {
                 is SyncMessage.Accept -> {
                     link.sendRaw(SyncPayloadCodec.seal(secret, snapshot))
-                    SyncSessionResult.Completed(peer, link.openSnapshot(secret))
+                    SyncSessionResult.Completed(peerDevice, link.openSnapshot(secret))
                 }
 
                 is SyncMessage.Reject -> SyncSessionResult.Declined
@@ -166,7 +170,7 @@ internal suspend fun runSyncSession(
         if (!accepted) return SyncSessionResult.Declined
 
         link.sendRaw(SyncPayloadCodec.seal(secret, snapshot))
-        return SyncSessionResult.Completed(peer, link.openSnapshot(secret))
+        return SyncSessionResult.Completed(peerDevice, link.openSnapshot(secret))
     } finally {
         transport.close()
     }
@@ -178,8 +182,10 @@ internal suspend fun runSyncSession(
  * The transport carries chunks of one message at a time and the assembler is stateful, so wrapping
  * both together keeps the sequencing in one place. One assembler serves the whole session because it
  * resets after each complete message.
+ *
+ * Internal rather than private because pairing speaks the same framing with a different message type.
  */
-private class FramedLink(private val transport: SyncTransport) {
+internal class FramedLink(private val transport: SyncTransport) {
     private val assembler = MessageAssembler()
 
     suspend fun send(message: SyncMessage) = sendRaw(SyncMessageCodec.write(message))
@@ -207,6 +213,19 @@ private class FramedLink(private val transport: SyncTransport) {
      */
     suspend fun openSnapshot(secret: ByteArray): SyncSnapshot? =
         runCatching { SyncPayloadCodec.open(secret, readRaw()) }.getOrNull()
+}
+
+/**
+ * Reads the first complete message on a fresh connection without assuming its type.
+ *
+ * The receiving side uses this to tell a pairing hello from a sync hello. A new assembler is safe
+ * here because not a single chunk of the first message has been consumed yet.
+ */
+internal suspend fun SyncTransport.readMessageText(): String {
+    val assembler = MessageAssembler()
+    while (true) {
+        assembler.accept(read())?.let { return it.decodeToString() }
+    }
 }
 
 /**

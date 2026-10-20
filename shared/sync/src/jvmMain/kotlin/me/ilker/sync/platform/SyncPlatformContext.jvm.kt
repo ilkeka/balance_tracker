@@ -10,3 +10,6 @@ internal actual fun BindSyncPlatformContext() = Unit
 internal actual fun RequestNearbyDevicePermissions(onResult: (granted: Boolean) -> Unit) {
     onResult(true)
 }
+
+/** No radio in this build, so nothing can be missing. */
+internal actual fun hasNearbyDevicePermissions(): Boolean = true

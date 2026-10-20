@@ -26,7 +26,6 @@ import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.FileUpload
 import androidx.compose.material.icons.rounded.LinkOff
-import androidx.compose.material.icons.rounded.QrCode
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -77,11 +76,17 @@ import me.ilker.balance_tracker.resources.sync_nearby_scan
 import me.ilker.balance_tracker.resources.sync_nearby_selected
 import me.ilker.balance_tracker.resources.sync_nearby_title
 import me.ilker.balance_tracker.resources.sync_no_changes
+import me.ilker.balance_tracker.resources.sync_pair_button
+import me.ilker.balance_tracker.resources.sync_pair_code_hint
+import me.ilker.balance_tracker.resources.sync_pair_code_placeholder
+import me.ilker.balance_tracker.resources.sync_pair_code_title
 import me.ilker.balance_tracker.resources.sync_pair_copy_code
 import me.ilker.balance_tracker.resources.sync_pair_device
-import me.ilker.balance_tracker.resources.sync_pair_qr_description
-import me.ilker.balance_tracker.resources.sync_pair_qr_title
-import me.ilker.balance_tracker.resources.sync_pair_scan_hint
+import me.ilker.balance_tracker.resources.sync_pair_hint
+import me.ilker.balance_tracker.resources.sync_pair_prompt_message
+import me.ilker.balance_tracker.resources.sync_pair_prompt_title
+import me.ilker.balance_tracker.resources.sync_import_code_placeholder
+import me.ilker.balance_tracker.resources.sync_import_document
 import me.ilker.balance_tracker.resources.sync_paired_with
 import me.ilker.balance_tracker.resources.sync_scanning
 import me.ilker.balance_tracker.resources.sync_start
@@ -94,14 +99,13 @@ import me.ilker.balance_tracker.resources.sync_unpaired
 import me.ilker.balance_tracker.resources.sync_unreadable_code
 import me.ilker.sync.IncomingRequest
 import me.ilker.sync.NearbyDevice
+import me.ilker.sync.PairingPrompt
 import me.ilker.sync.SyncFailure
 import me.ilker.sync.SyncOutcome
 import me.ilker.sync.SyncPhase
 import me.ilker.sync.SyncState
+import me.ilker.sync.clipboard.rememberCopyToClipboard
 import me.ilker.sync.protocol.DeviceType
-import me.ilker.sync.qr.ManualPairingCodeEntry
-import me.ilker.sync.qr.rememberCopyToClipboard
-import me.ilker.sync.qr.rememberQrCodePainter
 import org.jetbrains.compose.resources.stringResource
 
 private val CardShape = RoundedCornerShape(24.dp)
@@ -126,13 +130,12 @@ internal fun SyncLoadedView(
     onDiscover: () -> Unit,
     onStopDiscovering: () -> Unit,
     onSelectDevice: (String) -> Unit,
+    onPairDevice: (String) -> Unit,
     onPair: () -> Unit,
     onPairWith: (String) -> Unit,
     onExport: () -> Unit,
     onImport: (String) -> Unit,
     onUnpair: () -> Unit,
-    onPairScanRequested: () -> Unit,
-    onImportScanRequested: () -> Unit,
     onClose: () -> Unit
 ) {
     Scaffold(
@@ -190,12 +193,49 @@ internal fun SyncLoadedView(
                     BusyIndicator(phase = state.phase)
                 }
 
-                !state.paired && !state.isPairingInProgress -> item(key = "pairing") {
-                    PairingSection(
-                        onPair = onPair,
-                        onPairWith = onPairWith,
-                        onScanRequested = onPairScanRequested
-                    )
+                !state.paired && !state.isPairingInProgress -> {
+                    if (state.liveSyncSupported) {
+                        item(key = "pair_hint") {
+                            BluetoothPairingCard()
+                        }
+
+                        item(key = "nearby") {
+                            NearbySection(
+                                state = state,
+                                onDiscover = onDiscover,
+                                onStopDiscovering = onStopDiscovering,
+                                onSelectDevice = onSelectDevice,
+                                showFingerprint = false
+                            )
+                        }
+
+                        item(key = "pair") {
+                            Button(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(ActionHeight),
+                                enabled = state.selectedDeviceId != null && !state.isPairing,
+                                onClick = { state.selectedDeviceId?.let(onPairDevice) },
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Bluetooth,
+                                    contentDescription = null
+                                )
+
+                                Spacer(Modifier.width(8.dp))
+
+                                Text(stringResource(Res.string.sync_pair_button))
+                            }
+                        }
+                    } else {
+                        item(key = "pairing") {
+                            PairingSection(
+                                onPair = onPair,
+                                onPairWith = onPairWith
+                            )
+                        }
+                    }
                 }
 
                 state.liveSyncSupported -> {
@@ -224,7 +264,8 @@ internal fun SyncLoadedView(
                             state = state,
                             onDiscover = onDiscover,
                             onStopDiscovering = onStopDiscovering,
-                            onSelectDevice = onSelectDevice
+                            onSelectDevice = onSelectDevice,
+                            showFingerprint = true
                         )
                     }
                 }
@@ -232,8 +273,7 @@ internal fun SyncLoadedView(
                 else -> item(key = "document") {
                     DocumentSection(
                         onExport = onExport,
-                        onImport = onImport,
-                        onScanRequested = onImportScanRequested
+                        onImport = onImport
                     )
                 }
             }
@@ -352,7 +392,8 @@ private fun NearbySection(
     state: SyncState,
     onDiscover: () -> Unit,
     onStopDiscovering: () -> Unit,
-    onSelectDevice: (String) -> Unit
+    onSelectDevice: (String) -> Unit,
+    showFingerprint: Boolean
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -424,6 +465,7 @@ private fun NearbySection(
                 NearbyDeviceRow(
                     device = device,
                     selected = state.selectedDeviceId == device.id,
+                    showFingerprint = showFingerprint,
                     onClick = { onSelectDevice(device.id) }
                 )
             }
@@ -444,6 +486,7 @@ private fun NearbySection(
 private fun NearbyDeviceRow(
     device: NearbyDevice,
     selected: Boolean,
+    showFingerprint: Boolean,
     onClick: () -> Unit
 ) {
     Surface(
@@ -491,7 +534,11 @@ private fun NearbyDeviceRow(
                     maxLines = 1
                 )
                 Text(
-                    text = device.type.label() + " · " + device.fingerprint,
+                    text = if (showFingerprint) {
+                        device.type.label() + " · " + device.fingerprint
+                    } else {
+                        device.type.label()
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1
@@ -589,11 +636,64 @@ private fun BusyIndicator(phase: SyncPhase?) {
     }
 }
 
+/**
+ * The Bluetooth pairing card shown while nothing is paired yet.
+ *
+ * It explains that both devices have to be on this screen before the nearby list means anything: the
+ * other phone is only findable once its own sync screen has started advertising.
+ */
+@Composable
+private fun BluetoothPairingCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(CardPadding),
+            verticalArrangement = Arrangement.spacedBy(CardSpacing)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Rounded.Bluetooth,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(Modifier.width(8.dp))
+
+                Text(
+                    text = stringResource(Res.string.sync_pair_device),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Text(
+                text = stringResource(Res.string.sync_pair_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/**
+ * The out-of-band path for targets with no radio.
+ *
+ * Desktop and web cannot find a phone over Bluetooth, so they hand the same secret over as text. The
+ * button mints it and the field accepts a code created elsewhere; either side can be the one that
+ * starts the pairing.
+ */
 @Composable
 private fun PairingSection(
     onPair: () -> Unit,
-    onPairWith: (String) -> Unit,
-    onScanRequested: () -> Unit = {}
+    onPairWith: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -616,7 +716,7 @@ private fun PairingSection(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.QrCode,
+                    imageVector = Icons.Rounded.Devices,
                     contentDescription = null
                 )
 
@@ -627,35 +727,64 @@ private fun PairingSection(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            OutlinedButton(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                onClick = onScanRequested,
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.QrCode,
-                    contentDescription = null
-                )
-
-                Spacer(Modifier.width(8.dp))
-
-                Text(stringResource(Res.string.sync_pair_scan_hint))
-            }
-
-            ManualPairingCodeEntry(
+            ManualCodeEntry(
+                placeholder = stringResource(Res.string.sync_pair_code_placeholder),
+                action = stringResource(Res.string.sync_pair_button),
                 enabled = true,
-                onScanned = onPairWith
+                onSubmit = onPairWith
             )
         }
     }
 }
 
 /**
- * The pairing code is only needed once, so the scanner is shown inline rather than in a separate
- * screen: it keeps "here is my code" and "enter theirs" on one surface, which is what pairing by
- * hand-off actually looks like.
+ * The approval prompt for a Bluetooth pairing.
+ *
+ * Shows the code both users are meant to compare. The code is a session label rather than a secret,
+ * so a mismatch means the connection is not the one the other person is looking at, and rejecting it
+ * costs nothing.
+ */
+@Composable
+internal fun PairingDialog(
+    prompt: PairingPrompt,
+    onAccept: () -> Unit,
+    onReject: () -> Unit
+) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onReject,
+        title = { Text(stringResource(Res.string.sync_pair_prompt_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(Res.string.sync_pair_prompt_message, prompt.device.alias))
+                HorizontalDivider()
+                Text(
+                    text = stringResource(Res.string.sync_incoming_verify),
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    text = prompt.code,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = onAccept) {
+                Text(stringResource(Res.string.sync_pair_button))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onReject) {
+                Text(stringResource(Res.string.sync_cancel))
+            }
+        }
+    )
+}
+
+/**
+ * A one-time code for a device that cannot pair over Bluetooth.
+ *
+ * Shown as text rather than a QR image: the only device that can consume it is one without a radio,
+ * and the user passes it along the way they would pass any other message.
  */
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -664,7 +793,6 @@ internal fun PairingCodeDialog(
     onDismiss: () -> Unit
 ) {
     val copyToClipboard = rememberCopyToClipboard()
-    val painter = rememberQrCodePainter(code)
 
     androidx.compose.material3.ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -679,24 +807,24 @@ internal fun PairingCodeDialog(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(stringResource(Res.string.sync_pair_qr_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(Res.string.sync_pair_code_title), style = MaterialTheme.typography.titleLarge)
             Text(
-                text = stringResource(Res.string.sync_pair_qr_description),
+                text = stringResource(Res.string.sync_pair_code_hint),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyMedium
             )
-            androidx.compose.foundation.Image(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(240.dp),
-                painter = painter,
-                contentDescription = stringResource(Res.string.sync_pair_qr_title)
-            )
-            Text(
-                text = code,
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center
-            )
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh
+            ) {
+                Text(
+                    modifier = Modifier.padding(16.dp),
+                    text = code,
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center
+                )
+            }
             OutlinedButton(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { copyToClipboard(code) }
@@ -716,8 +844,7 @@ internal fun PairingCodeDialog(
 @Composable
 private fun DocumentSection(
     onExport: () -> Unit,
-    onImport: (String) -> Unit,
-    onScanRequested: () -> Unit
+    onImport: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -753,26 +880,12 @@ private fun DocumentSection(
 
                 Text(stringResource(Res.string.sync_export_document))
             }
-            ManualPairingCodeEntry(
+            ManualCodeEntry(
+                placeholder = stringResource(Res.string.sync_import_code_placeholder),
+                action = stringResource(Res.string.sync_import_document),
                 enabled = true,
-                onScanned = onImport
+                onSubmit = onImport
             )
-            OutlinedButton(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                onClick = onScanRequested,
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.QrCode,
-                    contentDescription = null
-                )
-
-                Spacer(Modifier.width(8.dp))
-
-                Text(stringResource(Res.string.sync_pair_scan_hint))
-            }
         }
     }
 }

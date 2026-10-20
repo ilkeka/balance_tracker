@@ -1,5 +1,7 @@
 package me.ilker.sync.protocol
 
+import kotlin.random.Random
+
 /**
  * HMAC-SHA256 and the constant-time comparison, built on the common [sha256].
  *
@@ -47,3 +49,14 @@ internal fun constantTimeEquals(a: ByteArray, b: ByteArray): Boolean {
     }
     return difference == 0
 }
+
+/** Fresh key material for a pairing secret or a session nonce. */
+internal fun randomBytes(size: Int): ByteArray = Random.nextBytes(size)
+
+internal fun randomNonce(): String = randomBytes(NonceSizeBytes).toHex()
+
+/** 128 bits is enough for a nonce whose only job is to keep two pairings from looking alike. */
+private const val NonceSizeBytes = 16
+
+/** Length of the hex text [randomNonce] produces. */
+internal const val NonceHexLength = NonceSizeBytes * 2
