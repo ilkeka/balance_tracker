@@ -63,6 +63,11 @@ android {
             matchingFallbacks += listOf("release")
         }
     }
+    sourceSets {
+        // Shared greyscale launcher icon for both dev variants.
+        getByName("devDebug").res.srcDir("src/dev/res")
+        getByName("devRelease").res.srcDir("src/dev/res")
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_24
         targetCompatibility = JavaVersion.VERSION_24
