@@ -214,6 +214,7 @@ private class AndroidBleSyncLink(
              */
             private fun publish(result: ScanResult) {
                 val address = result.device.address ?: return
+                Log.d(LogTag, "Scan result $address")
                 val bytes = result.scanRecord?.manufacturerSpecificData?.get(DescriptorCodec.CompanyId)
                     ?: return
                 val descriptor = DescriptorCodec.decode(bytes) ?: return
@@ -224,6 +225,8 @@ private class AndroidBleSyncLink(
         }
 
         scanCallback = callback
+        // The service UUID is in the advertisement packet (the descriptor goes in the scan response),
+        // so the controller can match peers without waking the app for every beacon in range.
         scanner.startScan(
             listOf(ScanFilter.Builder().setServiceUuid(ParcelUuid(SyncService.Uuid)).build()),
             ScanSettings.Builder()
