@@ -87,6 +87,8 @@
     <string name="sync_permission_title">Autorizzazione necessaria</string>
     <string name="sync_scanning">Ricerca dei dispositivi vicini</string>
     <string name="sync_start">Sincronizza ora</string>
+    <string name="sync_step_find">Trovalo qui sotto e tocca Associa</string>
+    <string name="sync_step_open">Apri Sincronizzazione locale sull\'altro dispositivo</string>
     <string name="sync_success">Sincronizzazione completata</string>
     <string name="sync_success_detail">Inviate %1$d, ricevute %2$d</string>
     <string name="sync_title">Sincronizzazione locale</string>
@@ -96,6 +98,7 @@
     <string name="sync_unpair">Dissocia il dispositivo</string>
     <string name="sync_unpaired">Nessun dispositivo associato</string>
     <string name="sync_unreadable_code">Non e stato possibile leggere quel codice di abbinamento</string>
+    <string name="sync_with_device">Sincronizza con %1$s</string>
     <string name="transaction_details">Dettagli</string>
     <string name="transaction_type">Tipologia</string>
     <string name="transactions">Transazioni</string>

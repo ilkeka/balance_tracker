@@ -25,6 +25,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.ParcelUuid
+import android.util.Log
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.TimeoutCancellationException
@@ -111,7 +112,19 @@ private class AndroidBleSyncLink(
 
             val callback = advertiseCallback()
             advertiseCallback = callback
-            runCatching { advertiser.startAdvertising(advertiseSettings(), advertiseData(descriptor), callback) }
+            // Legacy advertising and scan response are 31 bytes each. The service UUID goes in the
+            // advertisement so the scanner's service filter matches, and the descriptor goes in the
+            // scan response: together they overflow a single packet by a wide margin.
+            runCatching {
+                advertiser.startAdvertising(
+                    advertiseSettings(),
+                    advertiseData(),
+                    advertiseScanResponse(descriptor),
+                    callback
+                )
+            }.onFailure { error ->
+                Log.e(LogTag, "Could not request BLE advertising", error)
+            }
         }
     }
 
@@ -187,16 +200,26 @@ private class AndroidBleSyncLink(
             override fun onBatchScanResults(results: MutableList<ScanResult>) = results.forEach(::publish)
 
             override fun onScanFailed(errorCode: Int) {
+                Log.e(LogTag, "BLE scan failed with error code $errorCode")
                 found.close(SyncDiscoveryException.Unavailable(SyncUnavailableReason.BluetoothUnusable))
             }
 
-            /** Anything that is not one of our advertisements, or a repeat of one, is dropped here. */
+            /**
+             * Anything that is not one of our advertisements, or a repeat of one, is dropped here.
+             *
+             * The address is marked as seen only once the manufacturer data decoded, because the
+             * first report for an advertiser can be the advertisement packet alone: the descriptor
+             * arrives in the scan response, and marking the address on that first callback would
+             * discard the very packet that makes the device usable.
+             */
             private fun publish(result: ScanResult) {
                 val address = result.device.address ?: return
-                if (!seen.add(address)) return
                 val bytes = result.scanRecord?.manufacturerSpecificData?.get(DescriptorCodec.CompanyId)
                     ?: return
-                DescriptorCodec.decode(bytes)?.let { found.trySend(DiscoveredDevice(address, it)) }
+                val descriptor = DescriptorCodec.decode(bytes) ?: return
+                if (!seen.add(address)) return
+                Log.d(LogTag, "Found ${descriptor.alias} (${descriptor.type}) at $address")
+                found.trySend(DiscoveredDevice(address, descriptor))
             }
         }
 
@@ -363,25 +386,42 @@ private class AndroidBleSyncLink(
         .setTimeout(AdvertisingTimeoutMillis)
         .build()
 
-    private fun advertiseData(descriptor: DeviceDescriptor) = AdvertiseData.Builder()
+    /** Small enough for one legacy advertisement packet; 128-bit service UUIDs take 18 bytes. */
+    private fun advertiseData() = AdvertiseData.Builder()
         .setIncludeDeviceName(false)
         .setIncludeTxPowerLevel(false)
         .addServiceUuid(ParcelUuid(SyncService.Uuid))
+        .build()
+
+    /** Fits the scan response exactly: 2 bytes of AD header, 2 of company id, 27 of descriptor. */
+    private fun advertiseScanResponse(descriptor: DeviceDescriptor) = AdvertiseData.Builder()
+        .setIncludeDeviceName(false)
+        .setIncludeTxPowerLevel(false)
         .addManufacturerData(DescriptorCodec.CompanyId, DescriptorCodec.encode(descriptor))
         .build()
 
     private fun advertiseCallback() = object : AdvertiseCallback() {
-        override fun onStartFailure(errorCode: Int) = Unit
-        override fun onStartSuccess(settingsInEffect: AdvertiseSettings) = Unit
+        override fun onStartFailure(errorCode: Int) {
+            Log.e(LogTag, "BLE advertising failed with error code $errorCode")
+        }
+
+        override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
+            Log.d(LogTag, "BLE advertising started")
+        }
     }
 
     private companion object {
+        const val LogTag = "BalanceTrackerSync"
+
         /**
          * Long enough for both people to open the screen and pick each other, short enough that a
          * forgotten screen cannot leave the radio on indefinitely. The sync screen stops the link
          * itself when it is left, so this is the backstop rather than the usual lifetime.
+         *
+         * Android's builder rejects anything above 180_000 with an exception. The exception used to
+         * be swallowed, which left the radio completely silent while the UI said it was looking.
          */
-        const val AdvertisingTimeoutMillis = 300_000
+        const val AdvertisingTimeoutMillis = 180_000
     }
 }
 

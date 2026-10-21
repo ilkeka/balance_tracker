@@ -1,5 +1,6 @@
 package me.ilker.sync.views
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,40 +17,61 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.rounded.BluetoothSearching
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.CloudDone
+import androidx.compose.material.icons.rounded.Computer
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.rounded.Error
-import androidx.compose.material.icons.rounded.FileUpload
+import androidx.compose.material.icons.rounded.Fingerprint
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.LinkOff
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material.icons.rounded.Sync
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.back
 import me.ilker.balance_tracker.resources.sync_bluetooth_unavailable
@@ -59,12 +81,15 @@ import me.ilker.balance_tracker.resources.sync_declined
 import me.ilker.balance_tracker.resources.sync_device_type_desktop
 import me.ilker.balance_tracker.resources.sync_device_type_mobile
 import me.ilker.balance_tracker.resources.sync_device_type_web
+import me.ilker.balance_tracker.resources.sync_document_created
 import me.ilker.balance_tracker.resources.sync_document_hint
 import me.ilker.balance_tracker.resources.sync_error_generic
 import me.ilker.balance_tracker.resources.sync_error_unavailable
 import me.ilker.balance_tracker.resources.sync_error_unauthenticated
 import me.ilker.balance_tracker.resources.sync_export_document
 import me.ilker.balance_tracker.resources.sync_failed
+import me.ilker.balance_tracker.resources.sync_import_code_placeholder
+import me.ilker.balance_tracker.resources.sync_import_document
 import me.ilker.balance_tracker.resources.sync_incoming_description
 import me.ilker.balance_tracker.resources.sync_incoming_detail
 import me.ilker.balance_tracker.resources.sync_incoming_title
@@ -73,7 +98,6 @@ import me.ilker.balance_tracker.resources.sync_incompatible
 import me.ilker.balance_tracker.resources.sync_merging
 import me.ilker.balance_tracker.resources.sync_nearby_empty
 import me.ilker.balance_tracker.resources.sync_nearby_scan
-import me.ilker.balance_tracker.resources.sync_nearby_selected
 import me.ilker.balance_tracker.resources.sync_nearby_title
 import me.ilker.balance_tracker.resources.sync_no_changes
 import me.ilker.balance_tracker.resources.sync_pair_button
@@ -85,11 +109,11 @@ import me.ilker.balance_tracker.resources.sync_pair_device
 import me.ilker.balance_tracker.resources.sync_pair_hint
 import me.ilker.balance_tracker.resources.sync_pair_prompt_message
 import me.ilker.balance_tracker.resources.sync_pair_prompt_title
-import me.ilker.balance_tracker.resources.sync_import_code_placeholder
-import me.ilker.balance_tracker.resources.sync_import_document
 import me.ilker.balance_tracker.resources.sync_paired_with
 import me.ilker.balance_tracker.resources.sync_scanning
 import me.ilker.balance_tracker.resources.sync_start
+import me.ilker.balance_tracker.resources.sync_step_find
+import me.ilker.balance_tracker.resources.sync_step_open
 import me.ilker.balance_tracker.resources.sync_success
 import me.ilker.balance_tracker.resources.sync_success_detail
 import me.ilker.balance_tracker.resources.sync_title
@@ -97,6 +121,7 @@ import me.ilker.balance_tracker.resources.sync_transferring
 import me.ilker.balance_tracker.resources.sync_unpair
 import me.ilker.balance_tracker.resources.sync_unpaired
 import me.ilker.balance_tracker.resources.sync_unreadable_code
+import me.ilker.balance_tracker.resources.sync_with_device
 import me.ilker.sync.IncomingRequest
 import me.ilker.sync.NearbyDevice
 import me.ilker.sync.PairingPrompt
@@ -108,18 +133,22 @@ import me.ilker.sync.clipboard.rememberCopyToClipboard
 import me.ilker.sync.protocol.DeviceType
 import org.jetbrains.compose.resources.stringResource
 
+private val HeroShape = RoundedCornerShape(28.dp)
 private val CardShape = RoundedCornerShape(24.dp)
+private val RowShape = RoundedCornerShape(18.dp)
+private val ActionShape = RoundedCornerShape(16.dp)
 private val CardPadding = 20.dp
 private val ScreenPadding = 16.dp
 private val CardSpacing = 12.dp
 private val ActionHeight = 56.dp
+private val SmallActionHeight = 52.dp
 
 private data class OutcomeVisuals(
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val icon: ImageVector,
     val title: String,
     val detail: String?,
-    val containerColor: androidx.compose.ui.graphics.Color,
-    val contentColor: androidx.compose.ui.graphics.Color
+    val containerColor: Color,
+    val contentColor: Color
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -138,6 +167,8 @@ internal fun SyncLoadedView(
     onUnpair: () -> Unit,
     onClose: () -> Unit
 ) {
+    val busy = state.isSyncing || state.isPairing
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -174,12 +205,12 @@ internal fun SyncLoadedView(
                 start = ScreenPadding,
                 end = ScreenPadding,
                 top = 8.dp,
-                bottom = CardPadding
+                bottom = 32.dp
             ),
             verticalArrangement = Arrangement.spacedBy(CardSpacing)
         ) {
-            item(key = "device") {
-                LinkedDeviceCard(state = state)
+            item(key = "status") {
+                StatusCard(state = state)
             }
 
             state.outcome?.let { outcome ->
@@ -190,43 +221,24 @@ internal fun SyncLoadedView(
 
             when {
                 state.isSyncing -> item(key = "busy") {
-                    BusyIndicator(phase = state.phase)
+                    SyncProgressCard(phase = state.phase)
+                }
+
+                state.isPairing -> item(key = "busy") {
+                    SyncProgressCard(phase = SyncPhase.Connecting)
                 }
 
                 !state.paired && !state.isPairingInProgress -> {
                     if (state.liveSyncSupported) {
-                        item(key = "pair_hint") {
-                            BluetoothPairingCard()
-                        }
-
                         item(key = "nearby") {
                             NearbySection(
                                 state = state,
+                                paired = false,
                                 onDiscover = onDiscover,
                                 onStopDiscovering = onStopDiscovering,
                                 onSelectDevice = onSelectDevice,
-                                showFingerprint = false
+                                onPairDevice = onPairDevice
                             )
-                        }
-
-                        item(key = "pair") {
-                            Button(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(ActionHeight),
-                                enabled = state.selectedDeviceId != null && !state.isPairing,
-                                onClick = { state.selectedDeviceId?.let(onPairDevice) },
-                                shape = RoundedCornerShape(16.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Bluetooth,
-                                    contentDescription = null
-                                )
-
-                                Spacer(Modifier.width(8.dp))
-
-                                Text(stringResource(Res.string.sync_pair_button))
-                            }
                         }
                     } else {
                         item(key = "pairing") {
@@ -239,34 +251,28 @@ internal fun SyncLoadedView(
                 }
 
                 state.liveSyncSupported -> {
-                    item(key = "sync_now") {
-                        Button(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(ActionHeight),
-                            enabled = state.nearbyDevices.isNotEmpty(),
-                            onClick = onSync,
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Sync,
-                                contentDescription = null
-                            )
-
-                            Spacer(Modifier.width(8.dp))
-
-                            Text(stringResource(Res.string.sync_start))
-                        }
-                    }
-
                     item(key = "nearby") {
                         NearbySection(
                             state = state,
+                            paired = true,
                             onDiscover = onDiscover,
                             onStopDiscovering = onStopDiscovering,
                             onSelectDevice = onSelectDevice,
-                            showFingerprint = true
+                            onPairDevice = onPairDevice
                         )
+                    }
+
+                    val selected = state.nearbyDevices.firstOrNull {
+                        it.id == state.selectedDeviceId
+                    }
+
+                    if (selected != null && !busy) {
+                        item(key = "sync_now") {
+                            SyncNowButton(
+                                deviceAlias = selected.alias,
+                                onClick = onSync
+                            )
+                        }
                     }
                 }
 
@@ -278,27 +284,144 @@ internal fun SyncLoadedView(
                 }
             }
 
-            if (state.paired) {
+            if (state.paired && !busy) {
                 item(key = "unpair") {
-                    OutlinedButton(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(ActionHeight),
-                        onClick = onUnpair,
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
+                    UnpairButton(onUnpair = onUnpair)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The one place that says whether this device is ready to sync.
+ *
+ * Paired devices get a tinted hero with the name and fingerprint of the peer, so the screen answers
+ * "who am I connected to?" before the user looks for a button. Unpaired devices get the short version
+ * of the Bluetooth flow instead of a bare action list.
+ */
+@Composable
+private fun StatusCard(state: SyncState) {
+    val linked = state.linkedDevice
+    val isPaired = state.paired
+    val isCodeReady = !isPaired && state.isPairingInProgress
+
+    val containerColor = if (isPaired) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceContainer
+    }
+    val contentColor = if (isPaired) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = HeroShape,
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SyncIconBadge(
+                    icon = when {
+                        isPaired -> Icons.Rounded.Link
+                        isCodeReady -> Icons.Rounded.ContentCopy
+                        else -> Icons.Rounded.Bluetooth
+                    },
+                    size = 56.dp,
+                    containerColor = if (isPaired) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHigh
+                    },
+                    contentColor = if (isPaired) {
+                        MaterialTheme.colorScheme.onPrimary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+
+                Spacer(Modifier.width(16.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text(
+                        text = stringResource(
+                            when {
+                                isPaired -> Res.string.sync_paired_with
+                                isCodeReady -> Res.string.sync_pair_device
+                                else -> Res.string.sync_unpaired
+                            }
                         ),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                        style = MaterialTheme.typography.labelLarge,
+                        color = contentColor.copy(alpha = 0.72f)
+                    )
+
+                    Text(
+                        text = when {
+                            isPaired -> linked?.alias ?: stringResource(Res.string.sync_paired_with)
+                            isCodeReady -> stringResource(Res.string.sync_document_created)
+                            else -> stringResource(Res.string.sync_pair_device)
+                        },
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            when {
+                isPaired -> linked?.let { device ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.LinkOff,
-                            contentDescription = null
+                        MetaPill(
+                            icon = Icons.Rounded.Fingerprint,
+                            text = device.fingerprint.uppercase(),
+                            containerColor = contentColor.copy(alpha = 0.08f),
+                            contentColor = contentColor
                         )
+                    }
+                }
 
-                        Spacer(Modifier.width(8.dp))
+                isCodeReady -> Text(
+                    text = stringResource(Res.string.sync_pair_code_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = contentColor.copy(alpha = 0.8f)
+                )
 
-                        Text(stringResource(Res.string.sync_unpair))
+                else -> {
+                    Text(
+                        text = stringResource(
+                            if (state.liveSyncSupported) {
+                                Res.string.sync_pair_hint
+                            } else {
+                                Res.string.sync_document_hint
+                            }
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = contentColor.copy(alpha = 0.8f)
+                    )
+
+                    if (state.liveSyncSupported) {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Step(number = 1, text = stringResource(Res.string.sync_step_open))
+                            Step(number = 2, text = stringResource(Res.string.sync_step_find))
+                        }
                     }
                 }
             }
@@ -306,76 +429,87 @@ internal fun SyncLoadedView(
     }
 }
 
-/**
- * Shows the device this installation is paired with, or a hint that nothing is paired yet.
- */
 @Composable
-private fun LinkedDeviceCard(state: SyncState) {
-    val linked = state.linkedDevice
-    val isPaired = linked != null
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        colors = CardDefaults.cardColors(
-            containerColor = if (isPaired) {
-                MaterialTheme.colorScheme.surfaceContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerLow
+private fun Step(number: Int, text: String) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            modifier = Modifier.size(24.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = number.toString(),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
+        }
+
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
+    }
+}
+
+@Composable
+internal fun SyncIconBadge(
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    size: Dp = 48.dp,
+    containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer
+) {
+    Surface(
+        modifier = modifier.size(size),
+        shape = CircleShape,
+        color = containerColor,
+        contentColor = contentColor
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(size / 2)
+            )
+        }
+    }
+}
+
+@Composable
+private fun MetaPill(
+    icon: ImageVector,
+    text: String,
+    containerColor: Color,
+    contentColor: Color
+) {
+    Surface(
+        shape = CircleShape,
+        color = containerColor,
+        contentColor = contentColor
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(CardPadding),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = CircleShape,
-                color = if (isPaired) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainerHigh
-                },
-                contentColor = if (isPaired) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Rounded.Bluetooth,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp)
+            )
 
-            Spacer(Modifier.width(16.dp))
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = stringResource(
-                        if (isPaired) Res.string.sync_paired_with else Res.string.sync_unpaired
-                    ),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Text(
-                    text = linked?.alias ?: state.deviceId.take(FingerprintLength),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1
-                )
-            }
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1
+            )
         }
     }
 }
@@ -383,20 +517,23 @@ private fun LinkedDeviceCard(state: SyncState) {
 /**
  * The nearby-device picker.
  *
- * Devices are listed rather than picked automatically: more than one phone can be in the room, and
- * silently choosing the first to answer would sync with the wrong ledger. The list stays open for the
- * whole scan window so a device that wakes up later is still offered.
+ * Unpaired rows carry their own Pair action so the flow is one tap instead of select-then-scroll.
+ * Paired rows are radio options, because there the tap only chooses who to sync with and the action
+ * stays in one place below the list.
  */
 @Composable
 private fun NearbySection(
     state: SyncState,
+    paired: Boolean,
     onDiscover: () -> Unit,
     onStopDiscovering: () -> Unit,
     onSelectDevice: (String) -> Unit,
-    showFingerprint: Boolean
+    onPairDevice: (String) -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
         shape = CardShape,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
@@ -406,76 +543,76 @@ private fun NearbySection(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(CardPadding),
-            verticalArrangement = Arrangement.spacedBy(CardSpacing)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Devices,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(Modifier.width(8.dp))
-
                 Text(
                     text = stringResource(Res.string.sync_nearby_title),
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.weight(1f)
                 )
+
+                if (state.nearbyDevices.isNotEmpty()) {
+                    CountBadge(count = state.nearbyDevices.size)
+                }
             }
 
             if (state.isDiscovering) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                SearchingRow(onStopDiscovering = onStopDiscovering)
+            } else if (state.nearbyDevices.isEmpty()) {
+                FilledTonalButton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(SmallActionHeight),
+                    onClick = onDiscover,
+                    shape = ActionShape
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                        Text(
-                            text = stringResource(Res.string.sync_scanning),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Rounded.BluetoothSearching,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+
+                    Spacer(Modifier.width(8.dp))
+
+                    Text(stringResource(Res.string.sync_nearby_scan))
                 }
             } else {
-                TextButton(onClick = onDiscover) {
+                TextButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onDiscover
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+
+                    Spacer(Modifier.width(8.dp))
+
                     Text(stringResource(Res.string.sync_nearby_scan))
                 }
             }
 
             if (state.nearbyDevices.isEmpty()) {
-                Text(
-                    text = stringResource(Res.string.sync_nearby_empty),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            state.nearbyDevices.forEach { device ->
-                NearbyDeviceRow(
-                    device = device,
-                    selected = state.selectedDeviceId == device.id,
-                    showFingerprint = showFingerprint,
-                    onClick = { onSelectDevice(device.id) }
-                )
-            }
-
-            if (state.isDiscovering) {
-                TextButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = onStopDiscovering
-                ) {
-                    Text(stringResource(Res.string.sync_cancel))
+                EmptyNearby()
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    state.nearbyDevices.forEach { device ->
+                        NearbyDeviceRow(
+                            device = device,
+                            paired = paired,
+                            selected = paired && state.selectedDeviceId == device.id,
+                            pairingEnabled = !state.isPairing,
+                            showFingerprint = paired,
+                            onSelect = { onSelectDevice(device.id) },
+                            onPair = { onPairDevice(device.id) }
+                        )
+                    }
                 }
             }
         }
@@ -483,39 +620,127 @@ private fun NearbySection(
 }
 
 @Composable
-private fun NearbyDeviceRow(
-    device: NearbyDevice,
-    selected: Boolean,
-    showFingerprint: Boolean,
-    onClick: () -> Unit
-) {
+private fun CountBadge(count: Int) {
+    Surface(
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    ) {
+        Text(
+            text = count.toString(),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun SearchingRow(onStopDiscovering: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
-        shape = RoundedCornerShape(18.dp),
-        color = if (selected) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
-        },
-        contentColor = if (selected) {
-            MaterialTheme.colorScheme.onPrimaryContainer
-        } else {
-            MaterialTheme.colorScheme.onSurface
+        shape = RowShape,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                strokeWidth = 2.dp
+            )
+
+            Text(
+                text = stringResource(Res.string.sync_scanning),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f)
+            )
+
+            TextButton(onClick = onStopDiscovering) {
+                Text(stringResource(Res.string.sync_cancel))
+            }
         }
+    }
+}
+
+@Composable
+private fun EmptyNearby() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RowShape,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.BluetoothSearching,
+                contentDescription = null,
+                modifier = Modifier.size(28.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Text(
+                text = stringResource(Res.string.sync_nearby_empty),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+private fun NearbyDeviceRow(
+    device: NearbyDevice,
+    paired: Boolean,
+    selected: Boolean,
+    pairingEnabled: Boolean,
+    showFingerprint: Boolean,
+    onSelect: () -> Unit,
+    onPair: () -> Unit
+) {
+    val containerColor = if (selected) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerHigh
+    }
+    val contentColor = if (selected) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = if (paired) onSelect else ({}),
+        enabled = paired,
+        shape = RowShape,
+        color = containerColor,
+        contentColor = contentColor
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Rounded.Devices,
-                contentDescription = null,
-                modifier = Modifier.size(22.dp),
-                tint = if (selected) {
+            SyncIconBadge(
+                icon = device.type.icon(),
+                size = 40.dp,
+                containerColor = if (selected) {
                     MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerHighest
+                },
+                contentColor = if (selected) {
+                    MaterialTheme.colorScheme.onPrimary
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 }
@@ -529,121 +754,100 @@ private fun NearbyDeviceRow(
             ) {
                 Text(
                     text = device.alias,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+
                 Text(
-                    text = if (showFingerprint) {
-                        device.type.label() + " · " + device.fingerprint
-                    } else {
-                        device.type.label()
-                    },
+                    text = device.subtitle(showFingerprint = showFingerprint),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
+                    color = contentColor.copy(alpha = 0.7f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
-            if (selected) {
+            if (paired) {
                 Spacer(Modifier.width(8.dp))
 
-                Icon(
-                    imageVector = Icons.Rounded.CheckCircle,
-                    contentDescription = stringResource(Res.string.sync_nearby_selected),
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                RadioButton(
+                    selected = selected,
+                    onClick = null
                 )
+            } else {
+                Spacer(Modifier.width(12.dp))
+
+                FilledTonalButton(
+                    modifier = Modifier.height(40.dp),
+                    onClick = onPair,
+                    enabled = pairingEnabled,
+                    shape = CircleShape,
+                    contentPadding = PaddingValues(horizontal = 18.dp)
+                ) {
+                    Text(
+                        text = stringResource(Res.string.sync_pair_button),
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
             }
         }
     }
 }
 
-/**
- * The approval prompt.
- *
- * Shown before anything crosses the link, and it prints the pairing fingerprint because "accept a sync
- * request" is meaningless without a way to tell it apart from a stranger running the same app. It is a
- * dialog rather than inline because the answer is the only thing that matters at this point, and the
- * session behind it is holding a connection open.
- */
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
-internal fun IncomingRequestDialog(
-    request: IncomingRequest,
-    onAccept: () -> Unit,
-    onReject: () -> Unit
-) {
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onReject,
-        title = { Text(stringResource(Res.string.sync_incoming_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(Res.string.sync_incoming_description, request.device.alias))
-                Text(stringResource(Res.string.sync_incoming_detail, request.transactionCount))
-                HorizontalDivider()
-                Text(
-                    text = stringResource(Res.string.sync_incoming_verify),
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = request.verifyCode,
-                    style = MaterialTheme.typography.headlineSmall
-                )
-            }
-        },
-        confirmButton = {
-            Button(onClick = onAccept) {
-                Text(stringResource(Res.string.sync_start))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onReject) {
-                Text(stringResource(Res.string.sync_cancel))
-            }
-        }
-    )
-}
-
-@Composable
-private fun BusyIndicator(phase: SyncPhase?) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+private fun SyncNowButton(deviceAlias: String, onClick: () -> Unit) {
+    Button(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(ActionHeight),
+        onClick = onClick,
+        shape = ActionShape
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(CardPadding),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            CircularProgressIndicator(modifier = Modifier.size(32.dp))
-            Text(
-                text = when (phase) {
-                    SyncPhase.Connecting -> stringResource(Res.string.sync_connecting)
-                    SyncPhase.Transferring -> stringResource(Res.string.sync_transferring)
-                    SyncPhase.Merging -> stringResource(Res.string.sync_merging)
-                    null -> stringResource(Res.string.sync_connecting)
-                },
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
+        Icon(
+            imageVector = Icons.Rounded.Sync,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp)
+        )
+
+        Spacer(Modifier.width(8.dp))
+
+        Text(
+            text = stringResource(Res.string.sync_with_device, deviceAlias),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
-/**
- * The Bluetooth pairing card shown while nothing is paired yet.
- *
- * It explains that both devices have to be on this screen before the nearby list means anything: the
- * other phone is only findable once its own sync screen has started advertising.
- */
 @Composable
-private fun BluetoothPairingCard() {
+private fun UnpairButton(onUnpair: () -> Unit) {
+    OutlinedButton(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp),
+        onClick = onUnpair,
+        shape = ActionShape,
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = MaterialTheme.colorScheme.error
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.LinkOff,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp)
+        )
+
+        Spacer(Modifier.width(8.dp))
+
+        Text(stringResource(Res.string.sync_unpair))
+    }
+}
+
+@Composable
+private fun SyncProgressCard(phase: SyncPhase?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = CardShape,
@@ -655,40 +859,46 @@ private fun BluetoothPairingCard() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(CardPadding),
-            verticalArrangement = Arrangement.spacedBy(CardSpacing)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Rounded.Bluetooth,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(28.dp),
+                    strokeWidth = 3.dp
                 )
 
-                Spacer(Modifier.width(8.dp))
-
                 Text(
-                    text = stringResource(Res.string.sync_pair_device),
-                    style = MaterialTheme.typography.titleSmall,
+                    text = when (phase) {
+                        SyncPhase.Connecting -> stringResource(Res.string.sync_connecting)
+                        SyncPhase.Transferring -> stringResource(Res.string.sync_transferring)
+                        SyncPhase.Merging -> stringResource(Res.string.sync_merging)
+                        null -> stringResource(Res.string.sync_connecting)
+                    },
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
             }
 
-            Text(
-                text = stringResource(Res.string.sync_pair_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(CircleShape),
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }
 }
 
 /**
- * The out-of-band path for targets with no radio.
+ * The Bluetooth pairing card shown while nothing is paired yet.
  *
- * Desktop and web cannot find a phone over Bluetooth, so they hand the same secret over as text. The
- * button mints it and the field accepts a code created elsewhere; either side can be the one that
- * starts the pairing.
+ * Unpaired rows in the picker start the handshake themselves, so this card only has to explain what
+ * the other device should be doing. The steps are short because the dialog that follows is the part
+ * that actually needs attention.
  */
 @Composable
 private fun PairingSection(
@@ -706,18 +916,19 @@ private fun PairingSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(CardPadding),
-            verticalArrangement = Arrangement.spacedBy(CardSpacing)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Button(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(ActionHeight),
+                    .height(SmallActionHeight),
                 onClick = onPair,
-                shape = RoundedCornerShape(16.dp)
+                shape = ActionShape
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Devices,
-                    contentDescription = null
+                    imageVector = Icons.Rounded.Link,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
                 )
 
                 Spacer(Modifier.width(8.dp))
@@ -740,9 +951,8 @@ private fun PairingSection(
 /**
  * The approval prompt for a Bluetooth pairing.
  *
- * Shows the code both users are meant to compare. The code is a session label rather than a secret,
- * so a mismatch means the connection is not the one the other person is looking at, and rejecting it
- * costs nothing.
+ * The code gets a block of its own because comparing six characters is the whole point of the dialog.
+ * Rejecting is a plain cancel: a mismatch is not an error the app can act on.
  */
 @Composable
 internal fun PairingDialog(
@@ -750,20 +960,26 @@ internal fun PairingDialog(
     onAccept: () -> Unit,
     onReject: () -> Unit
 ) {
-    androidx.compose.material3.AlertDialog(
+    AlertDialog(
         onDismissRequest = onReject,
+        icon = {
+            Icon(
+                imageVector = Icons.Rounded.Link,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
         title = { Text(stringResource(Res.string.sync_pair_prompt_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(Res.string.sync_pair_prompt_message, prompt.device.alias))
-                HorizontalDivider()
+
+                VerificationCode(code = prompt.code)
+
                 Text(
                     text = stringResource(Res.string.sync_incoming_verify),
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = prompt.code,
-                    style = MaterialTheme.typography.headlineSmall
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         },
@@ -781,6 +997,82 @@ internal fun PairingDialog(
 }
 
 /**
+ * The approval prompt shown before a sync starts.
+ *
+ * Same code block as pairing: the fingerprint is what tells the user this is the device they paired
+ * with and not someone else running the app in the same room.
+ */
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+internal fun IncomingRequestDialog(
+    request: IncomingRequest,
+    onAccept: () -> Unit,
+    onReject: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onReject,
+        icon = {
+            Icon(
+                imageVector = Icons.Rounded.Sync,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        title = { Text(stringResource(Res.string.sync_incoming_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(Res.string.sync_incoming_description, request.device.alias))
+                Text(
+                    text = stringResource(Res.string.sync_incoming_detail, request.transactionCount),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                VerificationCode(code = request.verifyCode)
+
+                Text(
+                    text = stringResource(Res.string.sync_incoming_verify),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = onAccept) {
+                Text(stringResource(Res.string.sync_start))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onReject) {
+                Text(stringResource(Res.string.sync_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun VerificationCode(code: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = MaterialTheme.colorScheme.onSurface
+    ) {
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 16.dp),
+            text = code,
+            style = MaterialTheme.typography.headlineMedium,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 6.sp,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+/**
  * A one-time code for a device that cannot pair over Bluetooth.
  *
  * Shown as text rather than a QR image: the only device that can consume it is one without a radio,
@@ -794,43 +1086,75 @@ internal fun PairingCodeDialog(
 ) {
     val copyToClipboard = rememberCopyToClipboard()
 
-    androidx.compose.material3.ModalBottomSheet(
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(stringResource(Res.string.sync_pair_code_title), style = MaterialTheme.typography.titleLarge)
+            SyncIconBadge(
+                icon = Icons.Rounded.ContentCopy,
+                size = 56.dp
+            )
+
+            Text(
+                text = stringResource(Res.string.sync_pair_code_title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
             Text(
                 text = stringResource(Res.string.sync_pair_code_hint),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerHigh
             ) {
-                Text(
-                    modifier = Modifier.padding(16.dp),
-                    text = code,
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
+                SelectionContainer {
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        text = code,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontFamily = FontFamily.Monospace,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
-            OutlinedButton(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { copyToClipboard(code) }
+
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(SmallActionHeight),
+                onClick = { copyToClipboard(code) },
+                shape = ActionShape
             ) {
+                Icon(
+                    imageVector = Icons.Rounded.ContentCopy,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+
+                Spacer(Modifier.width(8.dp))
+
                 Text(stringResource(Res.string.sync_pair_copy_code))
             }
+
             TextButton(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onDismiss
@@ -857,29 +1181,34 @@ private fun DocumentSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(CardPadding),
-            verticalArrangement = Arrangement.spacedBy(CardSpacing)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
                 text = stringResource(Res.string.sync_document_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
             Button(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(ActionHeight),
+                    .height(SmallActionHeight),
                 onClick = onExport,
-                shape = RoundedCornerShape(16.dp)
+                shape = ActionShape
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.FileUpload,
-                    contentDescription = null
+                    imageVector = Icons.Rounded.ContentCopy,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
                 )
 
                 Spacer(Modifier.width(8.dp))
 
                 Text(stringResource(Res.string.sync_export_document))
             }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
             ManualCodeEntry(
                 placeholder = stringResource(Res.string.sync_import_code_placeholder),
                 action = stringResource(Res.string.sync_import_document),
@@ -919,35 +1248,41 @@ private fun OutcomeCard(outcome: SyncOutcome) {
 
         is SyncOutcome.Failed -> OutcomeVisuals(
             icon = Icons.Rounded.Error,
-            title = stringResource(Res.string.sync_failed) + ": " + outcome.failure.message(),
-            detail = null,
+            title = stringResource(Res.string.sync_failed),
+            detail = outcome.failure.message(),
             containerColor = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer
         )
     }
 
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        colors = CardDefaults.cardColors(
-            containerColor = visuals.containerColor,
-            contentColor = visuals.contentColor
-        )
+        shape = RoundedCornerShape(20.dp),
+        color = visuals.containerColor,
+        contentColor = visuals.contentColor
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(CardPadding),
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = visuals.icon,
-                contentDescription = null,
-                modifier = Modifier.size(28.dp),
-                tint = visuals.contentColor
-            )
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = CircleShape,
+                color = visuals.contentColor.copy(alpha = 0.12f),
+                contentColor = visuals.contentColor
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = visuals.icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
 
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(12.dp))
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -956,8 +1291,7 @@ private fun OutcomeCard(outcome: SyncOutcome) {
                 Text(
                     text = visuals.title,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = visuals.contentColor
+                    fontWeight = FontWeight.SemiBold
                 )
 
                 visuals.detail?.let { detail ->
@@ -990,4 +1324,20 @@ private fun DeviceType.label(): String = when (this) {
     DeviceType.Web -> stringResource(Res.string.sync_device_type_web)
 }
 
-private const val FingerprintLength = 8
+private fun DeviceType.icon(): ImageVector = when (this) {
+    DeviceType.Mobile -> Icons.Rounded.Smartphone
+    DeviceType.Desktop -> Icons.Rounded.Computer
+    DeviceType.Web -> Icons.Rounded.Language
+}
+
+@Composable
+private fun NearbyDevice.subtitle(showFingerprint: Boolean): String {
+    val type = type.label()
+    val model = model?.takeIf { it.isNotBlank() }
+
+    return when {
+        showFingerprint -> "$type · ${fingerprint.uppercase()}"
+        model != null -> "$type · $model"
+        else -> type
+    }
+}
