@@ -88,7 +88,7 @@ internal object DescriptorCodec {
      * Layout, big-endian:
      * `[version:1][type:1][deviceId:8][fingerprint:3][model:6][alias:8]` = 27 bytes.
      * [deviceId] is 4 bytes and [fingerprint] is 3, so the text is written out in full at 8 and 6
-     * characters respectively.
+     * bytes respectively.
      *
      * The device id is truncated rather than hashed so the full id stays in the handshake where there
      * is room for it; the truncated copy is only used to tell two advertisers apart in the picker.
@@ -105,9 +105,9 @@ internal object DescriptorCodec {
         hexToByteArray(descriptor.fingerprint.take(FingerprintHexLength).lowercase())
             .copyInto(payload, destinationOffset = FingerprintOffset)
 
-        descriptor.model.orEmpty().take(MaxModelLength).encodeToByteArray()
+        descriptor.model.orEmpty().utf8Prefix(MaxModelLength)
             .copyInto(payload, destinationOffset = ModelOffset)
-        descriptor.alias.take(MaxAliasLength).encodeToByteArray()
+        descriptor.alias.utf8Prefix(MaxAliasLength)
             .copyInto(payload, destinationOffset = AliasOffset)
 
         return payload
@@ -148,6 +148,22 @@ internal object DescriptorCodec {
     private const val AliasOffset = ModelOffset + MaxModelLength
     private const val DeviceIdHexLength = DeviceIdBytes * 2
     private const val FingerprintHexLength = FingerprintBytes * 2
+}
+
+/**
+ * Encodes at most [maxBytes] bytes without splitting a UTF-8 sequence.
+ *
+ * Device names are user-controlled and can contain multi-byte characters. Truncating by character
+ * count instead would let a name such as "ÀÀÀÀÀ" grow past the fixed alias slot and fail the copy,
+ * which would break advertising for that device.
+ */
+private fun String.utf8Prefix(maxBytes: Int): ByteArray {
+    val bytes = encodeToByteArray()
+    if (bytes.size <= maxBytes) return bytes
+
+    var end = maxBytes
+    while (end > 0 && (bytes[end].toInt() and 0xC0) == 0x80) end--
+    return bytes.copyOf(end)
 }
 
 /** Public half of the pairing secret: enough to recognise a device, not enough to authenticate as it. */

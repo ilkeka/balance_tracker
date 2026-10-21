@@ -15,6 +15,8 @@ import me.ilker.balance_tracker.sync.LinkedDevice
 import me.ilker.balance_tracker.sync.SyncImportResult
 import me.ilker.balance_tracker.sync.SyncSnapshot
 import me.ilker.core.Manager
+import me.ilker.sync.platform.deviceDisplayName
+import me.ilker.sync.platform.deviceModel
 import me.ilker.sync.platform.hasNearbyDevicePermissions
 import me.ilker.sync.protocol.DeviceDescriptor
 import me.ilker.sync.protocol.DeviceType
@@ -100,7 +102,7 @@ class SyncManager(
                 it.copy(
                     isLoading = false,
                     deviceId = sdk.deviceId(),
-                    alias = sdk.deviceAlias(),
+                    alias = sdk.deviceAlias().ifBlank { deviceDisplayName() },
                     paired = paired,
                     linkedDevice = sdk.getLinkedDevice(),
                     liveSyncSupported = isLiveSyncSupported()
@@ -688,8 +690,8 @@ class SyncManager(
      */
     private suspend fun localDescriptor(secret: ByteArray?): DeviceDescriptor = DeviceDescriptor(
         deviceId = sdk.deviceId(),
-        alias = sdk.deviceAlias().ifEmpty { LinkedDevice.DefaultAlias },
-        model = null,
+        alias = sdk.deviceAlias().ifBlank { deviceDisplayName() },
+        model = deviceModel(),
         type = DeviceType.Mobile,
         fingerprint = secret?.let(::deviceFingerprint) ?: UnpairedFingerprint
     )

@@ -475,6 +475,16 @@ class DescriptorCodecTest {
     }
 
     @Test
+    fun `a multi-byte alias is truncated on a character boundary`() {
+        // A device name is user-controlled; cutting the UTF-8 bytes mid-sequence would either break
+        // the fixed-width copy or leave a replacement character in the picker.
+        val payload = DescriptorCodec.encode(descriptor(alias = "AÀÀÀÀ", model = "Pixel"))
+
+        assertEquals(DescriptorCodec.MaxSize, payload.size)
+        assertEquals("AÀÀÀ", DescriptorCodec.decode(payload)?.alias)
+    }
+
+    @Test
     fun `every device type round trips`() {
         DeviceType.entries.forEach { type ->
             val original = descriptor(type = type)

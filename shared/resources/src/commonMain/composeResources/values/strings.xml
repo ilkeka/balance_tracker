@@ -28,7 +28,7 @@
     <string name="edit">Edit</string>
     <string name="edit_transaction">Edit Transaction</string>
     <string name="edit_transaction_success_feedback">Edited transaction successfully!</string>
-    <string name="error_90001">Cannot edit the transaction due to an internal error.\nCode is %1$s</string>
+    <string name="error_90001">Cannot edit the transaction due to an internal error.&#10;Code is %1$s</string>
     <string name="expense">Expense</string>
     <string name="expense_total">Total expense</string>
     <string name="income">Income</string>
