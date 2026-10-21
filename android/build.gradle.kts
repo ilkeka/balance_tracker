@@ -44,6 +44,15 @@ android {
         getByName("release") {
             isMinifyEnabled = false
         }
+        // Installs alongside the main app (separate package and database) so a test build can be
+        // used on a second device without replacing the existing installation.
+        create("dev") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("debug")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_24
