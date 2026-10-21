@@ -4,12 +4,16 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.sync.LinkedDevice
 import me.ilker.balance_tracker.sync.SyncImportResult
@@ -18,6 +22,7 @@ import me.ilker.core.Manager
 import me.ilker.sync.platform.deviceDisplayName
 import me.ilker.sync.platform.deviceModel
 import me.ilker.sync.platform.hasNearbyDevicePermissions
+import me.ilker.sync.protocol.DescriptorCodec
 import me.ilker.sync.protocol.DeviceDescriptor
 import me.ilker.sync.protocol.DeviceType
 import me.ilker.sync.protocol.FramedLink
@@ -36,6 +41,8 @@ import me.ilker.sync.protocol.randomNonce
 import me.ilker.sync.protocol.readMessageText
 import me.ilker.sync.protocol.runPairingSession
 import me.ilker.sync.protocol.runSyncSession
+import me.ilker.sync.protocol.unpairProof
+import me.ilker.sync.protocol.verifiesUnpair
 import me.ilker.sync.transport.DiscoveredDevice
 import me.ilker.sync.transport.SyncDiscoveryException
 import me.ilker.sync.transport.SyncLink
@@ -65,6 +72,14 @@ class SyncManager(
     private var pendingPairingApproval: CompletableDeferred<Boolean>? = null
 
     private var link: SyncLink? = null
+
+    /**
+     * Serialises every scan, including the silent ones that validate or revoke a link.
+     *
+     * A platform link has one scanner, so overlapping windows would replace each other's callback and
+     * leave one caller waiting forever for results that will never arrive.
+     */
+    private val scanMutex = Mutex()
 
     override val state: StateFlow<SyncState> = currentState.asStateFlow()
     override val sideEffect = Channel<SyncSideEffect>(capacity = Channel.BUFFERED)
@@ -110,11 +125,12 @@ class SyncManager(
             }
 
             // Start advertising as soon as the screen opens, so the other phone can find this one
-            // without the user doing anything here. Only when the permissions are already held: a
-            // prompt before the user asked for anything would be a worse first impression than
-            // waiting for the "look for nearby devices" tap.
-            if (!paired && isLiveSyncSupported() && hasNearbyDevicePermissions()) {
-                ensureLink()
+            // without the user doing anything here. Paired devices advertise too: that is what lets
+            // the peer reach them to sync, and to report that it has just unpaired. Only when the
+            // permissions are already held: a prompt before the user asked for anything would be a
+            // worse first impression than waiting for the "look for nearby devices" tap.
+            if (isLiveSyncSupported() && hasNearbyDevicePermissions()) {
+                if (ensureLink() && paired) reconcileLinkedPeerOnce()
             }
         }
     }
@@ -305,7 +321,9 @@ class SyncManager(
         val found = Channel<DiscoveredDevice>(Channel.UNLIMITED)
         scanJob = scope.launch {
             try {
-                current.discover(timeoutMillis = ScanWindowMillis) { device -> found.send(device) }
+                scanMutex.withLock {
+                    current.discover(timeoutMillis = ScanWindowMillis) { device -> found.send(device) }
+                }
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (throwable: Throwable) {
@@ -318,6 +336,13 @@ class SyncManager(
         }
 
         for (device in found) {
+            // Seeing the peer advertise the unpaired placeholder means the secret was removed on the
+            // other end: the stored link can never authenticate again, so drop it here as well.
+            val linked = currentState.value.linkedDevice
+            if (currentState.value.paired && linked != null && device.descriptor.revokesLink(linked)) {
+                forgetPairing()
+            }
+
             // A device that re-advertises replaces its own entry rather than showing up twice.
             val nearby = device.toNearbyDevice()
             currentState.update {
@@ -327,6 +352,58 @@ class SyncManager(
                 )
             }
         }
+    }
+
+    /**
+     * A short, silent scan on entry that catches a peer which unpaired while this screen was closed.
+     *
+     * Nothing is reported when the peer is absent: a device that is simply not nearby has not revoked
+     * anything, and clearing the link just because it stayed silent would be destructive.
+     */
+    private suspend fun reconcileLinkedPeerOnce() {
+        val linked = currentState.value.linkedDevice ?: return
+        val current = link ?: return
+        val revoked = scanForPeer(current, PeerValidationScanMillis) { descriptor ->
+            descriptor.revokesLink(linked)
+        } ?: return
+
+        if (currentState.value.paired) {
+            forgetPairing()
+        }
+    }
+
+    /**
+     * Scans until [matches] accepts a descriptor or the window closes.
+     *
+     * The scan is cancelled as soon as something matches instead of running out the whole window,
+     * because this is a background check and the caller has a session to start.
+     */
+    private suspend fun scanForPeer(
+        current: SyncLink,
+        timeoutMillis: Long,
+        matches: (DeviceDescriptor) -> Boolean
+    ): DiscoveredDevice? = coroutineScope {
+        val found = CompletableDeferred<DiscoveredDevice?>()
+        val job = launch {
+            try {
+                scanMutex.withLock {
+                    current.discover(timeoutMillis = timeoutMillis) { device ->
+                        if (matches(device.descriptor)) found.complete(device)
+                    }
+                }
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Throwable) {
+                // Validation and revocation are best effort: a failed scan must not replace the
+                // screen's state with a transport error.
+            } finally {
+                found.complete(null)
+            }
+        }
+
+        val result = found.await()
+        job.cancel()
+        result
     }
 
     /** Accepts incoming sessions for as long as the screen is up, one at a time. */
@@ -363,9 +440,41 @@ class SyncManager(
             return
         }
 
+        if (pairing is PairingMessage.Unpair) {
+            serveUnpair(transport, pairing)
+            return
+        }
+
         val hello = SyncMessageCodec.read(first) as? SyncMessage.Hello
             ?: throw SyncProtocolException.Unauthenticated
         serveSession(transport, hello)
+    }
+
+    /**
+     * Applies a remote unpair, after checking that the sender really held the secret being revoked.
+     *
+     * The proof is what keeps a stranger from clearing the link just by finding the advertisement.
+     * An already-unpaired receiver has nothing to clear and simply lets the sender time out.
+     */
+    private suspend fun serveUnpair(transport: SyncTransport, message: PairingMessage.Unpair) {
+        val secret = sdk.getPairingSecret()
+        val linked = sdk.getLinkedDevice()
+        val fromLinkedDevice = linked == null || linked.deviceId == message.device.deviceId
+        val authorized = secret != null &&
+            fromLinkedDevice &&
+            verifiesUnpair(secret = secret, message = message, receiverDeviceId = sdk.deviceId())
+
+        try {
+            if (!authorized) return
+
+            runCatching {
+                transport.open()
+                FramedLink(transport).sendRaw(PairingMessageCodec.write(PairingMessage.Accept()))
+            }
+            forgetPairing()
+        } finally {
+            transport.close()
+        }
     }
 
     /** Runs the receiving half of a pairing handshake. */
@@ -469,6 +578,14 @@ class SyncManager(
     private suspend fun serveSession(transport: SyncTransport, peerHello: SyncMessage.Hello) {
         val secret = sdk.getPairingSecret()
         if (secret == null) {
+            // Say why this session cannot continue. Closing silently would look like a dropped link,
+            // and the initiator would keep showing the peer as paired instead of clearing it.
+            runCatching {
+                transport.open()
+                FramedLink(transport).sendRaw(
+                    SyncMessageCodec.write(SyncMessage.Unpaired(device = localDescriptor(secret = null)))
+                )
+            }
             transport.close()
             fail(SyncProtocolException.Unauthenticated)
             return
@@ -569,7 +686,19 @@ class SyncManager(
                     // it as a refusal keeps a mislabelled peer from pushing data.
                     onRequest = { false }
                 )
-            }.onSuccess { outcome -> finishSession(outcome) }.onFailure { fail(it) }
+            }.onSuccess { outcome -> finishSession(outcome) }.onFailure { error ->
+                val linked = currentState.value.linkedDevice
+                if (error is SyncProtocolException.PeerUnpaired &&
+                    linked != null &&
+                    device.fingerprint == linked.fingerprint
+                ) {
+                    // The device we tried to sync with is the one stored as linked, and it has just
+                    // said it no longer holds the secret. Clearing here avoids showing a dead link.
+                    forgetPairing()
+                } else {
+                    fail(error)
+                }
+            }
         }
     }
 
@@ -582,9 +711,10 @@ class SyncManager(
 
             is SyncSessionResult.Completed -> {
                 rememberLinkedDevice(outcome.peer)
-                // Nothing else is expected over this link now, and advertising is started again on
-                // demand, so the radio is turned off rather than left on until the screen closes.
-                stopDiscovering()
+                // The picker stops growing, but the link keeps advertising and serving. The peer may
+                // come back for another sync, or to report that it has unpaired, and the screen's own
+                // lifetime is what turns the radio off.
+                stopScanning()
                 outcome.peerSnapshot?.let { merge(it) }
                     ?: currentState.update {
                         it.copy(isSyncing = false, phase = null, outcome = SyncOutcome.UpToDate)
@@ -658,25 +788,99 @@ class SyncManager(
 
     private fun unpair() {
         scope.launch {
-            stopDiscovering()
-            sdk.clearPairingSecret()
-            currentState.update {
-                it.copy(
-                    paired = false,
-                    linkedDevice = null,
-                    isPairingInProgress = false,
-                    pairingCode = null,
-                    pairingPrompt = null,
-                    isPairing = false,
-                    outgoingCode = null,
-                    outcome = null
+            // Captured before the secret is cleared: the old secret is what lets the peer verify that
+            // this is a real revocation from the device it paired with, not a stranger's spoof.
+            val secret = sdk.getPairingSecret()
+            val linked = sdk.getLinkedDevice()
+
+            stopScanning()
+            forgetPairing()
+            currentState.update { it.copy(nearbyDevices = emptyList(), selectedDeviceId = null) }
+
+            if (!isLiveSyncSupported() || !hasNearbyDevicePermissions()) return@launch
+            if (!ensureLink()) return@launch
+
+            // Best effort. If the peer is not nearby the local link is still gone, and the peer will
+            // notice the next time it scans or tries to sync.
+            if (secret != null && linked != null) {
+                notifyPeerOfUnpair(secret = secret, linked = linked)
+            }
+        }
+    }
+
+    /** Drops the pairing locally and advertises the unpaired placeholder on the existing link. */
+    private suspend fun forgetPairing() {
+        // A prompt that was waiting on the old link has nothing left to authorize. Releasing it as a
+        // refusal keeps a pairing or sync session from sitting on screen after the link is gone.
+        pendingPairingApproval?.complete(false)
+        pendingApproval?.complete(false)
+        pendingPairingApproval = null
+        pendingApproval = null
+
+        sdk.clearPairingSecret()
+        currentState.update {
+            it.copy(
+                paired = false,
+                linkedDevice = null,
+                isSyncing = false,
+                phase = null,
+                isPairingInProgress = false,
+                pairingCode = null,
+                pairingPrompt = null,
+                isPairing = false,
+                incomingRequest = null,
+                isIncomingRequestAnswered = true,
+                outgoingCode = null,
+                outcome = null
+            )
+        }
+
+        // The advertisement still carries the old fingerprint, which no longer names a secret this
+        // device holds. Restarting it with the unpaired placeholder keeps the picker honest.
+        runCatching { link?.start(localDescriptor(secret = null)) }
+    }
+
+    /**
+     * Tells the peer that this device has removed their shared secret.
+     *
+     * The peer is found by its advertised fingerprint rather than by a stored address: BLE addresses
+     * rotate, while the fingerprint is exactly the public half of the secret being revoked.
+     */
+    private suspend fun notifyPeerOfUnpair(secret: ByteArray, linked: LinkedDevice) {
+        val current = link ?: return
+        if (link !== current) return
+
+        val target = scanForPeer(current, UnpairNotifyScanMillis) { descriptor ->
+            descriptor.isLinkedPeer(linked)
+        } ?: return
+        // The screen may have been left during the scan, which stops the link this target came from.
+        if (link !== current) return
+
+        val transport = runCatching { current.connectTo(target.id) }.getOrNull() ?: return
+        try {
+            transport.open()
+            val framed = FramedLink(transport)
+            val local = localDescriptor(secret = null)
+            framed.sendRaw(
+                PairingMessageCodec.write(
+                    PairingMessage.Unpair(
+                        device = local,
+                        proof = unpairProof(
+                            secret = secret,
+                            senderDeviceId = local.deviceId,
+                            receiverDeviceId = linked.deviceId
+                        )
+                    )
                 )
-            }
-            // The advertisement still carries the old fingerprint, which no longer names a secret
-            // this device holds. Restarting it with the unpaired placeholder keeps the picker honest.
-            if (isLiveSyncSupported() && hasNearbyDevicePermissions()) {
-                ensureLink()
-            }
+            )
+            // The ack is useful but not required: the write above already reached the peer's server.
+            withTimeoutOrNull(UnpairAckTimeoutMillis) { framed.readRaw() }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Throwable) {
+            // Best effort, as above.
+        } finally {
+            runCatching { transport.close() }
         }
     }
 
@@ -727,7 +931,9 @@ class SyncManager(
     }
 
     private fun Throwable.toSyncFailure(): SyncFailure = when (this) {
-        is SyncProtocolException.Unauthenticated -> SyncFailure.Unauthenticated
+        is SyncProtocolException.Unauthenticated,
+        is SyncProtocolException.PeerUnpaired -> SyncFailure.Unauthenticated
+
         is SyncProtocolException.IncompatibleVersion -> SyncFailure.Incompatible
         is SyncProtocolException.MessageTooLarge,
         is SyncProtocolException.MalformedChunk,
@@ -771,10 +977,39 @@ private fun IncomingSyncRequest.toIncomingRequest() = IncomingRequest(
     transactionCount = transactionCount
 )
 
+/**
+ * Whether an advertised descriptor is the device stored as linked.
+ *
+ * Advertisements only carry the first four bytes of the id, so the prefix is the stable part to
+ * compare; no full id ever reaches the scan result.
+ */
+private fun DeviceDescriptor.sharesDeviceIdWith(linked: LinkedDevice): Boolean =
+    deviceId.isNotEmpty() &&
+        deviceId.length <= DescriptorCodec.DeviceIdHexLength &&
+        linked.deviceId.startsWith(deviceId, ignoreCase = true)
+
+/** The linked peer, still holding the same secret: the only device an unpair notice may target. */
+private fun DeviceDescriptor.isLinkedPeer(linked: LinkedDevice): Boolean =
+    sharesDeviceIdWith(linked) && fingerprint.equals(linked.fingerprint, ignoreCase = true)
+
+/** The linked peer after it has replaced its fingerprint with the unpaired placeholder. */
+private fun DeviceDescriptor.revokesLink(linked: LinkedDevice): Boolean =
+    sharesDeviceIdWith(linked) &&
+        linked.fingerprint != UnpairedFingerprint &&
+        fingerprint == UnpairedFingerprint
+
 private const val ScanWindowMillis = 15_000L
 
 /** Settling time between closing the pairing link and opening the first sync link on the same peer. */
 private const val PairingToSyncDelayMillis = 250L
+
+/** Short enough not to hold the picker up, long enough to see a peer that is already advertising. */
+private const val PeerValidationScanMillis = 2_000L
+
+/** A revocation is useful as soon as it is sent, so this window is deliberately brief. */
+private const val UnpairNotifyScanMillis = 3_000L
+
+private const val UnpairAckTimeoutMillis = 1_000L
 
 /** Published while no secret exists. Only a label: pairing replaces it with the real fingerprint. */
 private const val UnpairedFingerprint = "000000"

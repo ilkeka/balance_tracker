@@ -34,8 +34,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import me.ilker.sync.protocol.DescriptorCodec
 import me.ilker.sync.protocol.DeviceDescriptor
+import java.util.UUID
 
 internal actual fun isLiveSyncSupported(): Boolean = true
 
@@ -318,7 +320,15 @@ private class AndroidBleSyncLink(
             offset: Int,
             value: ByteArray?
         ) {
-            deliverWrite(device, requestId, characteristic, value, responseNeeded)
+            deliverWrite(
+                device = device,
+                requestId = requestId,
+                characteristic = characteristic,
+                preparedWrite = preparedWrite,
+                offset = offset,
+                value = value,
+                responseNeeded = responseNeeded
+            )
         }
 
         @Suppress("unused")
@@ -329,13 +339,23 @@ private class AndroidBleSyncLink(
             preparedWrite: Boolean,
             responseNeeded: Boolean
         ) {
-            deliverWrite(device, requestId, characteristic, characteristic?.value, responseNeeded)
+            deliverWrite(
+                device = device,
+                requestId = requestId,
+                characteristic = characteristic,
+                preparedWrite = preparedWrite,
+                offset = 0,
+                value = characteristic?.value,
+                responseNeeded = responseNeeded
+            )
         }
 
         private fun deliverWrite(
             device: BluetoothDevice?,
             requestId: Int,
             characteristic: BluetoothGattCharacteristic?,
+            preparedWrite: Boolean,
+            offset: Int,
             value: ByteArray?,
             responseNeeded: Boolean
         ) {
@@ -344,8 +364,97 @@ private class AndroidBleSyncLink(
                 if (responseNeeded) respond(device, requestId, BluetoothGatt.GATT_FAILURE)
                 return
             }
-            session.inbound.trySend(value ?: ByteArray(0))
+
+            if (preparedWrite) {
+                // A write longer than the negotiated MTU arrives as prepare/execute. Buffering it
+                // until onExecuteWrite keeps a single session message from being split into several
+                // malformed chunks.
+                session.preparedWrites
+                    .getOrPut(characteristic.uuid) { mutableMapOf() }[offset] = value ?: ByteArray(0)
+            } else {
+                session.inbound.trySend(value ?: ByteArray(0))
+            }
             if (responseNeeded) respond(device, requestId, BluetoothGatt.GATT_SUCCESS)
+        }
+
+        override fun onExecuteWrite(device: BluetoothDevice?, requestId: Int, execute: Boolean) {
+            val session = device?.address?.let(served::get)
+            if (session == null) {
+                respond(device, requestId, BluetoothGatt.GATT_FAILURE)
+                return
+            }
+
+            if (execute) {
+                session.preparedWrites.remove(SyncService.Data)?.let { chunks ->
+                    val assembled = assemblePreparedWrite(chunks)
+                    if (assembled.isNotEmpty()) session.inbound.trySend(assembled)
+                }
+            } else {
+                session.preparedWrites.clear()
+            }
+            respond(device, requestId, BluetoothGatt.GATT_SUCCESS)
+        }
+
+        /**
+         * Answers the client's notification subscription.
+         *
+         * The default [BluetoothGattServerCallback] implementation does not respond, which leaves
+         * the peer's `writeDescriptor` pending until its connection timeout. That used to look like
+         * a peer that connected and then never sent a single session message.
+         */
+        override fun onDescriptorWriteRequest(
+            device: BluetoothDevice?,
+            requestId: Int,
+            descriptor: BluetoothGattDescriptor?,
+            preparedWrite: Boolean,
+            responseNeeded: Boolean,
+            offset: Int,
+            value: ByteArray?
+        ) {
+            val session = device?.address?.let(served::get)
+            val valid = session != null &&
+                descriptor?.uuid == SyncService.ClientConfig &&
+                descriptor.characteristic?.uuid == SyncService.Data
+
+            if (valid && !preparedWrite) {
+                session.notificationsEnabled = value?.contentEquals(NotificationsEnabled) == true
+            }
+            Log.d(
+                LogTag,
+                "Notification subscription from ${device?.address}: valid=$valid, " +
+                    "enabled=${session?.notificationsEnabled}"
+            )
+            if (responseNeeded) {
+                respond(
+                    device = device,
+                    requestId = requestId,
+                    status = if (valid) BluetoothGatt.GATT_SUCCESS else BluetoothGatt.GATT_FAILURE
+                )
+            }
+        }
+
+        override fun onDescriptorReadRequest(
+            device: BluetoothDevice?,
+            requestId: Int,
+            offset: Int,
+            descriptor: BluetoothGattDescriptor?
+        ) {
+            val valid = descriptor?.uuid == SyncService.ClientConfig &&
+                descriptor.characteristic?.uuid == SyncService.Data
+            respond(
+                device = device,
+                requestId = requestId,
+                status = if (valid) BluetoothGatt.GATT_SUCCESS else BluetoothGatt.GATT_FAILURE,
+                value = if (valid) NotificationsEnabled else null
+            )
+        }
+
+        private fun assemblePreparedWrite(chunks: Map<Int, ByteArray>): ByteArray {
+            val sorted = chunks.toSortedMap()
+            val size = sorted.entries.maxOfOrNull { (offset, bytes) -> offset + bytes.size } ?: 0
+            return ByteArray(size).also { assembled ->
+                sorted.forEach { (offset, bytes) -> bytes.copyInto(assembled, offset) }
+            }
         }
 
         override fun onCharacteristicReadRequest(
@@ -431,6 +540,13 @@ private class AndroidBleSyncLink(
 /** Per-connection buffers for a session this device is serving. */
 private class ServedSession(val device: BluetoothDevice) {
     val inbound = Channel<ByteArray>(Channel.BUFFERED)
+
+    /** Chunks of a write that is too long for one ATT packet, keyed by their offset. */
+    val preparedWrites = mutableMapOf<UUID, MutableMap<Int, ByteArray>>()
+
+    /** Whether the peer has written the notification-enable value to the CCCD. */
+    @Volatile
+    var notificationsEnabled: Boolean = false
 }
 
 /**
@@ -454,6 +570,10 @@ private class ServerBleTransport(
 
     override suspend fun write(chunk: ByteArray) {
         writeMutex.withLock {
+            if (!session.notificationsEnabled) {
+                throw SyncTransportException.Failed("the peer did not subscribe to notifications")
+            }
+
             val sent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 server.notifyCharacteristicChanged(session.device, characteristic, false, chunk)
             } else {
@@ -502,8 +622,9 @@ private class ClientBleTransport(
     private val connected = CompletableDeferred<Unit>()
     private val negotiatedMtu = CompletableDeferred<Int>()
 
-    /** One rendezvous per in-flight write, so a write completes only once the stack acknowledges it. */
-    private val writeAcknowledged = Channel<Unit>(Channel.RENDEZVOUS)
+    /** The in-flight write, so a write completes only once the stack reports its status. */
+    @Volatile
+    private var pendingWrite: CompletableDeferred<Int>? = null
 
     private var gatt: BluetoothGatt? = null
 
@@ -513,7 +634,18 @@ private class ClientBleTransport(
     private val callback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             when (newState) {
-                BluetoothProfile.STATE_CONNECTED -> gatt.discoverServices()
+                BluetoothProfile.STATE_CONNECTED -> {
+                    if (status != BluetoothGatt.GATT_SUCCESS) {
+                        connected.completeExceptionally(
+                            SyncTransportException.Failed("the connection failed with status $status")
+                        )
+                    } else if (!gatt.discoverServices()) {
+                        connected.completeExceptionally(
+                            SyncTransportException.Failed("the sync service could not be discovered")
+                        )
+                    }
+                }
+
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     if (!connected.isCompleted) {
                         connected.completeExceptionally(
@@ -526,6 +658,13 @@ private class ClientBleTransport(
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                connected.completeExceptionally(
+                    SyncTransportException.Failed("service discovery failed with status $status")
+                )
+                return
+            }
+
             val data = gatt.getService(SyncService.Uuid)?.getCharacteristic(SyncService.Data)
             if (data == null) {
                 connected.completeExceptionally(
@@ -536,27 +675,64 @@ private class ClientBleTransport(
 
             // Subscribing first, so notifications cannot arrive before there is somewhere to buffer
             // them; the write descriptor completing is also what finishes connecting.
-            gatt.setCharacteristicNotification(data, true)
-            gatt.writeDescriptor(
-                data.getDescriptor(SyncService.ClientConfig) ?: return,
-                NotificationsEnabled
-            )
+            if (!gatt.setCharacteristicNotification(data, true)) {
+                connected.completeExceptionally(
+                    SyncTransportException.Failed("notifications could not be enabled")
+                )
+                return
+            }
+
+            val descriptor = data.getDescriptor(SyncService.ClientConfig)
+            if (descriptor == null) {
+                connected.completeExceptionally(
+                    SyncTransportException.Failed("that device does not offer the sync descriptor")
+                )
+                return
+            }
+
+            val started = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                gatt.writeDescriptor(descriptor, NotificationsEnabled) == BluetoothStatusCodes.SUCCESS
+            } else {
+                @Suppress("DEPRECATION")
+                run {
+                    descriptor.value = NotificationsEnabled
+                    gatt.writeDescriptor(descriptor)
+                }
+            }
+            if (!started) {
+                connected.completeExceptionally(
+                    SyncTransportException.Failed("notifications could not be subscribed")
+                )
+            }
         }
 
         override fun onDescriptorWrite(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                maxChunkSize = RequestedMtu - GattOverhead
-                negotiatedMtu.complete(RequestedMtu)
-            } else {
-                @Suppress("DEPRECATION")
-                run { gatt.requestMtu(RequestedMtu) }
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                connected.completeExceptionally(
+                    SyncTransportException.Failed("notification subscription failed with status $status")
+                )
+                return
             }
+
             connected.complete(Unit)
+            Log.d("BalanceTrackerSync", "Notification subscription complete, requesting MTU")
+
+            // Ask for a larger MTU before the session starts. If the request is refused, the
+            // guaranteed default still works: only the chunk size has to stay at its minimum.
+            if (!gatt.requestMtu(RequestedMtu)) {
+                maxChunkSize = DefaultMtu - GattOverhead
+                negotiatedMtu.complete(DefaultMtu)
+            }
         }
 
         override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
-            val usable = mtu.coerceIn(DefaultMtu, RequestedMtu)
+            val usable = if (status == BluetoothGatt.GATT_SUCCESS) {
+                mtu.coerceIn(DefaultMtu, RequestedMtu)
+            } else {
+                DefaultMtu
+            }
             maxChunkSize = usable - GattOverhead
+            Log.d("BalanceTrackerSync", "MTU negotiated: $usable, chunk=${maxChunkSize}")
             negotiatedMtu.complete(usable)
         }
 
@@ -569,7 +745,7 @@ private class ClientBleTransport(
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            writeAcknowledged.trySend(Unit)
+            pendingWrite?.complete(status)
         }
     }
 
@@ -593,7 +769,9 @@ private class ClientBleTransport(
 
         runCatching {
             withTimeout(ConnectionTimeoutMillis) { connected.await() }
-            negotiatedMtu.await()
+            // The MTU is an optimisation, not a requirement. If the stack never reports it, the
+            // default-sized chunks are still valid.
+            withTimeoutOrNull(MtuNegotiationTimeoutMillis) { negotiatedMtu.await() }
         }.onFailure {
             close()
             throw if (it is SyncTransportException) {
@@ -615,11 +793,38 @@ private class ClientBleTransport(
             ?: throw SyncTransportException.Failed("transport is not open")
 
         writeMutex.withLock {
-            current.writeCharacteristic(data, chunk, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT)
+            val result = CompletableDeferred<Int>()
+            pendingWrite = result
             try {
-                withTimeout(WriteTimeoutMillis) { writeAcknowledged.receive() }
-            } catch (timeout: TimeoutCancellationException) {
-                throw SyncTransportException.Failed("the peer did not acknowledge a write")
+                val started = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    current.writeCharacteristic(
+                        data,
+                        chunk,
+                        BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                    ) == BluetoothStatusCodes.SUCCESS
+                } else {
+                    @Suppress("DEPRECATION")
+                    run {
+                        data.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                        data.value = chunk
+                        current.writeCharacteristic(data)
+                    }
+                }
+
+                if (!started) {
+                    throw SyncTransportException.Failed("the peer rejected a write")
+                }
+
+                val status = try {
+                    withTimeout(WriteTimeoutMillis) { result.await() }
+                } catch (timeout: TimeoutCancellationException) {
+                    throw SyncTransportException.Failed("the peer did not acknowledge a write")
+                }
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    throw SyncTransportException.Failed("the peer rejected a write with status $status")
+                }
+            } finally {
+                pendingWrite = null
             }
         }
     }
@@ -648,4 +853,5 @@ private val NotificationsEnabled = byteArrayOf(1, 0)
 private const val GattServerMovedToManagerApi = 36
 
 private const val ConnectionTimeoutMillis = 15_000L
+private const val MtuNegotiationTimeoutMillis = 2_000L
 private const val WriteTimeoutMillis = 10_000L

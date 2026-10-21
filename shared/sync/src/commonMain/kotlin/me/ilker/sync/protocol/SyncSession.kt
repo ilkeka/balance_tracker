@@ -54,6 +54,19 @@ internal sealed interface SyncMessage {
     data class Reject(
         override val protocolVersion: Int = SyncPayloadCodec.Version
     ) : SyncMessage
+
+    /**
+     * Sent instead of a hello when the receiver no longer holds a pairing secret.
+     *
+     * Without it the receiver can only close the connection, which the initiator sees as a dropped
+     * link. That distinction matters: a dropped link is retryable, while this means the stored link
+     * is gone and should be cleared rather than shown as paired forever.
+     */
+    @Serializable
+    data class Unpaired(
+        override val protocolVersion: Int = SyncPayloadCodec.Version,
+        val device: DeviceDescriptor
+    ) : SyncMessage
 }
 
 internal object SyncMessageCodec {
@@ -142,7 +155,13 @@ internal suspend fun runSyncSession(
 
         link.send(SyncMessage.Hello(device = local, proof = proof(secret, local.deviceId)))
 
-        val peer = peerHello ?: (link.read() as? SyncMessage.Hello ?: throw SyncProtocolException.Unauthenticated)
+        val peer = peerHello ?: when (val answer = link.read()) {
+            is SyncMessage.Hello -> answer
+            // A peer that removed its secret says so explicitly, so the initiator can drop a link that
+            // can never authenticate again instead of treating this as a transient transport failure.
+            is SyncMessage.Unpaired -> throw SyncProtocolException.PeerUnpaired
+            else -> throw SyncProtocolException.Unauthenticated
+        }
         if (peer.device.deviceId == local.deviceId) return SyncSessionResult.Declined
         if (!verify(secret, peer)) throw SyncProtocolException.Unauthenticated
         // Taken from the hello rather than the request: the hello is what the peer proved, and both

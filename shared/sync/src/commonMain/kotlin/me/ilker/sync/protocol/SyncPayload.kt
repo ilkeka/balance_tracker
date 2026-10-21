@@ -34,6 +34,11 @@ internal sealed class SyncProtocolException(message: String) : Exception(message
     data object SameDevice : SyncProtocolException("the peer is this device") {
         private fun readResolve(): Any = SameDevice
     }
+
+    /** The peer answered a sync with its unpaired descriptor, so the stored link is no longer usable. */
+    data object PeerUnpaired : SyncProtocolException("the peer no longer holds the pairing secret") {
+        private fun readResolve(): Any = PeerUnpaired
+    }
 }
 
 /**

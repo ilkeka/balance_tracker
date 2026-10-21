@@ -65,6 +65,21 @@ internal sealed interface PairingMessage {
         override val protocolVersion: Int = SyncPayloadCodec.Version,
         val proof: String
     ) : PairingMessage
+
+    /**
+     * Sent by a device that has just removed its pairing secret, so the peer can drop the stale link.
+     *
+     * The proof is made with the secret being revoked and names both devices: the sender no longer
+     * holds it after this point, but it still proves this is the device the receiver paired with
+     * rather than a stranger that only found the advertisement. The receiver answers with [Accept].
+     */
+    @Serializable
+    @SerialName("pair-unpair")
+    data class Unpair(
+        override val protocolVersion: Int = SyncPayloadCodec.Version,
+        val device: DeviceDescriptor,
+        val proof: String
+    ) : PairingMessage
 }
 
 internal object PairingMessageCodec {
@@ -220,6 +235,34 @@ private suspend fun pairingProof(
     val transcript = "pair-proof|${nonces[0]}|${nonces[1]}"
     return hmacSha256(secret, transcript.encodeToByteArray()).toHex()
 }
+
+/**
+ * Proof that a device removing a link once held the shared secret.
+ *
+ * Both ids are in the transcript so a captured unpair message cannot be replayed at a different
+ * device that happens to share the same out-of-band code.
+ */
+internal suspend fun unpairProof(
+    secret: ByteArray,
+    senderDeviceId: String,
+    receiverDeviceId: String
+): String = hmacSha256(
+    key = secret,
+    message = "unpair|$senderDeviceId|$receiverDeviceId".encodeToByteArray()
+).toHex()
+
+internal suspend fun verifiesUnpair(
+    secret: ByteArray,
+    message: PairingMessage.Unpair,
+    receiverDeviceId: String
+): Boolean = constantTimeEquals(
+    unpairProof(
+        secret = secret,
+        senderDeviceId = message.device.deviceId,
+        receiverDeviceId = receiverDeviceId
+    ).encodeToByteArray(),
+    message.proof.encodeToByteArray()
+)
 
 /** Same length as [deviceFingerprint], so both codes read the same way on screen. */
 private const val FingerprintSizeBytes = 3

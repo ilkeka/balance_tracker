@@ -235,6 +235,40 @@ class SyncSessionTest {
     }
 
     @Test
+    fun `a peer that no longer holds a secret says so instead of dropping the link`() = runTest {
+        val (initiator, receiver) = transports()
+
+        val server = backgroundScope.async {
+            val first = receiver.readMessageText()
+            assertIs<SyncMessage.Hello>(SyncMessageCodec.read(first))
+            FramedLink(receiver).sendRaw(
+                SyncMessageCodec.write(
+                    SyncMessage.Unpaired(
+                        device = descriptor(
+                            deviceId = "bbbb",
+                            alias = "Tablet"
+                        ).copy(fingerprint = "000000")
+                    )
+                )
+            )
+        }
+
+        val error = assertFailsWith<SyncProtocolException.PeerUnpaired> {
+            runSyncSession(
+                transport = initiator,
+                local = descriptor(),
+                secret = Secret,
+                snapshot = snapshot("aaaa"),
+                request = SyncMessage.Request(device = descriptor(), transactionCount = 0),
+                onRequest = { false }
+            )
+        }
+
+        assertEquals(SyncProtocolException.PeerUnpaired, error)
+        server.await()
+    }
+
+    @Test
     fun `a device syncing with itself reports no merge instead of doubling up`() = runTest {
         val (initiator, receiver) = transports()
         val same = descriptor()
@@ -405,7 +439,8 @@ class SyncMessageCodecTest {
             SyncMessage.Hello(device = descriptor(), proof = "abc123"),
             SyncMessage.Request(device = descriptor(), transactionCount = 7),
             SyncMessage.Accept(),
-            SyncMessage.Reject()
+            SyncMessage.Reject(),
+            SyncMessage.Unpaired(device = descriptor().copy(fingerprint = "000000"))
         )
 
         messages.forEach { message ->

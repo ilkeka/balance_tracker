@@ -173,12 +173,34 @@ class PairingSessionTest {
             PairingMessage.Accept(),
             PairingMessage.Reject(),
             PairingMessage.Secret(value = "c2VjcmV0", proof = "abc123"),
-            PairingMessage.Paired(proof = "abc123")
+            PairingMessage.Paired(proof = "abc123"),
+            PairingMessage.Unpair(device = pairingHello(deviceId = "aaaa").device, proof = "abc123")
         )
 
         messages.forEach { message ->
             assertEquals(message, PairingMessageCodec.read(PairingMessageCodec.write(message)))
         }
+    }
+
+    @Test
+    fun `an unpair proof is bound to both devices and the secret`() = runTest {
+        val secret = ByteArray(16) { it.toByte() }
+        val otherSecret = ByteArray(16) { (it + 1).toByte() }
+        val message = PairingMessage.Unpair(
+            device = pairingHello(deviceId = "aaaa").device,
+            proof = unpairProof(secret, senderDeviceId = "aaaa", receiverDeviceId = "bbbb")
+        )
+
+        assertTrue(verifiesUnpair(secret, message, receiverDeviceId = "bbbb"))
+        assertFalse(verifiesUnpair(secret, message, receiverDeviceId = "cccc"))
+        assertFalse(verifiesUnpair(otherSecret, message, receiverDeviceId = "bbbb"))
+        assertFalse(
+            verifiesUnpair(
+                secret,
+                message.copy(device = message.device.copy(deviceId = "cccc")),
+                receiverDeviceId = "bbbb"
+            )
+        )
     }
 
     @Test

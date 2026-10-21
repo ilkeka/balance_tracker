@@ -146,7 +146,9 @@ internal object DescriptorCodec {
     private const val FingerprintOffset = DeviceIdOffset + DeviceIdBytes
     private const val ModelOffset = FingerprintOffset + FingerprintBytes
     private const val AliasOffset = ModelOffset + MaxModelLength
-    private const val DeviceIdHexLength = DeviceIdBytes * 2
+
+    /** How much of the full device id travels in the advertisement, in hex characters. */
+    const val DeviceIdHexLength = DeviceIdBytes * 2
     private const val FingerprintHexLength = FingerprintBytes * 2
 }
 
