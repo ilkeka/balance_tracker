@@ -9,6 +9,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import me.ilker.balance_tracker.database.DB
 import me.ilker.balance_tracker.database.DatabaseDriverFactory
+import me.ilker.balance_tracker.database.SnapshotMode
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.sdk.TransactionCategory
 import me.ilker.balance_tracker.sdk.TransactionDomainModel
@@ -73,10 +74,17 @@ internal class BalanceTrackerSDKImpl(
 
     override suspend fun deviceId(): String = database.deviceId()
 
-    override suspend fun exportSyncSnapshot(): SyncSnapshot = database.exportSnapshot()
+    override suspend fun exportSyncSnapshot(): SyncSnapshot =
+        database.exportSnapshot(mode = SnapshotMode.Live)
 
     override suspend fun importSyncSnapshot(snapshot: SyncSnapshot): SyncImportResult =
-        database.importSnapshot(remote = snapshot)
+        database.importSnapshot(remote = snapshot, mode = SnapshotMode.Live)
+
+    override suspend fun exportBackupSnapshot(): SyncSnapshot =
+        database.exportSnapshot(mode = SnapshotMode.Backup)
+
+    override suspend fun importBackupSnapshot(snapshot: SyncSnapshot): SyncImportResult =
+        database.importSnapshot(remote = snapshot, mode = SnapshotMode.Backup)
 
     override suspend fun getPairingSecret(): ByteArray? =
         database.pairing()?.secret?.hexToByteArray()

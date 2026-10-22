@@ -24,11 +24,11 @@ data class SyncedTransaction(
 )
 
 /**
- * The complete syncable state of one device.
+ * The transactions one device contributes to a sync.
  *
- * A snapshot is exchanged in full on every sync rather than as a delta. Transaction counts for a
- * personal ledger are small, and a full exchange needs no per-peer cursor to be persisted, which
- * removes a whole class of "what did I last send them" bookkeeping bugs.
+ * Each device sends only the rows it created. Rows received from the peer are stored and shown, but
+ * are never echoed back: only their author can change them. A snapshot is exchanged in full on every
+ * sync rather than as a delta, which needs no per-peer cursor to be persisted.
  */
 @Serializable
 data class SyncSnapshot(
@@ -39,7 +39,9 @@ data class SyncSnapshot(
 data class MergeStats(
     val inserted: Int,
     val updated: Int,
-    val unchanged: Int
+    val unchanged: Int,
+    /** Rows the sender did not own, so they were deliberately not applied. */
+    val ignored: Int = 0
 ) {
     val applied: Int get() = inserted + updated
 }

@@ -57,6 +57,15 @@ class SyncManager(
 ) : Manager<SyncState, SyncIntent, SyncSideEffect>() {
     private val currentState = MutableStateFlow(SyncState(liveSyncSupported = isLiveSyncSupported()))
 
+    /**
+     * Whether the sync screen is currently on screen.
+     *
+     * The manager outlives the navigation entry so a transfer can continue while the user visits
+     * another screen. Visibility is tracked separately from that lifetime: an idle link still stops
+     * on the way out, while an active session is allowed to finish.
+     */
+    private val screenVisible = MutableStateFlow(false)
+
     /** The running scan, so it can be stopped when the user leaves the screen. */
     private var scanJob: Job? = null
 
@@ -87,6 +96,7 @@ class SyncManager(
     override fun sendIntent(intent: SyncIntent) {
         when (intent) {
             SyncIntent.Load -> load()
+            SyncIntent.ScreenLeft -> screenLeft()
             SyncIntent.Pair -> pair()
             is SyncIntent.PairWith -> pairWith(intent.code)
             is SyncIntent.PairDevice -> pairDevice(intent.deviceId)
@@ -111,6 +121,7 @@ class SyncManager(
     }
 
     private fun load() {
+        screenVisible.value = true
         scope.launch {
             val paired = sdk.getPairingSecret() != null
             currentState.update {
@@ -124,6 +135,12 @@ class SyncManager(
                 )
             }
 
+            // A transfer that started before the user left is still using the link. Reopening or
+            // validating it here would race the session, so only an idle screen sets one up.
+            if (!screenVisible.value || currentState.value.isSyncing || currentState.value.isPairing) {
+                return@launch
+            }
+
             // Start advertising as soon as the screen opens, so the other phone can find this one
             // without the user doing anything here. Paired devices advertise too: that is what lets
             // the peer reach them to sync, and to report that it has just unpaired. Only when the
@@ -132,6 +149,49 @@ class SyncManager(
             if (isLiveSyncSupported() && hasNearbyDevicePermissions()) {
                 if (ensureLink() && paired) reconcileLinkedPeerOnce()
             }
+        }
+    }
+
+    /**
+     * Handles the navigation entry going away.
+     *
+     * A running transfer keeps the radio: that is what lets the user visit another screen without
+     * interrupting it. Everything else is torn down here, and prompts are declined because nobody is
+     * left to answer them. Session paths keep the link until their own completion notices that the
+     * screen is gone.
+     */
+    private fun screenLeft() {
+        screenVisible.value = false
+
+        // Also covers a session that has connected but has not raised its prompt yet: without a
+        // screen nobody can answer it, and leaving the deferred waiting would hold the peer open.
+        val waitingForUser =
+            currentState.value.pairingPrompt != null ||
+                currentState.value.incomingRequest != null ||
+                pendingPairingApproval != null ||
+                pendingApproval != null
+        if (waitingForUser) {
+            pendingPairingApproval?.complete(false)
+            pendingApproval?.complete(false)
+            pendingPairingApproval = null
+            pendingApproval = null
+            currentState.update {
+                it.copy(
+                    pairingPrompt = null,
+                    incomingRequest = null,
+                    isIncomingRequestAnswered = true
+                )
+            }
+        }
+
+        stopScanning()
+
+        if (currentState.value.isSyncing || currentState.value.isPairing) {
+            // The picker is screen-local: keeping stale rows would let the user start a session with
+            // a device that may no longer be reachable when they return.
+            currentState.update { it.copy(nearbyDevices = emptyList(), selectedDeviceId = null) }
+        } else {
+            stopLink()
         }
     }
 
@@ -227,8 +287,11 @@ class SyncManager(
                         syncNow()
                     }
 
-                    PairingResult.Declined -> currentState.update {
-                        it.copy(outcome = SyncOutcome.Declined)
+                    PairingResult.Declined -> {
+                        currentState.update {
+                            it.copy(outcome = SyncOutcome.Declined)
+                        }
+                        stopLinkIfScreenLeft()
                     }
                 }
             } catch (cancellation: CancellationException) {
@@ -244,7 +307,8 @@ class SyncManager(
      * Opens the link and starts advertising, or reuses the one already running.
      *
      * Advertising and serving are shared by every attempt, while a session is one connection, so the
-     * link outlives an individual scan window and is only dropped when the screen is left.
+     * link outlives an individual scan window and is dropped when the screen is left or a session
+     * that continued off-screen finishes.
      *
      * @return false when the link could not be opened, after reporting the failure as an outcome.
      */
@@ -286,6 +350,16 @@ class SyncManager(
     }
 
     private fun stopDiscovering() {
+        stopLink()
+    }
+
+    /**
+     * Drops the radio link and the picker rows that depended on it.
+     *
+     * Only safe when no session is using the link. The completion paths call this after a transfer
+     * ends and the user has already left the screen.
+     */
+    private fun stopLink() {
         link?.stop()
         link = null
         stopScanning()
@@ -295,6 +369,17 @@ class SyncManager(
                 selectedDeviceId = null
             )
         }
+    }
+
+    /**
+     * Turns the radio off after a session ends if its screen is no longer visible.
+     *
+     * A session that is still running is left alone: this can be reached from pairing cleanup while
+     * the first sync has already been queued.
+     */
+    private fun stopLinkIfScreenLeft() {
+        if (screenVisible.value || currentState.value.isSyncing) return
+        stopLink()
     }
 
     /**
@@ -406,7 +491,21 @@ class SyncManager(
         result
     }
 
-    /** Accepts incoming sessions for as long as the screen is up, one at a time. */
+    /**
+     * Finds the stored peer for a sync started without a picker row.
+     *
+     * The address from the pairing session cannot be reused because BLE addresses rotate. The
+     * fingerprint in the advertisement is derived from the shared secret, so it is the stable way
+     * to recognise the device the user already paired with.
+     */
+    private suspend fun findLinkedPeer(current: SyncLink): NearbyDevice? {
+        val linked = sdk.getLinkedDevice() ?: return null
+        return scanForPeer(current, PairedSyncScanMillis) { descriptor ->
+            descriptor.isLinkedPeer(linked)
+        }?.toNearbyDevice()
+    }
+
+    /** Accepts incoming sessions for as long as the link is up, one at a time. */
     private suspend fun listenForIncomingSessions(current: SyncLink) {
         scope.launch {
             while (true) {
@@ -429,6 +528,14 @@ class SyncManager(
      * sync hello have different shapes, so no extra envelope or second characteristic is needed.
      */
     private suspend fun serveIncoming(transport: SyncTransport) {
+        // A connection can arrive just as the user leaves. Without a screen there is no one to
+        // approve a pairing code or an incoming request, so close it rather than raise a prompt the
+        // user cannot see.
+        if (!screenVisible.value) {
+            runCatching { transport.close() }
+            return
+        }
+
         val first = transport.readMessageText()
         val pairing = runCatching<PairingMessage?> { PairingMessageCodec.read(first) }.getOrElse { error ->
             if (error is SyncProtocolException.IncompatibleVersion) throw error
@@ -514,6 +621,7 @@ class SyncManager(
                 }
             }
             .onFailure { fail(it) }
+        stopLinkIfScreenLeft()
     }
 
     /**
@@ -523,7 +631,9 @@ class SyncManager(
      * screens, which is why the answer is a deliberate tap rather than a timeout.
      */
     private suspend fun askPairingApproval(peer: DeviceDescriptor, code: String): Boolean {
-        if (currentState.value.isSyncing) return false
+        // Nobody is on the screen to compare the code, so decline instead of raising an invisible
+        // prompt that would hold the peer until it times out.
+        if (!screenVisible.value || currentState.value.isSyncing) return false
 
         val answer = CompletableDeferred<Boolean>()
         pendingPairingApproval = answer
@@ -604,8 +714,15 @@ class SyncManager(
                 snapshot = snapshot,
                 request = null,
                 onRequest = { request ->
-                    currentState.update { it.copy(incomingRequest = request.toIncomingRequest()) }
-                    answer.await()
+                    // The screen can disappear between the connection arriving and the request
+                    // reaching this point. Declining keeps the peer from waiting on a prompt that
+                    // no one can see.
+                    if (!screenVisible.value) {
+                        false
+                    } else {
+                        currentState.update { it.copy(incomingRequest = request.toIncomingRequest()) }
+                        answer.await()
+                    }
                 },
                 peerHello = peerHello
             )
@@ -642,20 +759,29 @@ class SyncManager(
             return
         }
 
-        val device = state.selectedDeviceId?.let { selected ->
+        // A picker row already describes a reachable peer. When there is none, the stored pairing
+        // is enough to find it: the user should not have to scan and select a device they already
+        // paired with.
+        val nearby = state.selectedDeviceId?.let { selected ->
             state.nearbyDevices.firstOrNull { it.id == selected }
         } ?: state.nearbyDevices.firstOrNull()
-        if (device == null) {
-            currentState.update { it.copy(outcome = SyncOutcome.Failed(SyncFailure.NoDevicesNearby)) }
-            return
-        }
 
         scope.launch {
             stopScanning()
-            if (!ensureLink()) return@launch
-            val current = link ?: return@launch
-
+            // Marked busy before opening the link so leaving the screen in that gap does not tear
+            // down the link this session is about to use.
             busy(SyncPhase.Connecting)
+            if (!ensureLink()) return@launch
+            val current = link ?: run {
+                fail(SyncTransportException.Disconnected("the link closed before the sync started"))
+                return@launch
+            }
+
+            val device = nearby ?: findLinkedPeer(current)
+            if (device == null) {
+                fail(SyncDiscoveryException.Unavailable(SyncUnavailableReason.NoDevicesNearby))
+                return@launch
+            }
 
             val secret = sdk.getPairingSecret()
             if (secret == null) {
@@ -704,22 +830,34 @@ class SyncManager(
 
     /** Merges what the peer sent, or reports that there was nothing to do. */
     private suspend fun finishSession(outcome: SyncSessionResult) {
-        when (outcome) {
-            SyncSessionResult.Declined -> currentState.update {
-                it.copy(isSyncing = false, phase = null, outcome = SyncOutcome.Declined)
-            }
+        try {
+            when (outcome) {
+                SyncSessionResult.Declined -> currentState.update {
+                    it.copy(isSyncing = false, phase = null, outcome = SyncOutcome.Declined)
+                }
 
-            is SyncSessionResult.Completed -> {
-                rememberLinkedDevice(outcome.peer)
-                // The picker stops growing, but the link keeps advertising and serving. The peer may
-                // come back for another sync, or to report that it has unpaired, and the screen's own
-                // lifetime is what turns the radio off.
-                stopScanning()
-                outcome.peerSnapshot?.let { merge(it) }
-                    ?: currentState.update {
-                        it.copy(isSyncing = false, phase = null, outcome = SyncOutcome.UpToDate)
-                    }
+                is SyncSessionResult.Completed -> {
+                    rememberLinkedDevice(outcome.peer)
+                    // The picker stops growing, but the link keeps advertising and serving. The peer may
+                    // come back for another sync, or to report that it has unpaired. Visibility is what
+                    // turns the radio off once the screen is gone.
+                    stopScanning()
+                    outcome.peerSnapshot?.let { merge(it) }
+                        ?: currentState.update {
+                            it.copy(isSyncing = false, phase = null, outcome = SyncOutcome.UpToDate)
+                        }
+                }
             }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (throwable: Throwable) {
+            // Storing the peer or merging its rows can fail after the exchange itself completed.
+            // Report it like any other session failure so the busy state cannot outlive the transfer.
+            fail(throwable)
+        } finally {
+            // If the user left during the transfer, this is the point where the radio is no longer
+            // needed. A visible screen keeps advertising for the next session, as before.
+            stopLinkIfScreenLeft()
         }
     }
 
@@ -775,11 +913,18 @@ class SyncManager(
 
     private suspend fun merge(snapshot: SyncSnapshot) {
         currentState.update { it.copy(phase = SyncPhase.Merging) }
-        val outcome = when (val result = sdk.importSyncSnapshot(snapshot)) {
-            is SyncImportResult.Merged -> SyncOutcome.Merged(
-                received = snapshot.transactions.size,
-                applied = result.stats.applied
-            )
+        val result = sdk.importSyncSnapshot(snapshot)
+        val outcome = when (result) {
+            // Each device contributes only its own rows, so "received" is the peer's ledger, not the
+            // number of changes. Rows the peer sent but does not own are not counted as received.
+            is SyncImportResult.Merged -> if (result.stats.applied == 0) {
+                SyncOutcome.UpToDate
+            } else {
+                SyncOutcome.Merged(
+                    received = snapshot.transactions.size - result.stats.ignored,
+                    applied = result.stats.applied
+                )
+            }
 
             SyncImportResult.SameDevice -> SyncOutcome.UpToDate
         }
@@ -928,6 +1073,7 @@ class SyncManager(
                 outcome = SyncOutcome.Failed(throwable.toSyncFailure())
             )
         }
+        stopLinkIfScreenLeft()
     }
 
     private fun Throwable.toSyncFailure(): SyncFailure = when (this) {
@@ -1005,6 +1151,9 @@ private const val PairingToSyncDelayMillis = 250L
 
 /** Short enough not to hold the picker up, long enough to see a peer that is already advertising. */
 private const val PeerValidationScanMillis = 2_000L
+
+/** A paired peer is already advertising; this is long enough to catch it without feeling stuck. */
+private const val PairedSyncScanMillis = 10_000L
 
 /** A revocation is useful as soon as it is sent, so this window is deliberately brief. */
 private const val UnpairNotifyScanMillis = 3_000L

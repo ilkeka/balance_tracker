@@ -90,7 +90,7 @@
     <string name="sync_step_find">Trovalo qui sotto e tocca Associa</string>
     <string name="sync_step_open">Apri Sincronizzazione locale sull'altro dispositivo</string>
     <string name="sync_success">Sincronizzazione completata</string>
-    <string name="sync_success_detail">Inviate %1$d, ricevute %2$d</string>
+    <string name="sync_success_detail">Ricevute %1$d, applicate %2$d</string>
     <string name="sync_title">Sincronizzazione locale</string>
     <string name="sync_transferring">Trasferimento delle transazioni</string>
     <string name="sync_unauthenticated">Quel dispositivo non è collegato a questo</string>
@@ -100,6 +100,7 @@
     <string name="sync_unreadable_code">Non è stato possibile leggere quel codice di associazione</string>
     <string name="sync_with_device">Sincronizza con %1$s</string>
     <string name="transaction_details">Dettagli</string>
+    <string name="transaction_read_only_note">Creata su un altro dispositivo. Puoi visualizzarla qui, ma solo quel dispositivo può modificarla o eliminarla.</string>
     <string name="transaction_type">Tipologia</string>
     <string name="transactions">Transazioni</string>
     <string-array name="month_names">

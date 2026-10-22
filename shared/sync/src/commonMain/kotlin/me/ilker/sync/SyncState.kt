@@ -114,6 +114,14 @@ sealed interface SyncIntent : Intent {
     data object Load : SyncIntent
 
     /**
+     * Marks the sync screen as no longer visible.
+     *
+     * An active transfer keeps the link alive so it can finish in the background, while an idle
+     * screen stops advertising immediately.
+     */
+    data object ScreenLeft : SyncIntent
+
+    /**
      * Mints a fresh one-time secret and shows it as text.
      *
      * Only offered where there is no radio to pair over, because a device with Bluetooth pairs by

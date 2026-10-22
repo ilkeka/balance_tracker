@@ -12,6 +12,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
@@ -75,6 +76,10 @@ fun CommonApp() {
         val navController: NavHostController = rememberNavController()
         val sdk: BalanceTrackerSDK = koinInject()
         val managerStore: ManagerStore = remember { mutableMapOf() }
+
+        // Kept above the NavHost rather than inside the Sync destination: navigating away disposes
+        // the destination, but an in-flight transfer has to keep running until it finishes.
+        val syncManager: SyncManager = remember { SyncManager(sdk = sdk) }
 
         Scaffold(
             modifier = Modifier
@@ -241,9 +246,15 @@ fun CommonApp() {
                 }
 
                 composable<Sync> {
-                    val manager = remember { SyncManager(sdk = sdk) }
+                    val manager = syncManager
                     val state = manager.state.collectAsStateWithLifecycle()
                     val copyToClipboard = rememberCopyToClipboard()
+
+                    // The manager itself lives above the NavHost. This only tells it whether the
+                    // screen is still there, so an active transfer can keep going in the background.
+                    DisposableEffect(Unit) {
+                        onDispose { manager.sendIntent(SyncIntent.ScreenLeft) }
+                    }
 
                     // Without this the screen would render its loading state forever: nothing else
                     // sends the first intent, and every field it shows is read here.

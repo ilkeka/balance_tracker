@@ -210,7 +210,7 @@ internal fun SyncLoadedView(
             verticalArrangement = Arrangement.spacedBy(CardSpacing)
         ) {
             item(key = "status") {
-                StatusCard(state = state)
+                StatusCard(state = state, onSync = onSync)
             }
 
             state.outcome?.let { outcome ->
@@ -251,27 +251,32 @@ internal fun SyncLoadedView(
                 }
 
                 state.liveSyncSupported -> {
-                    item(key = "nearby") {
-                        NearbySection(
-                            state = state,
-                            paired = true,
-                            onDiscover = onDiscover,
-                            onStopDiscovering = onStopDiscovering,
-                            onSelectDevice = onSelectDevice,
-                            onPairDevice = onPairDevice
-                        )
-                    }
-
-                    val selected = state.nearbyDevices.firstOrNull {
-                        it.id == state.selectedDeviceId
-                    }
-
-                    if (selected != null && !busy) {
-                        item(key = "sync_now") {
-                            SyncNowButton(
-                                deviceAlias = selected.alias,
-                                onClick = onSync
+                    // A paired device syncs from the card above, which finds the stored peer
+                    // itself. The picker is only needed when the secret was adopted out of band
+                    // and there is no linked device to look for.
+                    if (!state.isPairingInProgress && state.linkedDevice == null) {
+                        item(key = "nearby") {
+                            NearbySection(
+                                state = state,
+                                paired = true,
+                                onDiscover = onDiscover,
+                                onStopDiscovering = onStopDiscovering,
+                                onSelectDevice = onSelectDevice,
+                                onPairDevice = onPairDevice
                             )
+                        }
+
+                        val selected = state.nearbyDevices.firstOrNull {
+                            it.id == state.selectedDeviceId
+                        }
+
+                        if (selected != null && !busy) {
+                            item(key = "sync_now") {
+                                SyncNowButton(
+                                    deviceAlias = selected.alias,
+                                    onClick = onSync
+                                )
+                            }
                         }
                     }
                 }
@@ -301,7 +306,7 @@ internal fun SyncLoadedView(
  * of the Bluetooth flow instead of a bare action list.
  */
 @Composable
-private fun StatusCard(state: SyncState) {
+private fun StatusCard(state: SyncState, onSync: () -> Unit) {
     val linked = state.linkedDevice
     val isPaired = state.paired
     val isCodeReady = !isPaired && state.isPairingInProgress
@@ -423,6 +428,23 @@ private fun StatusCard(state: SyncState) {
                             Step(number = 2, text = stringResource(Res.string.sync_step_find))
                         }
                     }
+                }
+            }
+
+            // The stored peer is all a sync needs. Looking for it is the app's job, so the paired
+            // card offers the action directly instead of asking the user to scan and pick again.
+            if (isPaired && linked != null && !state.isSyncing && !state.isPairing) {
+                Button(
+                    onClick = onSync,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Sync,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(Res.string.sync_start))
                 }
             }
         }

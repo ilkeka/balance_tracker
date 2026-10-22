@@ -48,6 +48,7 @@ import me.ilker.balance_tracker.resources.edit
 import me.ilker.balance_tracker.resources.expense
 import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.transaction_details
+import me.ilker.balance_tracker.resources.transaction_read_only_note
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getValueForComposableUI
 import me.ilker.core.extensions.toHumanReadableValue
@@ -79,25 +80,27 @@ internal fun TransactionDetailsLoadedView(
             )
         },
         bottomBar = {
-            Button(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = ScreenPadding, vertical = 12.dp),
-                onClick = onDelete,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Delete,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
+            if (state.isOwned) {
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = ScreenPadding, vertical = 12.dp),
+                    onClick = onDelete,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
 
-                Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(8.dp))
 
-                Text(text = stringResource(Res.string.delete))
+                    Text(text = stringResource(Res.string.delete))
+                }
             }
         }
     ) { paddingValues ->
@@ -162,23 +165,42 @@ internal fun TransactionDetailsLoadedView(
                 }
             }
 
-            item {
-                OutlinedButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { onEditClicked(transaction.id) },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
+            if (!state.isOwned) {
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = CardShape,
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.transaction_read_only_note),
+                            modifier = Modifier.padding(CardPadding),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
 
-                    Spacer(Modifier.width(8.dp))
+            if (state.isOwned) {
+                item {
+                    OutlinedButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onEditClicked(transaction.id) },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
 
-                    Text(text = stringResource(Res.string.edit))
+                        Spacer(Modifier.width(8.dp))
+
+                        Text(text = stringResource(Res.string.edit))
+                    }
                 }
             }
         }

@@ -23,20 +23,23 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);
 editTransaction:
 UPDATE Transactions
 SET amount = :amount, dateTime = :dateTime, type = :type, category = :category, description = :description, version = :version
-WHERE id = :id AND isDeleted = 0;
+WHERE id = :id AND originId = :originId AND isDeleted = 0;
 
 softDeleteTransaction:
 UPDATE Transactions
 SET isDeleted = 1, version = :version
-WHERE id = :id;
+WHERE id = :id AND originId = :originId;
 
 getTransaction:
-SELECT id, amount, dateTime, type, category, description FROM Transactions
+SELECT id, amount, dateTime, type, category, description, originId FROM Transactions
 WHERE id = ? AND isDeleted = 0;
 
 getTransactions:
-SELECT id, amount, dateTime, type, category, description FROM Transactions
+SELECT id, amount, dateTime, type, category, description, originId FROM Transactions
 WHERE isDeleted = 0;
+
+assignOriginIdToUnsetRows:
+UPDATE Transactions SET originId = :originId WHERE originId = '';
 
 getTransactionBySyncId:
 SELECT id, amount, dateTime, type, category, description, syncId, version, originId, isDeleted FROM Transactions

@@ -17,7 +17,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -83,12 +82,6 @@ fun SyncScreen(
     // Set only while the platform is being asked, so the prompt appears next to the tap that caused it
     // rather than on every recomposition of a screen the user opened for something else.
     var permissionStep by remember { mutableStateOf<NearbyPermissionStep?>(null) }
-
-    // The radio is stopped when the screen leaves: an advertisement left behind would keep the
-    // device reachable (and the radio awake) with nothing on screen to pair with it.
-    DisposableEffect(Unit) {
-        onDispose { onStopDiscovering() }
-    }
 
     // Already-held permissions never show the sheet: the explanation is only there to make the system
     // prompt make sense, and a user who granted it once should not have to dismiss it on every scan.

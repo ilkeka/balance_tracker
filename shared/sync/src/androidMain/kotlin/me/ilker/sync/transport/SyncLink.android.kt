@@ -67,8 +67,8 @@ internal actual fun createSyncLink(): SyncLink {
  * Bluetooth LE nearby-device link: advertising, scanning, connecting out, and serving connections from
  * peers.
  *
- * All four live in one object because they share the adapter and have to be torn down together. The sync
- * screen owns exactly one instance for as long as it is on screen.
+ * All four live in one object because they share the adapter and have to be torn down together. The
+ * sync manager owns one instance and keeps it alive while the screen or an active session needs it.
  */
 private class AndroidBleSyncLink(
     private val context: Context,
@@ -163,7 +163,8 @@ private class AndroidBleSyncLink(
 
         served.values.forEach { session ->
             runCatching { server?.cancelConnection(session.device) }
-            session.inbound.close()
+            session.inbound?.close()
+            session.inbound = null
         }
         served.clear()
         dataCharacteristic = null
@@ -281,27 +282,61 @@ private class AndroidBleSyncLink(
         )
     }
 
+    /**
+     * Starts a fresh transport for a peer that has just enabled notifications.
+     *
+     * The subscription, rather than the connection, is what marks a session. A peer that closes
+     * right after one session and reconnects quickly can keep the same server-side connection
+     * before the stack reports the change; the peer still subscribes again, so starting the
+     * transport here means that reconnect is served instead of writing into a channel the previous
+     * session already closed.
+     */
+    private fun startSession(session: ServedSession) {
+        // One transport per connection at a time. A second enable while a session is running is the
+        // same client reconfiguring, not a new peer.
+        if (session.inbound != null) return
+
+        val currentServer = server ?: return
+        val characteristic = dataCharacteristic ?: return
+
+        val inbound = Channel<ByteArray>(Channel.BUFFERED)
+        session.inbound = inbound
+        session.preparedWrites.clear()
+        Log.d(LogTag, "Serving a session from ${session.device.address}")
+        val queued = incoming.trySend(
+            ServerBleTransport(
+                server = currentServer,
+                characteristic = characteristic,
+                session = session,
+                inbound = inbound
+            )
+        )
+        if (queued.isFailure) {
+            if (session.inbound === inbound) session.inbound = null
+            inbound.close()
+        }
+    }
+
     @SuppressLint("MissingPermission")
     private fun serverCallback() = object : BluetoothGattServerCallback() {
         override fun onConnectionStateChange(device: BluetoothDevice?, status: Int, newState: Int) {
             val remote = device ?: return
             if (newState != BluetoothProfile.STATE_CONNECTED) {
-                served.remove(remote.address)?.inbound?.close(
-                    SyncTransportException.Disconnected("the peer disconnected")
-                )
+                served.remove(remote.address)?.let { session ->
+                    session.inbound?.close(SyncTransportException.Disconnected("the peer disconnected"))
+                    session.inbound = null
+                }
                 return
             }
 
             // One session per connection: the protocol is a sequence of messages, and interleaving
             // chunks from two peers into one stream would corrupt both assemblies.
-            val session = ServedSession(remote)
-            served[remote.address] = session
-
-            val currentServer = server ?: return
-            val characteristic = dataCharacteristic ?: return
-            incoming.trySend(
-                ServerBleTransport(server = currentServer, characteristic = characteristic, session = session)
-            )
+            //
+            // The transport itself is created when the peer subscribes, not here. A peer that closes
+            // right after a session and reconnects can land back on the same server-side connection
+            // before the stack reports the disconnect; keying the session to the subscription means
+            // that reconnect still starts a fresh transport instead of writing into a closed channel.
+            served[remote.address] = ServedSession(remote)
         }
 
         /**
@@ -372,7 +407,7 @@ private class AndroidBleSyncLink(
                 session.preparedWrites
                     .getOrPut(characteristic.uuid) { mutableMapOf() }[offset] = value ?: ByteArray(0)
             } else {
-                session.inbound.trySend(value ?: ByteArray(0))
+                session.inbound?.trySend(value ?: ByteArray(0))
             }
             if (responseNeeded) respond(device, requestId, BluetoothGatt.GATT_SUCCESS)
         }
@@ -387,7 +422,7 @@ private class AndroidBleSyncLink(
             if (execute) {
                 session.preparedWrites.remove(SyncService.Data)?.let { chunks ->
                     val assembled = assemblePreparedWrite(chunks)
-                    if (assembled.isNotEmpty()) session.inbound.trySend(assembled)
+                    if (assembled.isNotEmpty()) session.inbound?.trySend(assembled)
                 }
             } else {
                 session.preparedWrites.clear()
@@ -411,24 +446,32 @@ private class AndroidBleSyncLink(
             offset: Int,
             value: ByteArray?
         ) {
-            val session = device?.address?.let(served::get)
-            val valid = session != null &&
-                descriptor?.uuid == SyncService.ClientConfig &&
+            val isOurDescriptor = descriptor?.uuid == SyncService.ClientConfig &&
                 descriptor.characteristic?.uuid == SyncService.Data
+            val remote = device
+            // Stacking a subscription on a connection whose disconnect has not been reported yet
+            // can leave the session map empty. The descriptor is ours, so recreating the session
+            // here is safe and keeps the peer from being rejected for a bookkeeping gap.
+            val session = if (isOurDescriptor && remote != null) {
+                served.getOrPut(remote.address) { ServedSession(remote) }
+            } else {
+                null
+            }
 
-            if (valid && !preparedWrite) {
+            if (session != null && !preparedWrite) {
                 session.notificationsEnabled = value?.contentEquals(NotificationsEnabled) == true
+                if (session.notificationsEnabled) startSession(session)
             }
             Log.d(
                 LogTag,
-                "Notification subscription from ${device?.address}: valid=$valid, " +
+                "Notification subscription from ${device?.address}: valid=${session != null}, " +
                     "enabled=${session?.notificationsEnabled}"
             )
             if (responseNeeded) {
                 respond(
                     device = device,
                     requestId = requestId,
-                    status = if (valid) BluetoothGatt.GATT_SUCCESS else BluetoothGatt.GATT_FAILURE
+                    status = if (session != null) BluetoothGatt.GATT_SUCCESS else BluetoothGatt.GATT_FAILURE
                 )
             }
         }
@@ -527,8 +570,9 @@ private class AndroidBleSyncLink(
 
         /**
          * Long enough for both people to open the screen and pick each other, short enough that a
-         * forgotten screen cannot leave the radio on indefinitely. The sync screen stops the link
-         * itself when it is left, so this is the backstop rather than the usual lifetime.
+         * forgotten screen cannot leave the radio on indefinitely. The sync manager stops the link
+         * when the screen is left and no session is running, so this is the backstop rather than the
+         * usual lifetime.
          *
          * Android's builder rejects anything above 180_000 with an exception. The exception used to
          * be swallowed, which left the radio completely silent while the UI said it was looking.
@@ -539,7 +583,14 @@ private class AndroidBleSyncLink(
 
 /** Per-connection buffers for a session this device is serving. */
 private class ServedSession(val device: BluetoothDevice) {
-    val inbound = Channel<ByteArray>(Channel.BUFFERED)
+    /**
+     * Chunks of the session currently being served, or null between sessions.
+     *
+     * Replaced for every subscription rather than fixed at connection time: a quick reconnect can
+     * reuse the connection, and the previous session's channel is already closed.
+     */
+    @Volatile
+    var inbound: Channel<ByteArray>? = null
 
     /** Chunks of a write that is too long for one ATT packet, keyed by their offset. */
     val preparedWrites = mutableMapOf<UUID, MutableMap<Int, ByteArray>>()
@@ -560,7 +611,8 @@ private class ServerBleTransport(
     private val server: BluetoothGattServer,
     /** The characteristic registered with the server, which notifications have to be sent on. */
     private val characteristic: BluetoothGattCharacteristic,
-    private val session: ServedSession
+    private val session: ServedSession,
+    private val inbound: Channel<ByteArray>
 ) : SyncTransport {
     private val writeMutex = Mutex()
 
@@ -593,12 +645,15 @@ private class ServerBleTransport(
         }
     }
 
-    override suspend fun read(): ByteArray = session.inbound.receive()
+    override suspend fun read(): ByteArray = inbound.receive()
         ?: throw SyncTransportException.Disconnected("the peer disconnected")
 
     override suspend fun close() {
+        // Cleared before closing so a peer that reconnects immediately can start the next session;
+        // the identity check keeps a late close from detaching a newer transport.
+        if (session.inbound === inbound) session.inbound = null
         runCatching { server.cancelConnection(session.device) }
-        session.inbound.close()
+        inbound.close()
     }
 
     private companion object {

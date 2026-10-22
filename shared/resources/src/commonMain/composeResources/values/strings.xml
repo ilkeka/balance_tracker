@@ -90,7 +90,7 @@
     <string name="sync_step_find">Find it below and tap Pair</string>
     <string name="sync_step_open">Open Local sync on the other device</string>
     <string name="sync_success">Sync complete</string>
-    <string name="sync_success_detail">Sent %1$d, received %2$d</string>
+    <string name="sync_success_detail">Received %1$d, applied %2$d</string>
     <string name="sync_title">Local sync</string>
     <string name="sync_transferring">Transferring your transactions</string>
     <string name="sync_unauthenticated">That device is not paired with this one</string>
@@ -100,6 +100,7 @@
     <string name="sync_unreadable_code">That pairing code could not be read</string>
     <string name="sync_with_device">Sync with %1$s</string>
     <string name="transaction_details">Transaction details</string>
+    <string name="transaction_read_only_note">Created on another device. You can view it here, but only that device can edit or delete it.</string>
     <string name="transaction_type">Transaction type</string>
     <string name="transactions">Transactions</string>
     <string-array name="month_names">
