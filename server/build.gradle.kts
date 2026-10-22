@@ -61,7 +61,6 @@ dependencies {
 sqldelight {
     databases {
         create("ServerDatabase") {
-            generateAsync = true
             packageName.set("me.ilker.balance_tracker")
         }
     }

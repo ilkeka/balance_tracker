@@ -7,6 +7,8 @@ sealed interface TransactionDetailsState: State {
     data object InitialState : TransactionDetailsState
 
     data class DetailsLoadedState(
-        val transaction: TransactionDomainModel
+        val transaction: TransactionDomainModel,
+        /** False when the transaction was created on the paired device. */
+        val isOwned: Boolean
     ): TransactionDetailsState
 }

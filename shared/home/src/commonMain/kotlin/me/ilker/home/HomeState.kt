@@ -10,24 +10,25 @@ import kotlin.time.Clock
 
 sealed class HomeState(
     open val selectedDate: LocalDate,
-    open val user: User
+    open val device: Device
 ) : State {
-    data class User(
-        val sessionEmail: String?
+    /** Identifies this installation. There is no account; the device is the identity. */
+    data class Device(
+        val deviceId: String
     )
 
     data object InitialState: HomeState(
         selectedDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
-        user = User(sessionEmail = null)
+        device = Device(deviceId = "")
     )
 
     data class Loaded(
         override val selectedDate: LocalDate,
-        override val user: User,
+        override val device: Device,
         val balances: List<BalanceUiModel>
     ) : HomeState(
         selectedDate = selectedDate,
-        user = user
+        device = device
     ) {
         data class BalanceUiModel(
             val yearMonth: YearMonth,

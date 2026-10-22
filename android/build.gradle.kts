@@ -35,6 +35,7 @@ android {
         versionCode = 15
         versionName = "1.0.14"
     }
+    testBuildType = "devDebug"
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -44,9 +45,39 @@ android {
         getByName("release") {
             isMinifyEnabled = false
         }
+        // The dev variants install alongside the main app (separate package and database), so a
+        // test build can be used without replacing the existing installation.
+        create("devDebug") {
+            isDebuggable = true
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("debug")
+        }
+        create("devRelease") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            // Local test builds need a key; use the debug key until a release keystore is configured.
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+        }
+    }
+    sourceSets {
+        // Shared greyscale launcher icon for both dev variants.
+        getByName("devDebug").res.srcDir("src/dev/res")
+        getByName("devRelease").res.srcDir("src/dev/res")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_24
         targetCompatibility = JavaVersion.VERSION_24
+    }
+}
+
+// The default debug variant is replaced by devDebug, so Android Studio lists exactly devDebug,
+// devRelease and release.
+androidComponents {
+    beforeVariants(selector().withBuildType("debug")) { variantBuilder ->
+        variantBuilder.enable = false
     }
 }

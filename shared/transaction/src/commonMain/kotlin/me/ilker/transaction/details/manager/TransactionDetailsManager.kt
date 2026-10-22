@@ -25,6 +25,7 @@ class TransactionDetailsManager(
 ): Manager<TransactionDetailsState, TransactionDetailsIntent, TransactionDetailsSideEffect>() {
     init {
         scope.launch {
+            val localDeviceId = sdk.deviceId()
             sdk
                 .transactions
                 .map { sdkTransactions -> sdkTransactions.firstOrNull { it.id == id } }
@@ -34,7 +35,8 @@ class TransactionDetailsManager(
                         ?.let { transactionDomainModel ->
                             managerState.update {
                                 TransactionDetailsState.DetailsLoadedState(
-                                    transaction = transactionDomainModel
+                                    transaction = transactionDomainModel,
+                                    isOwned = transactionDomainModel.originId == localDeviceId
                                 )
                             }
                         }
@@ -55,6 +57,7 @@ class TransactionDetailsManager(
     override val sideEffect: Channel<TransactionDetailsSideEffect> = Channel(capacity = 1)
 
     private fun deleteTransaction() {
+        if (!canModify()) return
         scope.launch {
             sdk.deleteTransaction(id = id)
             sideEffect.trySend(
@@ -68,6 +71,7 @@ class TransactionDetailsManager(
     }
 
     private fun editTransaction(id: Long) {
+        if (!canModify()) return
         scope.launch {
             sdk.getTransactionById(id = id)?.let {
                 sideEffect.trySend(TransactionDetailsSideEffect.Edit(id = id))
@@ -80,4 +84,7 @@ class TransactionDetailsManager(
             }
         }
     }
+
+    private fun canModify(): Boolean =
+        (managerState.value as? TransactionDetailsState.DetailsLoadedState)?.isOwned == true
 }

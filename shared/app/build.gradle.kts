@@ -33,11 +33,10 @@ kotlin {
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     dependencies {
-        implementation(projects.shared.auth)
         implementation(projects.shared.common)
         implementation(projects.shared.core)
         implementation(projects.shared.home)
-        implementation(projects.shared.profile)
+        implementation(projects.shared.sync)
         implementation(projects.shared.resources)
         implementation(projects.shared.transaction)
 

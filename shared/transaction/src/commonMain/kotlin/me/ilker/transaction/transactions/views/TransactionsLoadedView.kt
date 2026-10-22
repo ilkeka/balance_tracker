@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -14,11 +16,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -28,14 +29,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import me.ilker.balance_tracker.resources.Res
-import me.ilker.balance_tracker.resources.back
 import me.ilker.balance_tracker.resources.balance
 import me.ilker.balance_tracker.resources.expense_total
 import me.ilker.balance_tracker.resources.income_total
@@ -48,13 +46,13 @@ import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getIcon
 import me.ilker.balance_tracker.sdk.getValueForComposableUI
 import me.ilker.core.extensions.toHumanReadableValue
+import me.ilker.transaction.common.CardPadding
+import me.ilker.transaction.common.CardShape
+import me.ilker.transaction.common.ScreenPadding
+import me.ilker.transaction.common.TransactionTopBar
 import me.ilker.transaction.transactions.TransactionState
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
-
-private val CardShape = RoundedCornerShape(24.dp)
-private val CardPadding = 20.dp
-private val ScreenPadding = 16.dp
 
 @Composable
 internal fun TransactionsLoadedView(
@@ -63,7 +61,13 @@ internal fun TransactionsLoadedView(
     onBack: () -> Unit
 ) {
     Scaffold(
-        topBar = { TransactionsTopBar(onBack = onBack) }
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            TransactionTopBar(
+                title = stringResource(Res.string.transactions),
+                onBack = onBack
+            )
+        }
     ) { paddingValues ->
         val contentPadding = PaddingValues(
             start = ScreenPadding,
@@ -78,7 +82,7 @@ internal fun TransactionsLoadedView(
         }
 
         LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -114,31 +118,6 @@ internal fun TransactionsLoadedView(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun TransactionsTopBar(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp)
-            .padding(top = 48.dp)
-            .padding(bottom = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                contentDescription = stringResource(Res.string.back)
-            )
-        }
-
-        Text(
-            text = stringResource(Res.string.transactions),
-            fontSize = TextUnit(value = 24f, type = TextUnitType.Sp),
-            fontWeight = FontWeight.Bold
-        )
     }
 }
 
@@ -241,10 +220,27 @@ private fun EmptyTransactions(modifier: Modifier = Modifier) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(CardPadding),
+                .padding(horizontal = CardPadding, vertical = 56.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            Surface(
+                modifier = Modifier.size(64.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ReceiptLong,
+                        contentDescription = null,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(4.dp))
+
             Text(
                 text = stringResource(Res.string.nothing_yet),
                 style = MaterialTheme.typography.titleMedium,

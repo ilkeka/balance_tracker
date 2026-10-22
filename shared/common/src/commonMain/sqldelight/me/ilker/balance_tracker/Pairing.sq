@@ -1,0 +1,17 @@
+CREATE TABLE Pairing (
+    id INTEGER NOT NULL PRIMARY KEY CHECK (id = 1),
+    secret TEXT NOT NULL,
+    peerDeviceId TEXT,
+    peerAlias TEXT NOT NULL DEFAULT '',
+    peerFingerprint TEXT NOT NULL DEFAULT ''
+);
+
+getPairing:
+SELECT * FROM Pairing WHERE id = 1;
+
+upsertPairing:
+INSERT OR REPLACE INTO Pairing(id, secret, peerDeviceId, peerAlias, peerFingerprint)
+VALUES(1, :secret, :peerDeviceId, :peerAlias, :peerFingerprint);
+
+clearPairing:
+DELETE FROM Pairing;

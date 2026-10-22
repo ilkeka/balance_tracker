@@ -9,7 +9,9 @@ data class TransactionDomainModel(
     val dateTime: String,
     val type: TransactionType,
     val category: TransactionCategory,
-    val description: String?
+    val description: String?,
+    /** Device that created this transaction. Only that device may edit or delete it. */
+    val originId: String
 )
 
 fun TransactionDomainModel.getLocalDate() = LocalDate.parse(

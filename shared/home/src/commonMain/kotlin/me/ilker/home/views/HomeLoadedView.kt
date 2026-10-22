@@ -68,13 +68,12 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun HomeLoadedView(
     state: HomeState.Loaded,
-    user: HomeState.User,
+    device: HomeState.Device,
     setSelectedYearMonth: (yearMonth: YearMonth) -> Unit,
     add: () -> Unit,
     onTransactionsClicked: () -> Unit,
     onClick: (id: Long) -> Unit,
-    onRegister: () -> Unit = {},
-    onProfile: () -> Unit = {}
+    onSync: () -> Unit = {}
 ) {
     val balancePagerState = rememberPagerState(
         initialPage = state.balances.lastIndex.takeUnless { it < 0 } ?: 0,
@@ -93,9 +92,8 @@ internal fun HomeLoadedView(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             HomeTopBar(
-                sessionEmail = user.sessionEmail,
-                onRegister = onRegister,
-                onProfile = onProfile
+                device = device,
+                onSync = onSync
             )
         },
         floatingActionButton = {

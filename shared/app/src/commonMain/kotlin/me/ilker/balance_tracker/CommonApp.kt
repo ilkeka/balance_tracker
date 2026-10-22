@@ -12,6 +12,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
@@ -29,20 +30,17 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.theme.AppTheme
-import me.ilker.auth.Registration
-import me.ilker.auth.RegistrationIntent
-import me.ilker.auth.RegistrationManager
-import me.ilker.auth.RegistrationScreen
-import me.ilker.auth.RegistrationSideEffect
 import me.ilker.home.Home
 import me.ilker.home.HomeIntent
 import me.ilker.home.HomeManager
 import me.ilker.home.HomeScreen
-import me.ilker.profile.Profile
-import me.ilker.profile.ProfileIntent
-import me.ilker.profile.ProfileManager
-import me.ilker.profile.ProfileScreen
-import me.ilker.profile.ProfileSideEffect
+import me.ilker.sync.SyncIntent
+import me.ilker.sync.SyncManager
+import me.ilker.sync.SyncScreen
+import me.ilker.sync.SyncSideEffect
+import me.ilker.sync.navigation.Sync
+import me.ilker.sync.navigation.SyncNavigationEventInfo
+import me.ilker.sync.clipboard.rememberCopyToClipboard
 import me.ilker.transaction.add.AddTransactionIntent
 import me.ilker.transaction.add.AddTransactionScreen
 import me.ilker.transaction.add.AddTransactionSideEffect
@@ -79,6 +77,10 @@ fun CommonApp() {
         val sdk: BalanceTrackerSDK = koinInject()
         val managerStore: ManagerStore = remember { mutableMapOf() }
 
+        // Kept above the NavHost rather than inside the Sync destination: navigating away disposes
+        // the destination, but an in-flight transfer has to keep running until it finishes.
+        val syncManager: SyncManager = remember { SyncManager(sdk = sdk) }
+
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
@@ -107,39 +109,7 @@ fun CommonApp() {
                         add = { navController.navigate(AddTransaction) },
                         onTransactionsClicked = { navController.navigate(Transactions(yearMonth = state.value.selectedDate.yearMonth.toString())) },
                         onClick = { id -> navController.navigate(TransactionDetails(id = id)) },
-                        onRegister = { navController.navigate(Registration) },
-                        onProfile = { navController.navigate(Profile) },
-                    )
-                }
-
-                composable<Profile> { navBackStackEntry ->
-                    val manager = rememberManager(entry = navBackStackEntry, store = managerStore) {
-                        ProfileManager(sdk = sdk)
-                    }
-                    val state = manager.state.collectAsStateWithLifecycle()
-                    val email = sdk.sessionEmail.collectAsStateWithLifecycle()
-                    val linkAttempted = manager.linkAttempted.collectAsStateWithLifecycle()
-                    val sideEffects = manager.sideEffect.receiveAsFlow()
-
-                    LaunchedEffect(Unit) {
-                        sideEffects.collect { effect ->
-                            when (effect) {
-                                is ProfileSideEffect.LinkComplete -> Unit
-                                is ProfileSideEffect.LogoutComplete ->
-                                    navController.popBackStack(Home, inclusive = false)
-                            }
-                        }
-                    }
-
-                    ProfileScreen(
-                        state = state,
-                        email = email.value,
-                        linkAttempted = linkAttempted.value,
-                        onRefreshToken = { manager.sendIntent(ProfileIntent.RefreshToken) },
-                        onLink = { token -> manager.sendIntent(ProfileIntent.Link(token = token)) },
-                        onDismissMessage = { manager.sendIntent(ProfileIntent.DismissMessage) },
-                        onLogout = { manager.sendIntent(ProfileIntent.Logout) },
-                        onBack = { navController.popBackStack() }
+                        onSync = { navController.navigate(Sync) },
                     )
                 }
 
@@ -275,28 +245,59 @@ fun CommonApp() {
                     )
                 }
 
-                composable<Registration> { navBackStackEntry ->
-                    val manager = rememberManager(entry = navBackStackEntry, store = managerStore) {
-                        RegistrationManager(sdk = sdk)
-                    }
+                composable<Sync> {
+                    val manager = syncManager
                     val state = manager.state.collectAsStateWithLifecycle()
-                    val sideEffects = manager.sideEffect.receiveAsFlow()
+                    val copyToClipboard = rememberCopyToClipboard()
+
+                    // The manager itself lives above the NavHost. This only tells it whether the
+                    // screen is still there, so an active transfer can keep going in the background.
+                    DisposableEffect(Unit) {
+                        onDispose { manager.sendIntent(SyncIntent.ScreenLeft) }
+                    }
+
+                    // Without this the screen would render its loading state forever: nothing else
+                    // sends the first intent, and every field it shows is read here.
+                    LaunchedEffect(Unit) {
+                        manager.sendIntent(SyncIntent.Load)
+                    }
 
                     LaunchedEffect(Unit) {
-                        sideEffects.collect { effect ->
+                        manager.sideEffect.receiveAsFlow().collect { effect ->
                             when (effect) {
-                                is RegistrationSideEffect.RegistrationComplete ->
-                                    navController.popBackStack()
+                                is SyncSideEffect.CopyToClipboard -> copyToClipboard(effect.value)
                             }
                         }
                     }
 
-                    RegistrationScreen(
+                    val navEventState = rememberNavigationEventState(
+                        currentInfo = SyncNavigationEventInfo(route = Sync),
+                    )
+
+                    NavigationBackHandler(
+                        state = navEventState,
+                        isBackEnabled = true,
+                        onBackCompleted = { navController.popBackStack() }
+                    )
+
+                    SyncScreen(
                         state = state,
-                        onRegister = { email, password ->
-                            manager.sendIntent(RegistrationIntent.Register(email = email, password = password))
-                        },
-                        onBack = { navController.popBackStack() }
+                        onSync = { manager.sendIntent(SyncIntent.SyncNow) },
+                        onDiscover = { manager.sendIntent(SyncIntent.Discover) },
+                        onStopDiscovering = { manager.sendIntent(SyncIntent.StopDiscovering) },
+                        onSelectDevice = { deviceId -> manager.sendIntent(SyncIntent.SelectDevice(deviceId)) },
+                        onPairDevice = { deviceId -> manager.sendIntent(SyncIntent.PairDevice(deviceId)) },
+                        onAcceptPairing = { manager.sendIntent(SyncIntent.AcceptPairing) },
+                        onRejectPairing = { manager.sendIntent(SyncIntent.RejectPairing) },
+                        onAcceptIncoming = { manager.sendIntent(SyncIntent.AcceptIncoming) },
+                        onRejectIncoming = { manager.sendIntent(SyncIntent.RejectIncoming) },
+                        onPair = { manager.sendIntent(SyncIntent.Pair) },
+                        onPairWith = { code -> manager.sendIntent(SyncIntent.PairWith(code)) },
+                        onExport = { manager.sendIntent(SyncIntent.Export) },
+                        onImport = { code -> manager.sendIntent(SyncIntent.Import(code)) },
+                        onUnpair = { manager.sendIntent(SyncIntent.Unpair) },
+                        onDismissPairingCode = { manager.sendIntent(SyncIntent.DismissPairingCode) },
+                        onClose = { navController.popBackStack() }
                     )
                 }
             }

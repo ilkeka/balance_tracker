@@ -18,14 +18,12 @@ dependencyResolutionManagement {
 
 include(":android")
 include(":desktop")
-include(":server")
 include(":web")
 
 include(":shared:app")
-include(":shared:auth")
 include(":shared:common")
 include(":shared:core")
 include(":shared:home")
-include(":shared:profile")
 include(":shared:resources")
+include(":shared:sync")
 include(":shared:transaction")
