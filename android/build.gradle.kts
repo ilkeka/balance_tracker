@@ -1,8 +1,26 @@
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.androidApplication)
+}
+
+// Signing credentials live in the git-ignored local.properties so CI and fresh checkouts still
+// build unsigned release APKs.
+val localProperties = Properties().apply {
+    // providers.fileContents keeps the configuration cache aware of local.properties changes.
+    providers.fileContents(rootProject.layout.projectDirectory.file("local.properties"))
+        .asText.orNull
+        ?.reader()
+        ?.use { load(it) }
+}
+val releaseStoreFile = localProperties.getProperty("signing.storeFile")?.takeIf { it.isNotBlank() }
+
+fun Properties.signingPassword(key: String): String? {
+    val value = getProperty(key) ?: return null
+    // Older local.properties stored credentials as "<keyring-account>@<password>".
+    return if (value.startsWith("KEY_") && '@' in value) value.substringAfterLast('@') else value
 }
 
 kotlin {
@@ -32,8 +50,8 @@ android {
         applicationId = "me.ilker.balance_tracker"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 15
-        versionName = "1.0.14"
+        versionCode = 16
+        versionName = "1.0.15"
     }
     testBuildType = "devDebug"
     packaging {
@@ -41,9 +59,22 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    signingConfigs {
+        releaseStoreFile?.let { storeFilePath ->
+            create("release") {
+                storeFile = rootProject.file(storeFilePath)
+                storePassword = localProperties.signingPassword("signing.storePassword")
+                keyAlias = localProperties.getProperty("signing.keyAlias")
+                keyPassword = localProperties.signingPassword("signing.keyPassword")
+            }
+        }
+    }
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            if (releaseStoreFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         // The dev variants install alongside the main app (separate package and database), so a
         // test build can be used without replacing the existing installation.
