@@ -48,6 +48,23 @@ class TransactionManager(
                         income = income
                     )
                 },
+                categoryTotals = transactionsForMonth
+                    .groupBy { transaction -> transaction.category to transaction.type }
+                    .map { (categoryAndType, monthlyTransactions) ->
+                        val (category, type) = categoryAndType
+
+                        TransactionState.Loaded.CategoryTotalUiModel(
+                            category = category,
+                            type = type,
+                            amount = monthlyTransactions.sumOf { transaction -> transaction.amount }.round(2)
+                        )
+                    }
+                    .sortedWith(
+                        compareBy(
+                            { it.type != TransactionType.Expense },
+                            { -it.amount }
+                        )
+                    ),
                 transactions = transactionsSorted
             )
         }

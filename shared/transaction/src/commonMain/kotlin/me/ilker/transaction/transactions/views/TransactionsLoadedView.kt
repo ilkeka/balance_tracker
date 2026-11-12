@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -27,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -34,8 +36,11 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import me.ilker.balance_tracker.resources.Res
+import me.ilker.balance_tracker.resources.amount_by_category
 import me.ilker.balance_tracker.resources.balance
+import me.ilker.balance_tracker.resources.expense
 import me.ilker.balance_tracker.resources.expense_total
+import me.ilker.balance_tracker.resources.income
 import me.ilker.balance_tracker.resources.income_total
 import me.ilker.balance_tracker.resources.month_names
 import me.ilker.balance_tracker.resources.nothing_yet
@@ -72,17 +77,23 @@ internal fun TransactionsLoadedView(
         val contentPadding = PaddingValues(
             start = ScreenPadding,
             end = ScreenPadding,
-            top = paddingValues.calculateTopPadding() + 8.dp,
-            bottom = paddingValues.calculateBottomPadding() + 16.dp
+            top = 8.dp,
+            bottom = 16.dp
         )
 
         if (state.transactions.isEmpty()) {
-            EmptyTransactions(modifier = Modifier.padding(contentPadding))
+            EmptyTransactions(
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .padding(contentPadding)
+            )
             return@Scaffold
         }
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -93,6 +104,12 @@ internal fun TransactionsLoadedView(
                         income = balance.income,
                         expense = balance.expense
                     )
+                }
+            }
+
+            if (state.categoryTotals.isNotEmpty()) {
+                item {
+                    CategoryTotalsCard(categoryTotals = state.categoryTotals)
                 }
             }
 
@@ -205,6 +222,133 @@ private fun TotalStat(
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
+    }
+}
+
+@Composable
+private fun CategoryTotalsCard(
+    categoryTotals: List<TransactionState.Loaded.CategoryTotalUiModel>
+) {
+    val expenseTotals = categoryTotals.filter { it.type == TransactionType.Expense }
+    val incomeTotals = categoryTotals.filter { it.type == TransactionType.Income }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardShape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(CardPadding),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = stringResource(Res.string.amount_by_category),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            if (expenseTotals.isNotEmpty()) {
+                CategoryTotalsSection(
+                    title = stringResource(Res.string.expense),
+                    titleColor = MaterialTheme.colorScheme.error,
+                    categoryTotals = expenseTotals
+                )
+            }
+
+            if (incomeTotals.isNotEmpty()) {
+                CategoryTotalsSection(
+                    title = stringResource(Res.string.income),
+                    titleColor = MaterialTheme.colorScheme.primary,
+                    categoryTotals = incomeTotals
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryTotalsSection(
+    title: String,
+    titleColor: Color,
+    categoryTotals: List<TransactionState.Loaded.CategoryTotalUiModel>
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = titleColor
+        )
+
+        categoryTotals.forEachIndexed { index, categoryTotal ->
+            if (index > 0) {
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+            }
+
+            CategoryTotalRow(categoryTotal = categoryTotal)
+        }
+    }
+}
+
+@Composable
+private fun CategoryTotalRow(
+    categoryTotal: TransactionState.Loaded.CategoryTotalUiModel
+) {
+    val isExpense = categoryTotal.type == TransactionType.Expense
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            modifier = Modifier.size(36.dp),
+            shape = CircleShape,
+            color = if (isExpense) {
+                MaterialTheme.colorScheme.errorContainer
+            } else {
+                MaterialTheme.colorScheme.primaryContainer
+            },
+            contentColor = if (isExpense) {
+                MaterialTheme.colorScheme.onErrorContainer
+            } else {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            }
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = categoryTotal.category.getIcon(),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.width(12.dp))
+
+        Text(
+            text = categoryTotal.category.getValueForComposableUI(),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+
+        Spacer(Modifier.width(12.dp))
+
+        Text(
+            text = (if (isExpense) "-" else "+") + categoryTotal.amount.toHumanReadableValue(),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = if (isExpense) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.primary
+            }
+        )
     }
 }
 
