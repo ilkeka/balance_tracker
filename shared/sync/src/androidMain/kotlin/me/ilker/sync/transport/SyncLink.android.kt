@@ -51,12 +51,24 @@ internal actual fun createSyncLink(): SyncLink {
     val adapter = manager.adapter
         ?: throw SyncDiscoveryException.Unavailable(SyncUnavailableReason.BluetoothUnusable)
 
-    if (!context.hasPermission(Manifest.permission.BLUETOOTH_CONNECT) || !adapter.isEnabled) {
+    val hasBluetoothPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        context.hasPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    } else {
+        context.hasPermission(Manifest.permission.BLUETOOTH)
+    }
+    if (!hasBluetoothPermission || !adapter.isEnabled) {
         throw SyncDiscoveryException.Unavailable(SyncUnavailableReason.BluetoothUnusable)
     }
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-        !context.hasPermission(Manifest.permission.BLUETOOTH_SCAN)
-    ) {
+
+    // Scanning and advertising moved behind their own runtime permissions in Android 12. Before that,
+    // scans were gated on location instead and advertising on the install-time BLUETOOTH_ADMIN.
+    val hasDiscoverPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        context.hasPermission(Manifest.permission.BLUETOOTH_SCAN) &&
+            context.hasPermission(Manifest.permission.BLUETOOTH_ADVERTISE)
+    } else {
+        context.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+    if (!hasDiscoverPermission) {
         throw SyncDiscoveryException.Unavailable(SyncUnavailableReason.BluetoothUnusable)
     }
 

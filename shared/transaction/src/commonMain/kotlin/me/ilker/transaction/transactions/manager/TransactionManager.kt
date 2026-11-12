@@ -26,15 +26,16 @@ class TransactionManager(
     override val state: StateFlow<TransactionState> = sdk
         .transactions
         .map { transactions ->
-            val transactionsSorted = transactions
+            val transactionsForMonth = transactions
                 .filter { transaction -> transaction.getLocalDate().yearMonth.toString() == yearMonth }
+            val transactionsSorted = transactionsForMonth
                 .sortedByDescending { it.id }
                 .groupBy { transaction -> transaction.getLocalDate() }
 
             TransactionState.Loaded(
                 balance = run {
                     val (expense, income) = with(
-                        transactions.partition { it.type == TransactionType.Expense }
+                        transactionsForMonth.partition { it.type == TransactionType.Expense }
                     ) {
                         this.first.sumOf { transaction -> transaction.amount }.round(2) to
                         this.second.sumOf { transaction -> transaction.amount }.round(2)
