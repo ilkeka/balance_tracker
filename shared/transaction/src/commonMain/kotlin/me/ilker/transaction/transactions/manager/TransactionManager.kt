@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
+import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getLocalDate
 import me.ilker.core.Manager
@@ -32,7 +33,11 @@ class TransactionManager(
             val transactionsForMonth = transactions
                 .filter { transaction -> transaction.getLocalDate().yearMonth == transactionMonth }
             val transactionsSorted = transactionsForMonth
-                .sortedByDescending { it.id }
+                .sortedWith(
+                    compareByDescending<TransactionDomainModel> { transaction ->
+                        transaction.getLocalDate()
+                    }.thenByDescending { transaction -> transaction.id }
+                )
                 .groupBy { transaction -> transaction.getLocalDate() }
 
             TransactionState.Loaded(
