@@ -2,7 +2,6 @@
     <string name="add">Aggiungi</string>
     <string name="add_transaction_success_feedback">Transazione aggiunta correttamente!</string>
     <string name="amount">Importo</string>
-    <string name="amount_by_category">Importi per categoria</string>
     <string name="amount_format">La parte decimale dovrebbe essere rappresentata con il punto. Per esempio: 10.42</string>
     <string name="app_name">Balance Tracker</string>
     <string name="back">Indietro</string>

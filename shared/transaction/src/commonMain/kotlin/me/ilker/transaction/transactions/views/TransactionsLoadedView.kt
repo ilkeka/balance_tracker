@@ -1,5 +1,7 @@
 package me.ilker.transaction.transactions.views
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,9 +16,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -26,9 +28,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -36,12 +42,9 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import me.ilker.balance_tracker.resources.Res
-import me.ilker.balance_tracker.resources.amount_by_category
 import me.ilker.balance_tracker.resources.balance
 import me.ilker.balance_tracker.resources.expense
-import me.ilker.balance_tracker.resources.expense_total
 import me.ilker.balance_tracker.resources.income
-import me.ilker.balance_tracker.resources.income_total
 import me.ilker.balance_tracker.resources.month_names
 import me.ilker.balance_tracker.resources.nothing_yet
 import me.ilker.balance_tracker.resources.start_create_transaction
@@ -50,6 +53,7 @@ import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getIcon
 import me.ilker.balance_tracker.sdk.getValueForComposableUI
+import me.ilker.core.extensions.round
 import me.ilker.core.extensions.toHumanReadableValue
 import me.ilker.transaction.common.CardPadding
 import me.ilker.transaction.common.CardShape
@@ -90,6 +94,9 @@ internal fun TransactionsLoadedView(
             return@Scaffold
         }
 
+        val expenseTotals = state.categoryTotals.filter { it.type == TransactionType.Expense }
+        val incomeTotals = state.categoryTotals.filter { it.type == TransactionType.Income }
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -99,17 +106,27 @@ internal fun TransactionsLoadedView(
         ) {
             state.balance?.let { balance ->
                 item {
-                    BalanceCard(
-                        balance = balance.balance,
-                        income = balance.income,
-                        expense = balance.expense
+                    BalanceCard(balance = balance.balance)
+                }
+            }
+
+            if (expenseTotals.isNotEmpty()) {
+                item {
+                    CategoryTotalsCard(
+                        title = stringResource(Res.string.expense),
+                        isExpense = true,
+                        categoryTotals = expenseTotals
                     )
                 }
             }
 
-            if (state.categoryTotals.isNotEmpty()) {
+            if (incomeTotals.isNotEmpty()) {
                 item {
-                    CategoryTotalsCard(categoryTotals = state.categoryTotals)
+                    CategoryTotalsCard(
+                        title = stringResource(Res.string.income),
+                        isExpense = false,
+                        categoryTotals = incomeTotals
+                    )
                 }
             }
 
@@ -140,9 +157,7 @@ internal fun TransactionsLoadedView(
 
 @Composable
 private fun BalanceCard(
-    balance: Double,
-    income: Double,
-    expense: Double
+    balance: Double
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -155,69 +170,17 @@ private fun BalanceCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(CardPadding),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = stringResource(Res.string.balance),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Text(
-                    text = balance.toHumanReadableValue(),
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                TotalStat(
-                    label = stringResource(Res.string.income_total),
-                    value = income,
-                    modifier = Modifier.weight(1f)
-                )
-
-                TotalStat(
-                    label = stringResource(Res.string.expense_total),
-                    value = expense,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun TotalStat(
-    label: String,
-    value: Double,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Text(
-                text = label,
+                text = stringResource(Res.string.balance),
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Text(
-                text = value.toHumanReadableValue(),
-                style = MaterialTheme.typography.titleMedium,
+                text = balance.toHumanReadableValue(),
+                style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -227,70 +190,85 @@ private fun TotalStat(
 
 @Composable
 private fun CategoryTotalsCard(
+    title: String,
+    isExpense: Boolean,
     categoryTotals: List<TransactionState.Loaded.CategoryTotalUiModel>
 ) {
-    val expenseTotals = categoryTotals.filter { it.type == TransactionType.Expense }
-    val incomeTotals = categoryTotals.filter { it.type == TransactionType.Income }
+    val total = categoryTotals.sumOf { it.amount }.round(2)
+    val amountColor = if (isExpense) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
+    var expanded by rememberSaveable { mutableStateOf(true) }
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        label = "category totals card chevron"
+    )
 
     Card(
+        onClick = { expanded = !expanded },
         modifier = Modifier.fillMaxWidth(),
         shape = CardShape,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
         Column(
-            modifier = Modifier.padding(CardPadding),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(CardPadding)
         ) {
-            Text(
-                text = stringResource(Res.string.amount_by_category),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
 
-            if (expenseTotals.isNotEmpty()) {
-                CategoryTotalsSection(
-                    title = stringResource(Res.string.expense),
-                    titleColor = MaterialTheme.colorScheme.error,
-                    categoryTotals = expenseTotals
+                    Text(
+                        text = (if (isExpense) "-" else "+") + total.toHumanReadableValue(),
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = amountColor
+                    )
+                }
+
+                Spacer(Modifier.width(12.dp))
+
+                Icon(
+                    imageVector = Icons.Rounded.ExpandMore,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .rotate(chevronRotation),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            if (incomeTotals.isNotEmpty()) {
-                CategoryTotalsSection(
-                    title = stringResource(Res.string.income),
-                    titleColor = MaterialTheme.colorScheme.primary,
-                    categoryTotals = incomeTotals
-                )
+            AnimatedVisibility(visible = expanded) {
+                Column(
+                    modifier = Modifier.padding(top = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    categoryTotals.forEachIndexed { index, categoryTotal ->
+                        if (index > 0) {
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
+                        }
+
+                        CategoryTotalRow(categoryTotal = categoryTotal)
+                    }
+                }
             }
-        }
-    }
-}
-
-@Composable
-private fun CategoryTotalsSection(
-    title: String,
-    titleColor: Color,
-    categoryTotals: List<TransactionState.Loaded.CategoryTotalUiModel>
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = titleColor
-        )
-
-        categoryTotals.forEachIndexed { index, categoryTotal ->
-            if (index > 0) {
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-            }
-
-            CategoryTotalRow(categoryTotal = categoryTotal)
         }
     }
 }
