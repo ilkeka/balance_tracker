@@ -1,6 +1,7 @@
 package me.ilker.transaction.transactions
 
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
 import me.ilker.balance_tracker.sdk.TransactionCategory
 import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
@@ -10,6 +11,7 @@ sealed class TransactionState : State {
     data object InitialState: TransactionState()
 
     data class Loaded(
+        val yearMonth: YearMonth,
         val balance: BalanceUiModel?,
         val categoryTotals: List<CategoryTotalUiModel>,
         val transactions: Map<LocalDate, List<TransactionDomainModel>>

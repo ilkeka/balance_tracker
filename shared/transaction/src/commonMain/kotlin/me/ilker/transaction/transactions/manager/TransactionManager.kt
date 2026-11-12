@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.sdk.TransactionType
@@ -19,6 +20,8 @@ class TransactionManager(
     sdk: BalanceTrackerSDK,
     yearMonth: String
 ) : Manager<TransactionState, TransactionIntent, TransactionSideEffect>() {
+    private val transactionMonth: YearMonth = YearMonth.parse(yearMonth)
+
     override fun sendIntent(intent: TransactionIntent) {
 
     }
@@ -27,12 +30,13 @@ class TransactionManager(
         .transactions
         .map { transactions ->
             val transactionsForMonth = transactions
-                .filter { transaction -> transaction.getLocalDate().yearMonth.toString() == yearMonth }
+                .filter { transaction -> transaction.getLocalDate().yearMonth == transactionMonth }
             val transactionsSorted = transactionsForMonth
                 .sortedByDescending { it.id }
                 .groupBy { transaction -> transaction.getLocalDate() }
 
             TransactionState.Loaded(
+                yearMonth = transactionMonth,
                 balance = run {
                     val (expense, income) = with(
                         transactionsForMonth.partition { it.type == TransactionType.Expense }

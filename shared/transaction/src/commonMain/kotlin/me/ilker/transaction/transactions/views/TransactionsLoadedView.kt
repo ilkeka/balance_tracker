@@ -39,16 +39,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.char
 import me.ilker.balance_tracker.resources.Res
 import me.ilker.balance_tracker.resources.balance
-import me.ilker.balance_tracker.resources.expense
-import me.ilker.balance_tracker.resources.income
+import me.ilker.balance_tracker.resources.expense_total
+import me.ilker.balance_tracker.resources.income_total
 import me.ilker.balance_tracker.resources.month_names
 import me.ilker.balance_tracker.resources.nothing_yet
 import me.ilker.balance_tracker.resources.start_create_transaction
-import me.ilker.balance_tracker.resources.transactions
 import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getIcon
@@ -73,7 +74,7 @@ internal fun TransactionsLoadedView(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TransactionTopBar(
-                title = stringResource(Res.string.transactions),
+                title = state.yearMonth.toMonthName(),
                 onBack = onBack
             )
         }
@@ -113,7 +114,7 @@ internal fun TransactionsLoadedView(
             if (expenseTotals.isNotEmpty()) {
                 item {
                     CategoryTotalsCard(
-                        title = stringResource(Res.string.expense),
+                        title = stringResource(Res.string.expense_total),
                         isExpense = true,
                         categoryTotals = expenseTotals
                     )
@@ -123,7 +124,7 @@ internal fun TransactionsLoadedView(
             if (incomeTotals.isNotEmpty()) {
                 item {
                     CategoryTotalsCard(
-                        title = stringResource(Res.string.income),
+                        title = stringResource(Res.string.income_total),
                         isExpense = false,
                         categoryTotals = incomeTotals
                     )
@@ -271,6 +272,19 @@ private fun CategoryTotalsCard(
             }
         }
     }
+}
+
+@Composable
+private fun YearMonth.toMonthName(): String {
+    val monthNames = stringArrayResource(Res.array.month_names)
+
+    return format(
+        YearMonth.Format {
+            monthName(names = MonthNames(monthNames))
+            char(' ')
+            year()
+        }
+    )
 }
 
 @Composable
