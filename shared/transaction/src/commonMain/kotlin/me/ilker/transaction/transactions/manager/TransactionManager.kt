@@ -5,8 +5,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
+import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getLocalDate
 import me.ilker.core.Manager
@@ -19,6 +21,8 @@ class TransactionManager(
     sdk: BalanceTrackerSDK,
     yearMonth: String
 ) : Manager<TransactionState, TransactionIntent, TransactionSideEffect>() {
+    private val transactionMonth: YearMonth = YearMonth.parse(yearMonth)
+
     override fun sendIntent(intent: TransactionIntent) {
 
     }
@@ -26,15 +30,21 @@ class TransactionManager(
     override val state: StateFlow<TransactionState> = sdk
         .transactions
         .map { transactions ->
-            val transactionsSorted = transactions
-                .filter { transaction -> transaction.getLocalDate().yearMonth.toString() == yearMonth }
-                .sortedByDescending { it.id }
+            val transactionsForMonth = transactions
+                .filter { transaction -> transaction.getLocalDate().yearMonth == transactionMonth }
+            val transactionsSorted = transactionsForMonth
+                .sortedWith(
+                    compareByDescending<TransactionDomainModel> { transaction ->
+                        transaction.getLocalDate()
+                    }.thenByDescending { transaction -> transaction.id }
+                )
                 .groupBy { transaction -> transaction.getLocalDate() }
 
             TransactionState.Loaded(
+                yearMonth = transactionMonth,
                 balance = run {
                     val (expense, income) = with(
-                        transactions.partition { it.type == TransactionType.Expense }
+                        transactionsForMonth.partition { it.type == TransactionType.Expense }
                     ) {
                         this.first.sumOf { transaction -> transaction.amount }.round(2) to
                         this.second.sumOf { transaction -> transaction.amount }.round(2)
@@ -47,6 +57,23 @@ class TransactionManager(
                         income = income
                     )
                 },
+                categoryTotals = transactionsForMonth
+                    .groupBy { transaction -> transaction.category to transaction.type }
+                    .map { (categoryAndType, monthlyTransactions) ->
+                        val (category, type) = categoryAndType
+
+                        TransactionState.Loaded.CategoryTotalUiModel(
+                            category = category,
+                            type = type,
+                            amount = monthlyTransactions.sumOf { transaction -> transaction.amount }.round(2)
+                        )
+                    }
+                    .sortedWith(
+                        compareBy(
+                            { it.type != TransactionType.Expense },
+                            { -it.amount }
+                        )
+                    ),
                 transactions = transactionsSorted
             )
         }

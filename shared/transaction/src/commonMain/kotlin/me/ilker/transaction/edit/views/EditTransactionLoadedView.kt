@@ -7,10 +7,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -43,6 +45,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -53,6 +56,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
@@ -86,6 +90,8 @@ import me.ilker.transaction.edit.EditTransactionState
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
 
+private const val CategorySectionIndex = 3
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun EditTransactionLoadedView(
@@ -101,6 +107,8 @@ internal fun EditTransactionLoadedView(
     onBack: () -> Unit
 ) {
     val amountInputState = rememberTextFieldState(state.transaction.amount.toString())
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
     val categoryState: MutableState<TransactionCategory> =
         remember(state.transaction.category) { mutableStateOf(state.transaction.category) }
     val typeState: MutableState<TransactionType> =
@@ -152,6 +160,7 @@ internal fun EditTransactionLoadedView(
     }
 
     Scaffold(
+        modifier = Modifier.imePadding(),
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
@@ -197,6 +206,7 @@ internal fun EditTransactionLoadedView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
+            state = listState,
             contentPadding = PaddingValues(
                 start = ScreenPadding,
                 end = ScreenPadding,
@@ -312,7 +322,14 @@ internal fun EditTransactionLoadedView(
                         icon = Icons.AutoMirrored.Rounded.List,
                         value = categoryState.value.getValueForComposableUI(),
                         expanded = expandCategory,
-                        onClick = { expandCategory = !expandCategory }
+                        onClick = {
+                            expandCategory = !expandCategory
+                            if (expandCategory) {
+                                coroutineScope.launch {
+                                    listState.animateScrollToItem(CategorySectionIndex)
+                                }
+                            }
+                        }
                     )
 
                     if (expandCategory) {

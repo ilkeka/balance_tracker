@@ -10,6 +10,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
+import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
 import me.ilker.balance_tracker.sdk.getLocalDate
 import me.ilker.core.Manager
@@ -65,7 +66,11 @@ class HomeManager(
                     val balance = (income - expense).round(2)
                     val transactionsGropedByDateTime = transactionByYearMonth
                         .value
-                        .sortedByDescending { it.id }
+                        .sortedWith(
+                            compareByDescending<TransactionDomainModel> { transaction ->
+                                transaction.getLocalDate()
+                            }.thenByDescending { transaction -> transaction.id }
+                        )
                         .take(3)
                         .groupBy { transaction -> transaction.getLocalDate() }
 
