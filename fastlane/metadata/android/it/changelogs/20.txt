@@ -1,0 +1,3 @@
+Rilascio di manutenzione.
+
+- Nessuna novità visibile: questa build alza il codice di versione per un nuovo caricamento
