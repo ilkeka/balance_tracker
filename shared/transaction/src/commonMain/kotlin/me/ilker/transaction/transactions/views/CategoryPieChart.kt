@@ -2,11 +2,25 @@ package me.ilker.transaction.transactions.views
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
 import me.ilker.balance_tracker.sdk.TransactionCategory
+import me.ilker.balance_tracker.sdk.getIcon
 import me.ilker.transaction.transactions.TransactionState
 
 private val LightCategoryChartColors = listOf(
@@ -38,6 +52,10 @@ private val DarkCategoryChartColors = listOf(
     Color(0xFF7986CB),
     Color(0xFF4DB6AC)
 )
+
+private val IconSize = 16.dp
+private const val MinimumIconSweepAngle = 30f
+private const val DegreesToRadians = PI / 180.0
 
 @Composable
 internal fun TransactionCategory.chartColor(): Color {
@@ -72,34 +90,64 @@ internal fun CategoryPieChart(
         .takeIf { value -> value > 0.0 }
         ?: return
 
+    var startAngle = -90f
     val slices = categoryTotals.map { categoryTotal ->
-        PieSlice(
-            fraction = (categoryTotal.amount / total).toFloat(),
-            color = categoryTotal.category.chartColor()
+        val sweepAngle = (categoryTotal.amount / total).toFloat() * 360f
+        val slice = PieSlice(
+            category = categoryTotal.category,
+            color = categoryTotal.category.chartColor(),
+            startAngle = startAngle,
+            sweepAngle = sweepAngle
         )
+
+        startAngle += sweepAngle
+
+        slice
     }
 
-    Canvas(modifier = modifier) {
-        var startAngle = -90f
+    BoxWithConstraints(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        val chartSizePx = minOf(constraints.maxWidth, constraints.maxHeight).toFloat()
+        val iconRadiusPx = chartSizePx * 0.29f
+
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            slices.forEach { slice ->
+                val gapAngle = if (slices.size > 1 && slice.sweepAngle > 4f) 1.2f else 0f
+
+                drawArc(
+                    color = slice.color,
+                    startAngle = slice.startAngle + gapAngle / 2f,
+                    sweepAngle = slice.sweepAngle - gapAngle,
+                    useCenter = true,
+                    size = Size(size.width, size.height)
+                )
+            }
+        }
 
         slices.forEach { slice ->
-            val sweepAngle = slice.fraction * 360f
-            val gapAngle = if (slices.size > 1 && sweepAngle > 4f) 1.2f else 0f
+            if (slice.sweepAngle < MinimumIconSweepAngle) return@forEach
 
-            drawArc(
-                color = slice.color,
-                startAngle = startAngle + gapAngle / 2f,
-                sweepAngle = sweepAngle - gapAngle,
-                useCenter = true,
-                size = Size(size.width, size.height)
+            val angle = (slice.startAngle + slice.sweepAngle / 2f) * DegreesToRadians
+            val x = (cos(angle) * iconRadiusPx).roundToInt()
+            val y = (sin(angle) * iconRadiusPx).roundToInt()
+
+            Icon(
+                imageVector = slice.category.getIcon(),
+                contentDescription = null,
+                tint = if (slice.color.luminance() > 0.25f) Color.Black else Color.White,
+                modifier = Modifier
+                    .offset { IntOffset(x = x, y = y) }
+                    .size(IconSize)
             )
-
-            startAngle += sweepAngle
         }
     }
 }
 
 private data class PieSlice(
-    val fraction: Float,
-    val color: Color
+    val category: TransactionCategory,
+    val color: Color,
+    val startAngle: Float,
+    val sweepAngle: Float
 )

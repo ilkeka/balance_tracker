@@ -74,3 +74,26 @@ suspend fun TransactionCategory.getValueForUI() = when (this) {
     TransactionCategory.Predefined.Travel -> getString(Res.string.category_travel)
     is TransactionCategory.Custom -> this.value
 }
+
+fun TransactionCategory.Predefined.isAvailableFor(type: TransactionType): Boolean = when (type) {
+    TransactionType.Income -> {
+        this == TransactionCategory.Predefined.Other ||
+            this == TransactionCategory.Predefined.Reimbursement ||
+            this == TransactionCategory.Predefined.Salary
+    }
+
+    TransactionType.Expense -> {
+        this != TransactionCategory.Predefined.Reimbursement &&
+            this != TransactionCategory.Predefined.Salary
+    }
+}
+
+fun TransactionType.availableCategories(): List<TransactionCategory.Predefined> =
+    TransactionCategory.Predefined.entries.filter { category -> category.isAvailableFor(this) }
+
+fun TransactionCategory.withFallbackFor(type: TransactionType): TransactionCategory =
+    if (this is TransactionCategory.Predefined && !isAvailableFor(type)) {
+        TransactionCategory.Predefined.Other
+    } else {
+        this
+    }

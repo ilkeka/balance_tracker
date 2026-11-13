@@ -1,0 +1,7 @@
+Prima versione pubblica.
+
+- Aggiunta, modifica ed eliminazione di entrate e uscite
+- Categorie, date e descrizioni per ogni transazione
+- Saldo mensile, totale entrate e totale uscite
+- Grafico delle spese ed elenco delle ultime transazioni
+- Sincronizzazione locale tra i tuoi dispositivi via Bluetooth, senza server

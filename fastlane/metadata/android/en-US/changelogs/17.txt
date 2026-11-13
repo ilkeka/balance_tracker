@@ -1,0 +1,7 @@
+First public release.
+
+- Add, edit and delete income and expense transactions
+- Categories, dates and descriptions for every transaction
+- Monthly balance, total income and total expenses
+- Spending chart and a list of your latest transactions
+- Local sync between your own devices over Bluetooth, without a server

@@ -1,0 +1,21 @@
+Balance Tracker è un gestore di entrate e uscite semplice e riservato. Annota quanto spendi e quanto guadagni, e vedi a colpo d'occhio dove finiscono davvero i tuoi soldi.
+
+Tutto resta sul tuo dispositivo. Non servono account, non c'è nessun cloud, nessuna pubblicità e nessuna analisi statistica: l'app non chiede nemmeno il permesso di accesso a internet.
+
+Cosa puoi fare
+
+- Aggiungere entrate e uscite con importo, data, categoria e descrizione.
+- Organizzare le voci in categorie come bollette, spesa, acquisti, trasporti, viaggi, stipendio o rimborsi.
+- Vedere nella schermata iniziale il saldo attuale, il totale delle entrate e il totale delle uscite del mese.
+- Seguire l'andamento delle spese nel tempo con un grafico e scorrere le ultime transazioni.
+- Aprire in seguito i dettagli di una transazione, modificarla o eliminarla.
+
+Sincronizzazione senza server
+
+Puoi copiare le transazioni su un altro tuo dispositivo tramite Bluetooth Low Energy, direttamente dalla schermata Sincronizzazione locale: scegli il dispositivo vicino, conferma il codice di associazione su entrambi i lati e l'app unisce ciò che manca. Nulla viene caricato altrove e non serve alcun account.
+
+Software libero
+
+Balance Tracker è distribuito con licenza GNU General Public License v3.0. Il codice sorgente è su https://github.com/ilkeka/balance_tracker: segnalazioni, idee e patch sono benvenute.
+
+L'interfaccia è realizzata con Compose Multiplatform e i tuoi dati sono conservati in un normale database SQLite sul dispositivo.
