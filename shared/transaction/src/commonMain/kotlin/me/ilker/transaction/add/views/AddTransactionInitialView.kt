@@ -80,7 +80,9 @@ import me.ilker.balance_tracker.resources.new_transaction
 import me.ilker.balance_tracker.resources.transaction_type
 import me.ilker.balance_tracker.sdk.TransactionCategory
 import me.ilker.balance_tracker.sdk.TransactionType
+import me.ilker.balance_tracker.sdk.availableCategories
 import me.ilker.balance_tracker.sdk.getValueForComposableUI
+import me.ilker.balance_tracker.sdk.withFallbackFor
 import me.ilker.core.extensions.round
 import me.ilker.transaction.common.CardPadding
 import me.ilker.transaction.common.CardShape
@@ -217,7 +219,11 @@ internal fun AddTransactionInitialView(
                     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                         SegmentedButton(
                             selected = typeState.value == TransactionType.Expense,
-                            onClick = { typeState.value = TransactionType.Expense },
+                            onClick = {
+                                typeState.value = TransactionType.Expense
+                                categoryState.value = categoryState.value
+                                    .withFallbackFor(TransactionType.Expense)
+                            },
                             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
                             colors = SegmentedButtonDefaults.colors(
                                 activeContainerColor = MaterialTheme.colorScheme.errorContainer,
@@ -230,7 +236,11 @@ internal fun AddTransactionInitialView(
 
                         SegmentedButton(
                             selected = typeState.value == TransactionType.Income,
-                            onClick = { typeState.value = TransactionType.Income },
+                            onClick = {
+                                typeState.value = TransactionType.Income
+                                categoryState.value = categoryState.value
+                                    .withFallbackFor(TransactionType.Income)
+                            },
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                             colors = SegmentedButtonDefaults.colors(
                                 activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -338,7 +348,7 @@ internal fun AddTransactionInitialView(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            TransactionCategory.Predefined.entries.forEach { category ->
+                            typeState.value.availableCategories().forEach { category ->
                                 FilterChip(
                                     selected = categoryState.value == category,
                                     onClick = {

@@ -22,3 +22,6 @@ node_modules/
 Database.db
 Database.db-shm
 Database.db-wal
+
+# Release artefacts produced by the release workflow
+dist/

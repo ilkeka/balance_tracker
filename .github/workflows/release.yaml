@@ -1,0 +1,121 @@
+name: Release
+
+# Publishes a signed APK on GitHub releases.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: "Build and publish APK"
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 24
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: 24
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Read version
+        id: version
+        run: |
+          set -euo pipefail
+          version_name=$(awk -F'"' '/^ *versionName = "/{print $2; exit}' android/build.gradle.kts)
+          version_code=$(awk '/^ *versionCode = /{print $3; exit}' android/build.gradle.kts)
+          if [ -z "$version_name" ] || [ -z "$version_code" ]; then
+            echo "::error::Could not read versionName/versionCode from android/build.gradle.kts"
+            exit 1
+          fi
+          echo "name=$version_name" >> "$GITHUB_OUTPUT"
+          echo "code=$version_code" >> "$GITHUB_OUTPUT"
+          echo "Building $version_name ($version_code) for tag ${GITHUB_REF_NAME}"
+          if [ "$GITHUB_REF_NAME" != "v$version_name" ]; then
+            echo "::warning::Tag $GITHUB_REF_NAME does not match versionName $version_name"
+          fi
+
+      - name: Check changelog
+        id: changelog
+        run: |
+          set -euo pipefail
+          changelog="fastlane/metadata/android/en-US/changelogs/${{ steps.version.outputs.code }}.txt"
+          if [ ! -f "$changelog" ]; then
+            echo "::error::Missing $changelog - add it before tagging so IzzyOnDroid can show release notes."
+            exit 1
+          fi
+          echo "path=$changelog" >> "$GITHUB_OUTPUT"
+
+      - name: Configure signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE_BASE64:-}" ]; then
+            echo "::error::SIGNING_KEYSTORE_BASE64 is not set - refusing to publish an unsigned APK."
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          # The Gradle build reads the same properties as a local build does.
+          {
+            printf 'signing.storeFile=%s\n' "$RUNNER_TEMP/release.jks"
+            printf 'signing.storePassword=%s\n' "$STORE_PASSWORD"
+            printf 'signing.keyAlias=%s\n' "$KEY_ALIAS"
+            printf 'signing.keyPassword=%s\n' "$KEY_PASSWORD"
+          } > local.properties
+
+      - name: Build release APK
+        run: ./gradlew :android:assembleRelease
+
+      - name: Collect and verify APK
+        id: apk
+        run: |
+          set -euo pipefail
+          version_name='${{ steps.version.outputs.name }}'
+          apk=$(find android/build/outputs/apk/release -name '*.apk' -print -quit 2>/dev/null || true)
+          if [ -z "$apk" ]; then
+            echo "::error::No release APK was produced"
+            exit 1
+          fi
+
+          mkdir -p dist
+          target="dist/balance-tracker-$version_name.apk"
+          cp "$apk" "$target"
+
+          apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
+          "$apksigner" verify --print-certs "$target"
+
+          size=$(( $(stat -c%s "$target") / 1024 / 1024 ))
+          echo "APK size: ${size} MB"
+          if [ "$size" -gt 30 ]; then
+            echo "::warning::APK is larger than the 30 MB limit IzzyOnDroid accepts"
+          fi
+
+          sha256sum "$target" > "$target.sha256"
+          echo "path=$target" >> "$GITHUB_OUTPUT"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ steps.version.outputs.name }}
+          body_path: ${{ steps.changelog.outputs.path }}
+          files: |
+            ${{ steps.apk.outputs.path }}
+            ${{ steps.apk.outputs.path }}.sha256
+          fail_on_unmatched_files: true

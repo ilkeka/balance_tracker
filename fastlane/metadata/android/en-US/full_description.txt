@@ -1,0 +1,21 @@
+Balance Tracker is a simple, private income and expense tracker. Write down what you spend and what you earn, and see at a glance where your money actually goes.
+
+Everything stays on your device. There is no account, no cloud, no advertising and no analytics - the app does not even ask for the internet permission.
+
+What you can do
+
+- Add income and expenses with amount, date, category and a description.
+- Sort your entries into categories such as bills, groceries, shopping, transport, travel, salary or reimbursement.
+- See your current balance, total income and total expenses for the month on the start screen.
+- Follow how your spending develops over time with a chart, and browse your latest transactions.
+- Open the details of any transaction later on, and edit or delete it.
+
+Sync without a server
+
+You can copy your transactions to another device of your own over Bluetooth Low Energy, straight from the Local sync screen: pick the device next to you, confirm a pairing code on both sides, and the app merges what is missing. Nothing is uploaded anywhere and no account is needed.
+
+Free software
+
+Balance Tracker is licensed under the GNU General Public License v3.0. The source code lives at https://github.com/ilkeka/balance_tracker - bug reports, ideas and patches are welcome there.
+
+The interface is built with Compose Multiplatform, and your data is kept in a plain SQLite database on the device.

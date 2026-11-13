@@ -52,6 +52,9 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 17
         versionName = "1.0.16"
+        ndk {
+            debugSymbolLevel = "FULL"
+        }
     }
     testBuildType = "devDebug"
     packaging {
@@ -71,7 +74,12 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             if (releaseStoreFile != null) {
                 signingConfig = signingConfigs.getByName("release")
             }

@@ -277,6 +277,13 @@ private fun CategoryTotalsSection(
                 modifier = Modifier.padding(top = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                CategoryPieChart(
+                    categoryTotals = categoryTotals,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .size(140.dp)
+                )
+
                 categoryTotals.forEachIndexed { index, categoryTotal ->
                     if (index > 0) {
                         HorizontalDivider(
@@ -309,6 +316,7 @@ private fun CategoryTotalRow(
     categoryTotal: TransactionState.Loaded.CategoryTotalUiModel
 ) {
     val isExpense = categoryTotal.type == TransactionType.Expense
+    val chartColor = categoryTotal.category.chartColor()
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -317,16 +325,8 @@ private fun CategoryTotalRow(
         Surface(
             modifier = Modifier.size(36.dp),
             shape = CircleShape,
-            color = if (isExpense) {
-                MaterialTheme.colorScheme.errorContainer
-            } else {
-                MaterialTheme.colorScheme.primaryContainer
-            },
-            contentColor = if (isExpense) {
-                MaterialTheme.colorScheme.onErrorContainer
-            } else {
-                MaterialTheme.colorScheme.onPrimaryContainer
-            }
+            color = chartColor.copy(alpha = 0.18f),
+            contentColor = chartColor
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
