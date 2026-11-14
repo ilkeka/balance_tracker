@@ -63,7 +63,6 @@ kotlin {
         implementation(libs.jetbrains.compose.materialicons.core)
         implementation(libs.jetbrains.compose.materialicons.extended)
         implementation(libs.jetbrains.compose.material3)
-        implementation(libs.jetbrains.compose.navigationevent)
         implementation(libs.jetbrains.compose.lifecycle.runtime)
         implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.serialization.json)
