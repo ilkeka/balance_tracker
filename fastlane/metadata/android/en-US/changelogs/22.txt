@@ -1,0 +1,3 @@
+Maintenance release.
+
+- No user-facing changes: this build declares the Google Maven repository with the standard Gradle helper, so the source builds on F-Droid's build servers

@@ -4,7 +4,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
         maven { url = uri("https://repo1.maven.org/maven2/") }
-        maven { url = uri("https://dl.google.com/android/maven2/") }
+        google()
         gradlePluginPortal()
     }
 }
@@ -12,7 +12,7 @@ pluginManagement {
 dependencyResolutionManagement {
     repositories {
         maven { url = uri("https://repo1.maven.org/maven2/") }
-        maven { url = uri("https://dl.google.com/android/maven2/") }
+        google()
     }
 }
 
