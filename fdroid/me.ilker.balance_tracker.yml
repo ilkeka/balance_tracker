@@ -1,0 +1,25 @@
+Categories:
+  - Finance Manager
+License: GPL-3.0-only
+AuthorName: ilkeka
+AuthorEmail: me@ilker.it
+SourceCode: https://github.com/ilkeka/balance_tracker
+IssueTracker: https://github.com/ilkeka/balance_tracker/issues
+Changelog: https://github.com/ilkeka/balance_tracker/releases
+
+RepoType: git
+Repo: https://github.com/ilkeka/balance_tracker.git
+
+Builds:
+  - versionName: 1.0.19
+    versionCode: 21
+    commit: v1.0.19
+    gradle:
+      - yes
+    output: android/build/outputs/apk/release/android-release-unsigned.apk
+    prebuild: sed -i 's/-Xmx8G/-Xmx2048m/' gradle.properties
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.19
+CurrentVersionCode: 21

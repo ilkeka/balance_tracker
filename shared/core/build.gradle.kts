@@ -10,7 +10,7 @@ plugins {
 kotlin {
     android {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_24)
+            jvmTarget.set(JvmTarget.JVM_21)
         }
 
         namespace = "me.ilker.balance_tracker.shared.core"

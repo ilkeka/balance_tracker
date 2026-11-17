@@ -37,7 +37,7 @@ kotlin {
 
     target {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_24)
+            jvmTarget.set(JvmTarget.JVM_21)
         }
     }
 }
@@ -50,8 +50,8 @@ android {
         applicationId = "me.ilker.balance_tracker"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 20
-        versionName = "1.0.18"
+        versionCode = 21
+        versionName = "1.0.19"
         ndk {
             debugSymbolLevel = "FULL"
         }
@@ -108,8 +108,8 @@ android {
         getByName("devRelease").res.srcDir("src/dev/res")
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_24
-        targetCompatibility = JavaVersion.VERSION_24
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
 

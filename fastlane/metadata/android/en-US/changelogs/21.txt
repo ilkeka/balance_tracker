@@ -1,0 +1,4 @@
+Predictive back and date picker fixes.
+
+- System back gestures now animate before leaving the app
+- The date picker uses the app colours instead of a transparent background
