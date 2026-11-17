@@ -7,7 +7,7 @@ part of the Android APK and are not needed here.
 
 | | |
 |---|---|
-| JDK | **24** (the Android module compiles to JVM target 24) |
+| JDK | **21** or newer (the Android and shared modules compile to JVM target 21) |
 | Android SDK | platform 37 (`compileSdk`/`targetSdk`) |
 | Gradle | none to install — the wrapper pins 9.6.1 |
 | NDK | not required (the only native library comes prebuilt from a Maven dependency) |
@@ -20,7 +20,7 @@ dependencies; afterwards it builds offline.
 ```sh
 git clone https://github.com/ilkeka/balance_tracker.git
 cd balance_tracker
-git checkout v1.0.18
+git checkout v1.0.19
 
 # Point the build at your SDK, either of these works:
 export ANDROID_HOME="$HOME/Android/Sdk"
@@ -72,7 +72,8 @@ Released APKs are built by [`.github/workflows/release.yaml`](.github/workflows/
 2. `./gradlew :android:assembleRelease`
 3. signed with the release keystore, then uploaded to the GitHub release of the tag
 
-So `./gradlew :android:assembleRelease` with JDK 24 on Linux/macOS is the exact recipe.
+So `./gradlew :android:assembleRelease` on Linux/macOS is the exact recipe; JDK 21 and JDK 24
+both work (F-Droid builds it from source with Debian's default JDK 21).
 
 ## Notes
 

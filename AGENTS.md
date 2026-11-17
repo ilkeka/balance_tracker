@@ -13,7 +13,8 @@ Compose Multiplatform income/expense tracker. Targets: Android, Desktop (JVM), i
 ./gradlew :desktop:run                   # desktop app
 ```
 
-- Gradle 9.6.1 wrapper, JDK **24** required, configuration cache enabled
+- Gradle 9.6.1 wrapper, configuration cache enabled
+- JDK: **24** for `:desktop`/`:server`, **21** for the Android build (`:android` + `shared/*` modules compile to JVM target 21, so F-Droid's JDK 21 build server works)
 - `./gradlew test` runs `kotlin.test` tests (no instrumented tests)
 
 ## Module layout

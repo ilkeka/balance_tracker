@@ -1,0 +1,4 @@
+Back predittivo e correzioni al selettore di data.
+
+- I gesti di sistema per tornare indietro ora si animano prima di uscire dall'app
+- Il selettore di data usa i colori dell'app invece di uno sfondo trasparente
