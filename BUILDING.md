@@ -20,7 +20,7 @@ dependencies; afterwards it builds offline.
 ```sh
 git clone https://github.com/ilkeka/balance_tracker.git
 cd balance_tracker
-git checkout v1.0.19
+git checkout v1.0.20
 
 # Point the build at your SDK, either of these works:
 export ANDROID_HOME="$HOME/Android/Sdk"

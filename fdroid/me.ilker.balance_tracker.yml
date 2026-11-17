@@ -7,13 +7,15 @@ SourceCode: https://github.com/ilkeka/balance_tracker
 IssueTracker: https://github.com/ilkeka/balance_tracker/issues
 Changelog: https://github.com/ilkeka/balance_tracker/releases
 
+AutoName: Balance Tracker
+
 RepoType: git
 Repo: https://github.com/ilkeka/balance_tracker.git
 
 Builds:
-  - versionName: 1.0.19
-    versionCode: 21
-    commit: v1.0.19
+  - versionName: 1.0.20
+    versionCode: 22
+    commit: v1.0.20
     gradle:
       - yes
     output: android/build/outputs/apk/release/android-release-unsigned.apk
@@ -21,5 +23,5 @@ Builds:
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.0.19
-CurrentVersionCode: 21
+CurrentVersion: 1.0.20
+CurrentVersionCode: 22
