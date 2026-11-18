@@ -25,14 +25,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowDropDown
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronLeft
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -70,8 +69,11 @@ import me.ilker.balance_tracker.resources.expense_total
 import me.ilker.balance_tracker.resources.income_total
 import me.ilker.balance_tracker.resources.latest_transactions
 import me.ilker.balance_tracker.resources.month_names
+import me.ilker.balance_tracker.resources.month_names_short
 import me.ilker.balance_tracker.resources.next_month
+import me.ilker.balance_tracker.resources.next_year
 import me.ilker.balance_tracker.resources.previous_month
+import me.ilker.balance_tracker.resources.previous_year
 import me.ilker.balance_tracker.resources.see_all
 import me.ilker.balance_tracker.resources.select_month
 import me.ilker.balance_tracker.sdk.TransactionCategory
@@ -265,6 +267,12 @@ private fun MonthNavigator(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var pickerYear by remember(yearMonth) { mutableStateOf(yearMonth.year) }
+
+    val availableMonths = remember(availableYearMonths) { availableYearMonths.toSet() }
+    val availableYears = remember(availableYearMonths) {
+        availableYearMonths.map { available -> available.year }.distinct().sorted()
+    }
 
     Row(
         modifier = modifier,
@@ -292,7 +300,10 @@ private fun MonthNavigator(
                         .clickable(
                             onClickLabel = stringResource(Res.string.select_month),
                             role = Role.Button,
-                            onClick = { expanded = true }
+                            onClick = {
+                                pickerYear = yearMonth.year
+                                expanded = true
+                            }
                         )
                         .padding(horizontal = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -318,45 +329,17 @@ private fun MonthNavigator(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
-                    availableYearMonths.forEach { availableYearMonth ->
-                        val isSelected = availableYearMonth == yearMonth
-
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = availableYearMonth.toMonthName(),
-                                    fontWeight = if (isSelected) {
-                                        FontWeight.SemiBold
-                                    } else {
-                                        FontWeight.Normal
-                                    },
-                                    color = if (isSelected) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurface
-                                    }
-                                )
-                            },
-                            trailingIcon = if (isSelected) {
-                                {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Check,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            } else {
-                                null
-                            },
-                            onClick = {
-                                expanded = false
-
-                                if (!isSelected) {
-                                    onYearMonthSelected(availableYearMonth)
-                                }
-                            }
-                        )
-                    }
+                    MonthPickerPanel(
+                        selectedYearMonth = yearMonth,
+                        pickerYear = pickerYear,
+                        availableMonths = availableMonths,
+                        availableYears = availableYears,
+                        onPickerYearChanged = { year -> pickerYear = year },
+                        onYearMonthSelected = { selectedYearMonth ->
+                            expanded = false
+                            onYearMonthSelected(selectedYearMonth)
+                        }
+                    )
                 }
             }
         }
@@ -369,6 +352,94 @@ private fun MonthNavigator(
                 imageVector = Icons.Rounded.ChevronRight,
                 contentDescription = stringResource(Res.string.next_month)
             )
+        }
+    }
+}
+
+/**
+ * Year stepper plus a single year of month chips. Unlike a flat list of every month with data, this
+ * stays a fixed size no matter how many years the user has been tracking, and it shows months
+ * without transactions as disabled instead of hiding them.
+ */
+@Composable
+private fun MonthPickerPanel(
+    selectedYearMonth: YearMonth,
+    pickerYear: Int,
+    availableMonths: Set<YearMonth>,
+    availableYears: List<Int>,
+    onPickerYearChanged: (Int) -> Unit,
+    onYearMonthSelected: (YearMonth) -> Unit
+) {
+    val shortMonthNames = stringArrayResource(Res.array.month_names_short)
+    val yearIndex = availableYears.indexOf(pickerYear)
+
+    Column(
+        modifier = Modifier
+            .width(MonthPickerWidth)
+            .padding(horizontal = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = { availableYears.getOrNull(yearIndex - 1)?.let(onPickerYearChanged) },
+                enabled = yearIndex > 0
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.ChevronLeft,
+                    contentDescription = stringResource(Res.string.previous_year)
+                )
+            }
+
+            Text(
+                text = pickerYear.toString(),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            IconButton(
+                onClick = { availableYears.getOrNull(yearIndex + 1)?.let(onPickerYearChanged) },
+                enabled = yearIndex in 0 until availableYears.lastIndex
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.ChevronRight,
+                    contentDescription = stringResource(Res.string.next_year)
+                )
+            }
+        }
+
+        repeat(MonthPickerRowCount) { rowIndex ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                repeat(MonthPickerColumnCount) { columnIndex ->
+                    val monthNumber = rowIndex * MonthPickerColumnCount + columnIndex + 1
+                    val month = YearMonth(year = pickerYear, month = monthNumber)
+                    val isAvailable = month in availableMonths
+                    val isSelected = month == selectedYearMonth
+
+                    FilterChip(
+                        selected = isSelected,
+                        enabled = isAvailable,
+                        onClick = { onYearMonthSelected(month) },
+                        label = {
+                            Text(
+                                text = shortMonthNames[monthNumber - 1],
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center,
+                                maxLines = 1
+                            )
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
         }
     }
 }

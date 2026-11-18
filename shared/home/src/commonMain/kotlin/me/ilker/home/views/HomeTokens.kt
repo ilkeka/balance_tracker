@@ -18,3 +18,9 @@ internal val MonthNavigatorMaxWidth = 420.dp
 
 /** Touch target for the month label that opens the month menu. */
 internal val MonthSelectorMinHeight = 48.dp
+
+/** Width of the month picker panel that opens from the month label. */
+internal val MonthPickerWidth = 260.dp
+
+internal const val MonthPickerColumnCount = 3
+internal const val MonthPickerRowCount = 4
