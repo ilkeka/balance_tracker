@@ -53,7 +53,7 @@ jobs:
           set -euo pipefail
           changelog="fastlane/metadata/android/en-US/changelogs/${{ steps.version.outputs.code }}.txt"
           if [ ! -f "$changelog" ]; then
-            echo "::error::Missing $changelog - add it before tagging so IzzyOnDroid can show release notes."
+            echo "::error::Missing $changelog - add it before tagging so the release notes can be published."
             exit 1
           fi
           echo "path=$changelog" >> "$GITHUB_OUTPUT"
@@ -100,11 +100,7 @@ jobs:
           apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
           "$apksigner" verify --print-certs "$target"
 
-          size=$(( $(stat -c%s "$target") / 1024 / 1024 ))
-          echo "APK size: ${size} MB"
-          if [ "$size" -gt 30 ]; then
-            echo "::warning::APK is larger than the 30 MB limit IzzyOnDroid accepts"
-          fi
+          echo "APK size: $(( $(stat -c%s "$target") / 1024 / 1024 )) MB"
 
           sha256sum "$target" > "$target.sha256"
           echo "path=$target" >> "$GITHUB_OUTPUT"

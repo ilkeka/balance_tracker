@@ -1,0 +1,6 @@
+Più categorie di spesa.
+
+- Nuove categorie di spesa: Figli, Debiti, Ristoranti, Istruzione, Fitness, Assicurazione, Cura personale, Animali domestici, Affitto/Mutuo, Tasse e Utenze
+- La categoria Regalo ora è disponibile anche per le entrate
+- Le autorizzazioni inutilizzate per l'archiviazione e lo stato del telefono non vengono più richieste
+- L'autorizzazione alla posizione per la sincronizzazione Bluetooth è richiesta solo sulle versioni di Android che la necessitano
