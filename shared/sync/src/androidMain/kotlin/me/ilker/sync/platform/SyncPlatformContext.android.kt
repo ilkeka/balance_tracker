@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import me.ilker.sync.transport.AndroidContextHolder
+import me.ilker.sync.transport.LegacyScanPermission
 
 @Composable
 internal actual fun BindSyncPlatformContext() {
@@ -58,7 +59,7 @@ private fun Context.missingNearbyDevicePermissions(): List<String> = buildList {
         add(Manifest.permission.BLUETOOTH_SCAN)
         add(Manifest.permission.BLUETOOTH_ADVERTISE)
     } else {
-        add(Manifest.permission.ACCESS_FINE_LOCATION)
+        add(LegacyScanPermission)
     }
 }.filterNot(::hasPermission)
 

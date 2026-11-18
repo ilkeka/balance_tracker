@@ -41,6 +41,19 @@ import java.util.UUID
 
 internal actual fun isLiveSyncSupported(): Boolean = true
 
+/**
+ * The permission Android gates Bluetooth scans behind before API 31.
+ *
+ * Coarse up to Android 9 and fine from Android 10, mirroring the per-level manifest declaration, so a
+ * scan is never asked for more location scope than its release enforces. A user who granted fine on an
+ * older release reports coarse as granted too, so narrowing the request does not prompt them again.
+ */
+internal val LegacyScanPermission: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    Manifest.permission.ACCESS_FINE_LOCATION
+} else {
+    Manifest.permission.ACCESS_COARSE_LOCATION
+}
+
 @SuppressLint("MissingPermission")
 internal actual fun createSyncLink(): SyncLink {
     val context = AndroidContextHolder.context
@@ -66,7 +79,7 @@ internal actual fun createSyncLink(): SyncLink {
         context.hasPermission(Manifest.permission.BLUETOOTH_SCAN) &&
             context.hasPermission(Manifest.permission.BLUETOOTH_ADVERTISE)
     } else {
-        context.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+        context.hasPermission(LegacyScanPermission)
     }
     if (!hasDiscoverPermission) {
         throw SyncDiscoveryException.Unavailable(SyncUnavailableReason.BluetoothUnusable)

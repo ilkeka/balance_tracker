@@ -14,7 +14,12 @@
         android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
-    <!-- Pre-12 Bluetooth scanning still reports through the location permission. -->
+    <!-- Pre-12 Bluetooth scanning is gated on location instead: coarse is enough on 6.0-9.0, and
+         Android 10 tightened scanning to fine. Each is declared only where the platform enforces it,
+         so the scope requested on any one release is the minimum Play's location policy allows. -->
+    <uses-permission
+        android:name="android.permission.ACCESS_COARSE_LOCATION"
+        android:maxSdkVersion="28" />
     <uses-permission
         android:name="android.permission.ACCESS_FINE_LOCATION"
         android:maxSdkVersion="30" />
