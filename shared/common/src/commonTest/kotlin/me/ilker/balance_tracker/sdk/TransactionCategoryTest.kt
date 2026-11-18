@@ -8,9 +8,10 @@ import kotlin.test.assertTrue
 class TransactionCategoryTest {
 
     @Test
-    fun incomeCategoriesContainOnlyOtherReimbursementAndSalary() {
+    fun incomeCategoriesContainOnlyGiftOtherReimbursementAndSalary() {
         assertEquals(
             setOf(
+                TransactionCategory.Predefined.Gift,
                 TransactionCategory.Predefined.Other,
                 TransactionCategory.Predefined.Reimbursement,
                 TransactionCategory.Predefined.Salary
