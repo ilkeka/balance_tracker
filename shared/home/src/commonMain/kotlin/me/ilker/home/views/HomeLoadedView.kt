@@ -11,9 +11,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -22,25 +24,40 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.ArrowDropDown
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.ChevronLeft
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.format
@@ -53,7 +70,10 @@ import me.ilker.balance_tracker.resources.expense_total
 import me.ilker.balance_tracker.resources.income_total
 import me.ilker.balance_tracker.resources.latest_transactions
 import me.ilker.balance_tracker.resources.month_names
+import me.ilker.balance_tracker.resources.next_month
+import me.ilker.balance_tracker.resources.previous_month
 import me.ilker.balance_tracker.resources.see_all
+import me.ilker.balance_tracker.resources.select_month
 import me.ilker.balance_tracker.sdk.TransactionCategory
 import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
@@ -79,6 +99,7 @@ internal fun HomeLoadedView(
         initialPage = state.balances.lastIndex.takeUnless { it < 0 } ?: 0,
         pageCount = { state.balances.size }
     )
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(balancePagerState) {
         snapshotFlow { balancePagerState.currentPage }.collect { page ->
@@ -117,43 +138,95 @@ internal fun HomeLoadedView(
                     .fillMaxSize()
                     .padding(paddingValues),
                 contentPadding = PaddingValues(
-                    start = HomeScreenPadding,
-                    end = HomeScreenPadding,
                     top = 8.dp,
                     bottom = 96.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {
-                    HorizontalPager(
-                        modifier = Modifier.fillMaxWidth(),
-                        state = balancePagerState,
-                        verticalAlignment = Alignment.Top,
-                        pageSize = PageSize.Fill
-                    ) { page ->
-                        BalanceCard(
-                            balance = balances[page],
-                            onClick = onTransactionsClicked
-                        )
+                    val currentBalance = balances.getOrNull(balancePagerState.currentPage)
+                        ?: balances.last()
+                    val availableYearMonths = remember(balances) {
+                        balances.asReversed().map { balance -> balance.yearMonth }
                     }
-                }
 
-                if (balances.size > 1) {
-                    item {
-                        PageIndicator(
-                            count = balances.size,
-                            currentPage = balancePagerState.currentPage
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        MonthNavigator(
+                            yearMonth = currentBalance.yearMonth,
+                            availableYearMonths = availableYearMonths,
+                            canGoPrevious = balancePagerState.currentPage > 0,
+                            canGoNext = balancePagerState.currentPage < balances.lastIndex,
+                            onPrevious = {
+                                scope.launch {
+                                    balancePagerState.animateScrollToPage(
+                                        balancePagerState.currentPage - 1
+                                    )
+                                }
+                            },
+                            onNext = {
+                                scope.launch {
+                                    balancePagerState.animateScrollToPage(
+                                        balancePagerState.currentPage + 1
+                                    )
+                                }
+                            },
+                            onYearMonthSelected = { selectedYearMonth ->
+                                val page = balances.indexOfFirst { balance ->
+                                    balance.yearMonth == selectedYearMonth
+                                }
+
+                                if (page >= 0) {
+                                    // Jump instead of animating so the month list below does
+                                    // not flash through every month in between.
+                                    scope.launch {
+                                        balancePagerState.scrollToPage(page)
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .padding(horizontal = HomeScreenPadding)
+                                .widthIn(max = MonthNavigatorMaxWidth)
+                                .fillMaxWidth()
                         )
+
+                        HorizontalPager(
+                            modifier = Modifier.fillMaxWidth(),
+                            state = balancePagerState,
+                            key = { page -> balances.getOrNull(page)?.yearMonth ?: page },
+                            verticalAlignment = Alignment.Top,
+                            pageSize = PageSize.Fill,
+                            // Insetting the pages leaves a sliver of the neighbouring
+                            // month card visible, so swiping stays discoverable.
+                            contentPadding = PaddingValues(horizontal = HomeScreenPadding),
+                            pageSpacing = CardPageSpacing
+                        ) { page ->
+                            balances.getOrNull(page)?.let { balance ->
+                                BalanceCard(
+                                    balance = balance,
+                                    onClick = onTransactionsClicked
+                                )
+                            }
+                        }
                     }
                 }
 
                 item {
-                    SectionHeader(onClick = onTransactionsClicked)
+                    SectionHeader(
+                        onClick = onTransactionsClicked,
+                        modifier = Modifier.padding(horizontal = HomeScreenPadding)
+                    )
                 }
 
-                balances[balancePagerState.currentPage].transactions.forEach { (date, transactions) ->
+                balances.getOrNull(balancePagerState.currentPage)?.transactions?.forEach { (date, transactions) ->
                     item(key = date) {
-                        DateHeader(date = date)
+                        DateHeader(
+                            date = date,
+                            modifier = Modifier.padding(horizontal = HomeScreenPadding)
+                        )
                     }
 
                     items(
@@ -162,7 +235,8 @@ internal fun HomeLoadedView(
                     ) { transaction ->
                         Transaction(
                             transaction = transaction,
-                            onClick = onClick
+                            onClick = onClick,
+                            modifier = Modifier.padding(horizontal = HomeScreenPadding)
                         )
                     }
                 }
@@ -176,6 +250,126 @@ internal fun HomeLoadedView(
                     .padding(vertical = 8.dp),
                 onClick = add
             )
+    }
+}
+
+@Composable
+private fun MonthNavigator(
+    yearMonth: YearMonth,
+    availableYearMonths: List<YearMonth>,
+    canGoPrevious: Boolean,
+    canGoNext: Boolean,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onYearMonthSelected: (YearMonth) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(
+            onClick = onPrevious,
+            enabled = canGoPrevious
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.ChevronLeft,
+                contentDescription = stringResource(Res.string.previous_month)
+            )
+        }
+
+        Box(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            Box {
+                Row(
+                    modifier = Modifier
+                        .heightIn(min = MonthSelectorMinHeight)
+                        .clip(CircleShape)
+                        .clickable(
+                            onClickLabel = stringResource(Res.string.select_month),
+                            role = Role.Button,
+                            onClick = { expanded = true }
+                        )
+                        .padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = yearMonth.toMonthName(),
+                        modifier = Modifier.widthIn(min = HomeMonthLabelMinWidth),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowDropDown,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    availableYearMonths.forEach { availableYearMonth ->
+                        val isSelected = availableYearMonth == yearMonth
+
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = availableYearMonth.toMonthName(),
+                                    fontWeight = if (isSelected) {
+                                        FontWeight.SemiBold
+                                    } else {
+                                        FontWeight.Normal
+                                    },
+                                    color = if (isSelected) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    }
+                                )
+                            },
+                            trailingIcon = if (isSelected) {
+                                {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Check,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            } else {
+                                null
+                            },
+                            onClick = {
+                                expanded = false
+
+                                if (!isSelected) {
+                                    onYearMonthSelected(availableYearMonth)
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        IconButton(
+            onClick = onNext,
+            enabled = canGoNext
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.ChevronRight,
+                contentDescription = stringResource(Res.string.next_month)
+            )
+        }
     }
 }
 
@@ -210,14 +404,6 @@ private fun BalanceCard(
                 .fillMaxWidth()
                 .padding(HomeCardPadding)
         ) {
-            Text(
-                text = balance.yearMonth.toMonthName(),
-                style = MaterialTheme.typography.labelLarge,
-                color = contentColor.copy(alpha = 0.7f)
-            )
-
-            Spacer(Modifier.height(6.dp))
-
             Text(
                 text = balance.balance.toHumanReadableValue(),
                 style = MaterialTheme.typography.headlineMedium,
@@ -287,41 +473,12 @@ private fun SummaryItem(
 }
 
 @Composable
-private fun PageIndicator(
-    count: Int,
-    currentPage: Int
+private fun SectionHeader(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(
-            space = 6.dp,
-            alignment = Alignment.CenterHorizontally
-        ),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        repeat(count) { index ->
-            val isCurrent = index == currentPage
-
-            Box(
-                modifier = Modifier
-                    .size(if (isCurrent) 8.dp else 6.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isCurrent) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainerHighest
-                        }
-                    )
-            )
-        }
-    }
-}
-
-@Composable
-private fun SectionHeader(onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(top = 4.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -350,9 +507,12 @@ private fun SectionHeader(onClick: () -> Unit) {
 }
 
 @Composable
-private fun DateHeader(date: LocalDate) {
+private fun DateHeader(
+    date: LocalDate,
+    modifier: Modifier = Modifier
+) {
     Text(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(start = 4.dp, top = 4.dp),
         text = date.format(
@@ -372,13 +532,14 @@ private fun DateHeader(date: LocalDate) {
 @Composable
 private fun Transaction(
     transaction: TransactionDomainModel,
-    onClick: (Long) -> Unit
+    onClick: (Long) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val isExpense = transaction.type == TransactionType.Expense
     val amount = transaction.amount.toHumanReadableValue()
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable { onClick(transaction.id) },
         shape = HomeCardShape,
