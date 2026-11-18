@@ -60,7 +60,7 @@ apksigner verify --print-certs android/build/outputs/apk/release/android-release
 
 ```sh
 ./gradlew --no-daemon :android:bundleRelease
-# -> android/release/android-release.aab
+# -> android/build/outputs/bundle/release/android-release.aab
 ```
 
 ## What the published builds run
