@@ -1,0 +1,6 @@
+More expense categories.
+
+- New expense categories: Children, Debt, Dining, Education, Fitness, Insurance, Personal care, Pets, Rent/Mortgage, Taxes and Utilities
+- The Gift category is now available for income too
+- Unused storage and phone-state permissions are no longer requested
+- The location permission needed for Bluetooth sync is requested only on the Android versions that require it
