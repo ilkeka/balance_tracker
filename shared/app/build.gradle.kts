@@ -35,9 +35,11 @@ kotlin {
     dependencies {
         implementation(projects.shared.common)
         implementation(projects.shared.core)
+        implementation(projects.shared.data)
         implementation(projects.shared.home)
         implementation(projects.shared.sync)
         implementation(projects.shared.resources)
+        implementation(projects.shared.settings)
         implementation(projects.shared.transaction)
 
         implementation(libs.jetbrains.compose.component.resources)

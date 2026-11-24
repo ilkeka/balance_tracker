@@ -39,10 +39,13 @@ internal sealed class SyncDiscoveryException(message: String) : Exception(messag
  */
 internal interface SyncTransport {
     /**
-     * Largest chunk this link can carry. BLE links report the negotiated MTU minus the characteristic
-     * header, which is why chunking is a transport concern rather than a fixed value.
+     * Largest frame this link can carry, including the four-byte framing header.
+     *
+     * BLE links report the negotiated MTU minus the ATT overhead, which is why chunking is a
+     * transport concern rather than a fixed value. Chunking subtracts the header from this budget, so
+     * a transport that reports `MTU - 3` never writes a frame the peer's controller cannot accept.
      */
-    val maxChunkSize: Int
+    val maxFrameSize: Int
 
     /** Establishes the link, suspending until bytes can flow. */
     suspend fun open()

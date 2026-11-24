@@ -59,15 +59,23 @@ internal class MessageAssembler(
     }
 }
 
-/** Splits a message into chunks no larger than [maxChunkSize]. */
-internal fun ByteArray.toChunks(maxChunkSize: Int): List<ByteArray> {
-    require(maxChunkSize > MessageAssembler.HeaderSize) { "chunk size too small for header" }
+/**
+ * Splits a message into frames no larger than [maxFrameSize], header included.
+ *
+ * The budget covers the whole frame rather than just the payload: a Bluetooth link can only carry
+ * `MTU - 3` bytes in one notification or write, and the four header bytes are part of that. Treating
+ * the budget as payload-only would make every frame four bytes too large, which the peer rejects or
+ * silently truncates, so the exchange would never finish.
+ */
+internal fun ByteArray.toChunks(maxFrameSize: Int): List<ByteArray> {
+    val payloadSize = maxFrameSize - MessageAssembler.HeaderSize
+    require(payloadSize > 0) { "frame size too small for header" }
     if (isEmpty()) return listOf(frame(sequence = 0, total = 1, payload = ByteArray(0)))
 
-    val total = (size + maxChunkSize - 1) / maxChunkSize
+    val total = (size + payloadSize - 1) / payloadSize
     return (0 until total).map { index ->
-        val start = index * maxChunkSize
-        val end = minOf(start + maxChunkSize, size)
+        val start = index * payloadSize
+        val end = minOf(start + payloadSize, size)
         frame(sequence = index, total = total, payload = copyOfRange(start, end))
     }
 }

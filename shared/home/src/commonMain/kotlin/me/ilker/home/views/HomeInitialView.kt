@@ -27,21 +27,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import me.ilker.home.HomeState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HomeInitialView(
-    device: HomeState.Device,
-    onSync: () -> Unit = {}
+    onSettings: () -> Unit = {}
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            HomeTopBar(
-                device = device,
-                onSync = onSync
-            )
+            HomeTopBar(onSettings = onSettings)
         }
     ) { paddingValues ->
         LazyColumn(

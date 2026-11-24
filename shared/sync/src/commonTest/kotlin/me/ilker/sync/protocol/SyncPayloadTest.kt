@@ -20,7 +20,7 @@ import kotlin.test.assertTrue
  * out-of-order delivery the way BLE notifications would produce.
  */
 private class LoopbackTransport(
-    override val maxChunkSize: Int,
+    override val maxFrameSize: Int,
     private val inbound: Channel<ByteArray>,
     private val outbound: Channel<ByteArray>
 ) : SyncTransport {

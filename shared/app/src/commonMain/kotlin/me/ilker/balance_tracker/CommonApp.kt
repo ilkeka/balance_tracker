@@ -28,10 +28,15 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.datetime.yearMonth
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.theme.AppTheme
+import me.ilker.data.DataManager
+import me.ilker.data.DataRoute
+import me.ilker.data.navigation.DataTransfer
 import me.ilker.home.Home
 import me.ilker.home.HomeIntent
 import me.ilker.home.HomeManager
 import me.ilker.home.HomeScreen
+import me.ilker.settings.SettingsScreen
+import me.ilker.settings.navigation.Settings
 import me.ilker.sync.SyncIntent
 import me.ilker.sync.SyncManager
 import me.ilker.sync.SyncScreen
@@ -122,7 +127,29 @@ fun CommonApp() {
                         add = { navController.navigate(AddTransaction) },
                         onTransactionsClicked = { navController.navigate(Transactions(yearMonth = state.value.selectedDate.yearMonth.toString())) },
                         onClick = { id -> navController.navigate(TransactionDetails(id = id)) },
+                        onSettings = { navController.navigate(Settings) },
+                    )
+                }
+
+                composable<Settings> {
+                    SettingsScreen(
                         onSync = { navController.navigate(Sync) },
+                        onData = { navController.navigate(DataTransfer) },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable<DataTransfer> { navBackStackEntry ->
+                    val manager = rememberManager(
+                        entry = navBackStackEntry,
+                        store = managerStore
+                    ) {
+                        DataManager(sdk = sdk)
+                    }
+
+                    DataRoute(
+                        manager = manager,
+                        onBack = { navController.popBackStack() }
                     )
                 }
 

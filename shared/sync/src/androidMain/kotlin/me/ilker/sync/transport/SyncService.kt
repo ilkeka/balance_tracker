@@ -27,10 +27,14 @@ internal const val RequestedMtu = 247
 internal const val GattOverhead = 3
 
 /**
- * Chunk size the serving side can rely on.
+ * Frame size the serving side can use before the peer's MTU request has been reported.
  *
- * Only the connecting side can negotiate an MTU, and a notification longer than the negotiated MTU is
- * dropped rather than fragmented, so the server stays at the guaranteed default. Being slower than
- * necessary costs little next to silently losing chunks.
+ * Only the connecting side can start MTU negotiation, and a notification longer than the current MTU
+ * is dropped rather than fragmented, so the default has to be assumed until
+ * [android.bluetooth.BluetoothGattServerCallback.onMtuChanged] says otherwise. The session raises
+ * this per peer as soon as the new MTU arrives.
  */
-internal const val ServerChunkSize = DefaultMtu - GattOverhead
+internal const val ServerFrameSize = DefaultMtu - GattOverhead
+
+/** A frame has to carry its four-byte header plus at least one byte of payload. */
+internal const val MinFrameSize = 5

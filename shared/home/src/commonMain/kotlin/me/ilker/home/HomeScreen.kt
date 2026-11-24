@@ -15,21 +15,17 @@ fun HomeScreen(
     add: () -> Unit,
     onTransactionsClicked: () -> Unit,
     onClick: (id: Long) -> Unit,
-    onSync: () -> Unit
+    onSettings: () -> Unit
 ) {
     when (val currentState = state.value) {
-        HomeState.InitialState -> HomeInitialView(
-            device = currentState.device,
-            onSync = onSync
-        )
+        HomeState.InitialState -> HomeInitialView(onSettings = onSettings)
         is HomeState.Loaded -> HomeLoadedView(
             state = currentState,
-            device = currentState.device,
             setSelectedYearMonth = setSelectedYearMonth,
             add = add,
             onTransactionsClicked = onTransactionsClicked,
             onClick = onClick,
-            onSync = onSync
+            onSettings = onSettings
         )
     }
 }
