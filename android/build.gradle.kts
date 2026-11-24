@@ -50,8 +50,8 @@ android {
         applicationId = "me.ilker.balance_tracker"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 23
-        versionName = "1.0.21"
+        versionCode = 24
+        versionName = "1.0.22"
         ndk {
             debugSymbolLevel = "FULL"
         }
