@@ -11,6 +11,7 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class MessageFramingTest {
 
@@ -19,7 +20,7 @@ class MessageFramingTest {
         val payload = ByteArray(1000) { (it % 251).toByte() }
 
         val assembler = MessageAssembler()
-        val completed = payload.toChunks(maxChunkSize = 100).mapNotNull { assembler.accept(it) }
+        val completed = payload.toChunks(maxFrameSize = 100).mapNotNull { assembler.accept(it) }
 
         assertEquals(1, completed.size)
         assertContentEquals(payload, completed.single())
@@ -30,7 +31,7 @@ class MessageFramingTest {
         val payload = ByteArray(10) { 1 }
 
         val assembler = MessageAssembler()
-        val completed = payload.toChunks(maxChunkSize = 100).mapNotNull { assembler.accept(it) }
+        val completed = payload.toChunks(maxFrameSize = 100).mapNotNull { assembler.accept(it) }
 
         assertContentEquals(payload, completed.single())
     }
@@ -44,7 +45,7 @@ class MessageFramingTest {
         val payload = ByteArray(1000) { (it % 251).toByte() }
 
         val assembler = MessageAssembler()
-        val chunks = payload.toChunks(maxChunkSize = 100).reversed()
+        val chunks = payload.toChunks(maxFrameSize = 100).reversed()
         val completed = chunks.mapNotNull { assembler.accept(it) }
 
         assertContentEquals(payload, completed.single())
@@ -53,7 +54,7 @@ class MessageFramingTest {
     @Test
     fun noMessageIsEmittedUntilEveryChunkArrives() {
         val payload = ByteArray(300) { 7 }
-        val chunks = payload.toChunks(maxChunkSize = 100)
+        val chunks = payload.toChunks(maxFrameSize = 100)
 
         val assembler = MessageAssembler()
         chunks.dropLast(1).forEach { assertNull(assembler.accept(it), "emitted before the final chunk") }
@@ -61,12 +62,30 @@ class MessageFramingTest {
         assertContentEquals(payload, assembler.accept(chunks.last()))
     }
 
+    /**
+     * The budget is what the link can carry in one write or notification, so the header counts too.
+     * Sending `budget + 4` bytes is what the peer's controller rejects or truncates, and a truncated
+     * last chunk is exactly the kind of silent stall that leaves a transfer running forever.
+     */
+    @Test
+    fun everyFrameFitsInsideTheLinkBudget() {
+        val payload = ByteArray(1000) { (it % 251).toByte() }
+
+        val chunks = payload.toChunks(maxFrameSize = 20)
+
+        assertTrue(chunks.all { it.size <= 20 }, "a frame exceeded the link budget")
+        assertEquals((1000 + 15) / 16, chunks.size)
+
+        val assembler = MessageAssembler()
+        assertContentEquals(payload, chunks.mapNotNull { assembler.accept(it) }.single())
+    }
+
     @Test
     fun aMessageSplitOverManyChunksStillRoundTrips() {
         val payload = ByteArray(8 * 1024) { (it % 97).toByte() }
 
         val assembler = MessageAssembler()
-        val chunks = payload.toChunks(maxChunkSize = 17)
+        val chunks = payload.toChunks(maxFrameSize = 17)
         val completed = chunks.mapNotNull { assembler.accept(it) }
 
         assertEquals(1, completed.size)
@@ -90,12 +109,12 @@ class MessageFramingTest {
     @Test
     fun resetClearsAPartiallyReceivedMessage() {
         val assembler = MessageAssembler()
-        val chunks = ByteArray(300) { 7 }.toChunks(maxChunkSize = 100)
+        val chunks = ByteArray(300) { 7 }.toChunks(maxFrameSize = 100)
         assembler.accept(chunks.first())
 
         assembler.reset()
 
-        assertContentEquals(ByteArray(4) { 3 }, assembler.accept(ByteArray(4) { 3 }.toChunks(maxChunkSize = 100).single()))
+        assertContentEquals(ByteArray(4) { 3 }, assembler.accept(ByteArray(4) { 3 }.toChunks(maxFrameSize = 100).single()))
     }
 
     @Test

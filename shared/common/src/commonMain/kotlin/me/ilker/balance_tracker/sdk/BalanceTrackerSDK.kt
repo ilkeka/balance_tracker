@@ -40,6 +40,15 @@ interface BalanceTrackerSDK {
     ): Long
 
     /**
+     * Adds rows read from an external source, such as a CSV file.
+     *
+     * Rows that exactly match an existing live transaction are skipped, so importing the same file
+     * twice does not duplicate the ledger. Imported rows belong to this device and can be edited here.
+     */
+    @Throws(Exception::class)
+    suspend fun importTransactions(transactions: List<NewTransaction>): ImportTransactionsResult
+
+    /**
      * The live-sync state of this device: only transactions this device created, including local
      * tombstones. Rows received from the peer are deliberately not echoed back.
      */

@@ -6,6 +6,8 @@ import app.cash.sqldelight.db.SqlDriver
 import me.ilker.balance_tracker.Database
 import me.ilker.balance_tracker.Pairing
 import me.ilker.balance_tracker.Transactions
+import me.ilker.balance_tracker.sdk.ImportTransactionsResult
+import me.ilker.balance_tracker.sdk.NewTransaction
 import me.ilker.balance_tracker.sdk.TransactionCategory
 import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
@@ -153,6 +155,51 @@ internal class DB(driver: SqlDriver) {
             id = id
         )
     }
+
+    /**
+     * Adds externally supplied rows, skipping any that exactly match a live transaction.
+     *
+     * The duplicate check and every insert share one transaction, so importing a file that repeats a
+     * row cannot slip a second copy in between the check and the write. New rows are authored here:
+     * they get a fresh sync id, the next Lamport version and this device's origin.
+     */
+    internal suspend fun importTransactions(transactions: List<NewTransaction>): ImportTransactionsResult =
+        database.transactionWithResult {
+            val originId = ensureDeviceId()
+            var imported = 0
+            var skipped = 0
+
+            transactions.forEach { transaction ->
+                val existing = transactionQueries.getTransactionByContent(
+                    amount = transaction.amount,
+                    dateTime = transaction.dateTime,
+                    type = transaction.type,
+                    category = transaction.category,
+                    // Rows created through the app store an empty string for a missing description,
+                    // while an imported row carries null. The query compares both as the same text.
+                    description = transaction.description.orEmpty().trim()
+                ).executeAsOneOrNull()
+
+                if (existing != null) {
+                    skipped++
+                } else {
+                    transactionQueries.insertTransaction(
+                        amount = transaction.amount,
+                        dateTime = transaction.dateTime,
+                        type = transaction.type,
+                        category = transaction.category,
+                        description = transaction.description,
+                        syncId = generateSyncId(),
+                        version = nextVersion(),
+                        originId = originId,
+                        isDeleted = 0
+                    )
+                    imported++
+                }
+            }
+
+            ImportTransactionsResult(imported = imported, skipped = skipped)
+        }
 
     /**
      * Soft delete. The row stays with a bumped version so the deletion can win a merge on the other

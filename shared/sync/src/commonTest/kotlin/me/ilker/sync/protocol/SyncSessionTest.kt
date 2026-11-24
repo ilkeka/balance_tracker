@@ -3,10 +3,12 @@ package me.ilker.sync.protocol
 import me.ilker.balance_tracker.sync.SyncSnapshot
 import me.ilker.balance_tracker.sync.SyncedTransaction
 import me.ilker.sync.transport.SyncTransport
+import me.ilker.sync.transport.SyncTransportException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -46,7 +48,7 @@ internal suspend fun runSessionCatching(
 }
 
 internal class LinkedTransport(
-    override val maxChunkSize: Int,
+    override val maxFrameSize: Int,
     private val inbound: Channel<ByteArray>,
     private val outbound: Channel<ByteArray>
 ) : SyncTransport {
@@ -297,6 +299,32 @@ class SyncSessionTest {
         assertEquals(SyncSessionResult.Declined, result)
     }
 
+    /**
+     * A peer that connects and then goes quiet used to park the session on its read forever, which is
+     * what the progress screen looked like when the two devices disagreed about the end of the
+     * exchange. A silent gap has to fail the session so the UI can return to a usable state.
+     */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun `a peer that never answers fails the session instead of hanging`() = runTest {
+        val (initiator, _) = transports()
+
+        val result = backgroundScope.async {
+            runSessionCatching(
+                transport = initiator,
+                local = descriptor(),
+                secret = Secret,
+                snapshot = snapshot("aaaa"),
+                request = SyncMessage.Request(device = descriptor(), transactionCount = 0),
+                onRequest = { false }
+            )
+        }
+
+        advanceUntilIdle()
+
+        assertIs<SyncTransportException.Disconnected>(result.await().exceptionOrNull())
+    }
+
     @Test
     fun `the transport is closed even when the session fails`() = runTest {
         val (initiator, receiver) = transports()
@@ -440,6 +468,7 @@ class SyncMessageCodecTest {
             SyncMessage.Request(device = descriptor(), transactionCount = 7),
             SyncMessage.Accept(),
             SyncMessage.Reject(),
+            SyncMessage.Done(),
             SyncMessage.Unpaired(device = descriptor().copy(fingerprint = "000000"))
         )
 

@@ -327,6 +327,10 @@ private class AndroidBleSyncLink(
         val inbound = Channel<ByteArray>(Channel.BUFFERED)
         session.inbound = inbound
         session.preparedWrites.clear()
+        // A quick reconnect can reuse the server-side session, and the old MTU says nothing about the
+        // new link. The peer re-negotiates after subscribing, and the callback raises it again.
+        session.maxFrameSize = ServerFrameSize
+        session.pendingNotification = null
         Log.d(LogTag, "Serving a session from ${session.device.address}")
         val queued = incoming.trySend(
             ServerBleTransport(
@@ -348,6 +352,10 @@ private class AndroidBleSyncLink(
             val remote = device ?: return
             if (newState != BluetoothProfile.STATE_CONNECTED) {
                 served.remove(remote.address)?.let { session ->
+                    session.pendingNotification?.completeExceptionally(
+                        SyncTransportException.Disconnected("the peer disconnected")
+                    )
+                    session.pendingNotification = null
                     session.inbound?.close(SyncTransportException.Disconnected("the peer disconnected"))
                     session.inbound = null
                 }
@@ -517,6 +525,35 @@ private class AndroidBleSyncLink(
             )
         }
 
+        /**
+         * Adopts the MTU the connecting side asked for.
+         *
+         * Only the client can start the exchange, so this callback is the server's only way to learn
+         * that it may send frames larger than the default. A notification beyond the current MTU is
+         * dropped by the controller, so the value is only raised once the stack reports it.
+         */
+        override fun onMtuChanged(device: BluetoothDevice?, mtu: Int) {
+            val session = device?.address?.let(served::get) ?: return
+            val usable = mtu.coerceIn(DefaultMtu, RequestedMtu)
+            session.maxFrameSize = (usable - GattOverhead).coerceAtLeast(MinFrameSize)
+            Log.d(
+                LogTag,
+                "Serving MTU: $usable, frame=${session.maxFrameSize} to ${device.address}"
+            )
+        }
+
+        /**
+         * Completes the write that is waiting for the notification to leave the radio.
+         *
+         * This is the serving side's flow control: the next chunk is only handed to the stack after
+         * this fires, which is what keeps the queue from overflowing and lets `close()` be safe once
+         * the last write returned.
+         */
+        override fun onNotificationSent(device: BluetoothDevice?, status: Int) {
+            val session = device?.address?.let(served::get) ?: return
+            session.pendingNotification?.complete(status)
+        }
+
         private fun assemblePreparedWrite(chunks: Map<Int, ByteArray>): ByteArray {
             val sorted = chunks.toSortedMap()
             val size = sorted.entries.maxOfOrNull { (offset, bytes) -> offset + bytes.size } ?: 0
@@ -623,6 +660,38 @@ private class ServedSession(val device: BluetoothDevice) {
     /** Whether the peer has written the notification-enable value to the CCCD. */
     @Volatile
     var notificationsEnabled: Boolean = false
+
+    /**
+     * Largest frame that fits the MTU this peer negotiated, header included.
+     *
+     * Starts at the guaranteed default and grows when the connecting side reports a larger MTU. The
+     * notified value is limited to `MTU - 3`, and notifications are not fragmented, so using the
+     * default for the whole session would move a snapshot 15 times slower than the link allows.
+     */
+    @Volatile
+    var maxFrameSize: Int = ServerFrameSize
+
+    /**
+     * The notification the stack is currently sending, completed by `onNotificationSent`.
+     *
+     * Notifications are queued, not acknowledged, so the next one may only be written once the
+     * previous one has actually left the radio. Waiting for this, instead of sleeping for a fixed
+     * interval, both paces the stream and guarantees the last chunk is delivered before the session
+     * closes the connection.
+     */
+    @Volatile
+    var pendingNotification: CompletableDeferred<Int>? = null
+
+    /**
+     * Whether the stack actually reports [onNotificationSent] for notifications.
+     *
+     * Null until the first notification decides it: the protocol works without the callback, but
+     * pacing by acknowledgement is both faster and the only way to know the last chunk really left
+     * the radio before the connection is closed. A stack that stays silent falls back to a fixed
+     * interval instead of failing an otherwise working link.
+     */
+    @Volatile
+    var notificationReportsDelivered: Boolean? = null
 }
 
 /**
@@ -641,7 +710,8 @@ private class ServerBleTransport(
 ) : SyncTransport {
     private val writeMutex = Mutex()
 
-    override val maxChunkSize: Int = ServerChunkSize
+    /** Follows the MTU the peer negotiated, so chunks are as large as the link allows. */
+    override val maxFrameSize: Int get() = session.maxFrameSize
 
     override suspend fun open() = Unit
 
@@ -651,22 +721,55 @@ private class ServerBleTransport(
                 throw SyncTransportException.Failed("the peer did not subscribe to notifications")
             }
 
-            val sent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                server.notifyCharacteristicChanged(session.device, characteristic, false, chunk)
-            } else {
-                @Suppress("DEPRECATION")
-                run {
-                    characteristic.value = chunk
-                    server.notifyCharacteristicChanged(session.device, characteristic, false)
+            val queued = CompletableDeferred<Int>()
+            session.pendingNotification = queued
+            try {
+                // Both branches have to produce the same type: the legacy overload returns a Boolean,
+                // and comparing that to BluetoothStatusCodes.SUCCESS (an Int) would always be true,
+                // which made every notification on older releases look like a rejection.
+                val sent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    server.notifyCharacteristicChanged(session.device, characteristic, false, chunk)
+                } else {
+                    @Suppress("DEPRECATION")
+                    run {
+                        characteristic.value = chunk
+                        if (server.notifyCharacteristicChanged(session.device, characteristic, false)) {
+                            BluetoothStatusCodes.SUCCESS
+                        } else {
+                            BluetoothStatusCodes.ERROR_UNKNOWN
+                        }
+                    }
                 }
-            }
 
-            if (sent != BluetoothStatusCodes.SUCCESS) {
-                throw SyncTransportException.Failed("the peer stopped accepting data")
+                if (sent != BluetoothStatusCodes.SUCCESS) {
+                    throw SyncTransportException.Failed("the peer stopped accepting data")
+                }
+
+                // Wait for the controller's "sent" callback when the stack provides one. That paces
+                // the stream to the link and guarantees the last chunk left the radio before the
+                // session closes the connection. A stack that never reports it falls back to a fixed
+                // interval, as before, rather than failing a link that still works.
+                val status = if (session.notificationReportsDelivered != false) {
+                    withTimeoutOrNull(NotificationCallbackProbeMillis) { queued.await() }
+                } else {
+                    null
+                }
+                if (status != null) {
+                    session.notificationReportsDelivered = true
+                    if (status != BluetoothGatt.GATT_SUCCESS) {
+                        throw SyncTransportException.Failed(
+                            "the peer rejected a notification with status $status"
+                        )
+                    }
+                } else {
+                    if (session.notificationReportsDelivered == null) {
+                        session.notificationReportsDelivered = false
+                    }
+                    delay(NotificationFallbackIntervalMillis)
+                }
+            } finally {
+                if (session.pendingNotification === queued) session.pendingNotification = null
             }
-            // Longer than one connection interval, so the peer's controller drains each notification
-            // before the next one is queued.
-            delay(NotificationIntervalMillis)
         }
     }
 
@@ -682,7 +785,11 @@ private class ServerBleTransport(
     }
 
     private companion object {
-        const val NotificationIntervalMillis = 30L
+        /** Long enough for one connection event, only spent once to learn whether the callback works. */
+        const val NotificationCallbackProbeMillis = 500L
+
+        /** The previous pacing, kept as the fallback for stacks that do not report delivery. */
+        const val NotificationFallbackIntervalMillis = 20L
     }
 }
 
@@ -708,7 +815,7 @@ private class ClientBleTransport(
 
     private var gatt: BluetoothGatt? = null
 
-    override var maxChunkSize: Int = DefaultMtu - GattOverhead
+    override var maxFrameSize: Int = ServerFrameSize
         private set
 
     private val callback = object : BluetoothGattCallback() {
@@ -800,7 +907,7 @@ private class ClientBleTransport(
             // Ask for a larger MTU before the session starts. If the request is refused, the
             // guaranteed default still works: only the chunk size has to stay at its minimum.
             if (!gatt.requestMtu(RequestedMtu)) {
-                maxChunkSize = DefaultMtu - GattOverhead
+                maxFrameSize = ServerFrameSize
                 negotiatedMtu.complete(DefaultMtu)
             }
         }
@@ -811,8 +918,8 @@ private class ClientBleTransport(
             } else {
                 DefaultMtu
             }
-            maxChunkSize = usable - GattOverhead
-            Log.d("BalanceTrackerSync", "MTU negotiated: $usable, chunk=${maxChunkSize}")
+            maxFrameSize = (usable - GattOverhead).coerceAtLeast(MinFrameSize)
+            Log.d("BalanceTrackerSync", "MTU negotiated: $usable, frame=$maxFrameSize")
             negotiatedMtu.complete(usable)
         }
 

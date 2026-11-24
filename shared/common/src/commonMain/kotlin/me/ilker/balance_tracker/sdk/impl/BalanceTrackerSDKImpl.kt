@@ -11,6 +11,8 @@ import me.ilker.balance_tracker.database.DB
 import me.ilker.balance_tracker.database.DatabaseDriverFactory
 import me.ilker.balance_tracker.database.SnapshotMode
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
+import me.ilker.balance_tracker.sdk.ImportTransactionsResult
+import me.ilker.balance_tracker.sdk.NewTransaction
 import me.ilker.balance_tracker.sdk.TransactionCategory
 import me.ilker.balance_tracker.sdk.TransactionDomainModel
 import me.ilker.balance_tracker.sdk.TransactionType
@@ -71,6 +73,9 @@ internal class BalanceTrackerSDKImpl(
     )
 
     override suspend fun deleteTransaction(id: Long) = database.deleteTransaction(id = id)
+
+    override suspend fun importTransactions(transactions: List<NewTransaction>): ImportTransactionsResult =
+        database.importTransactions(transactions = transactions)
 
     override suspend fun deviceId(): String = database.deviceId()
 

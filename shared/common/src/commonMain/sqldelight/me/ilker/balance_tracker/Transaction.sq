@@ -38,6 +38,16 @@ getTransactions:
 SELECT id, amount, dateTime, type, category, description, originId FROM Transactions
 WHERE isDeleted = 0;
 
+getTransactionByContent:
+SELECT id FROM Transactions
+WHERE amount = :amount
+  AND dateTime = :dateTime
+  AND type = :type
+  AND category = :category
+  AND COALESCE(TRIM(description), '') = :description
+  AND isDeleted = 0
+LIMIT 1;
+
 assignOriginIdToUnsetRows:
 UPDATE Transactions SET originId = :originId WHERE originId = '';
 

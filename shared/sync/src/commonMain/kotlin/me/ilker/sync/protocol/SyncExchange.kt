@@ -14,7 +14,7 @@ internal suspend fun exchangeSealedPayload(transport: SyncTransport, sealed: Str
     transport.open()
     try {
         sealed.encodeToByteArray()
-            .toChunks(maxChunkSize = transport.maxChunkSize)
+            .toChunks(maxFrameSize = transport.maxFrameSize)
             .forEach { transport.write(it) }
 
         return readMessage(transport)

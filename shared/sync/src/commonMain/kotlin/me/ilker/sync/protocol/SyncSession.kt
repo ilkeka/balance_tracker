@@ -1,9 +1,12 @@
 package me.ilker.sync.protocol
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import me.ilker.balance_tracker.sync.SyncSnapshot
 import me.ilker.sync.transport.SyncTransport
+import me.ilker.sync.transport.SyncTransportException
 
 /**
  * The messages a session can carry, in the order they are exchanged.
@@ -16,9 +19,11 @@ import me.ilker.sync.transport.SyncTransport
  *    answers; the receiver then writes its own [Hello]
  * 2. the initiator writes [Request], carrying the metadata the receiver needs to decide
  * 3. the receiver writes [Accept] or [Reject]
- * 4. both sides write their sealed snapshot
+ * 4. both sides write their sealed snapshot and read the peer's
+ * 5. both sides write [Done] once they have read the peer's snapshot
  *
- * A reject ends the session at step 3, before a single transaction has moved.
+ * A reject ends the session at step 3, before a single transaction has moved. The final [Done] keeps
+ * the two devices from closing the link while the other is still consuming the last chunks.
  */
 @Serializable
 internal sealed interface SyncMessage {
@@ -52,6 +57,19 @@ internal sealed interface SyncMessage {
     /** Carries no reason: the receiver declined, which is all the initiator needs to know. */
     @Serializable
     data class Reject(
+        override val protocolVersion: Int = SyncPayloadCodec.Version
+    ) : SyncMessage
+
+    /**
+     * Sent after the sender has read the peer's snapshot, to confirm the whole exchange completed.
+     *
+     * Notifications are queued rather than acknowledged at the application level, so without this the
+     * sender can close the connection while its final chunks are still in flight. The peer then waits
+     * for data that will never arrive, which showed up as one device finishing while the other stayed
+     * on the progress screen. Receiving [Done] proves the peer read everything this side sent.
+     */
+    @Serializable
+    data class Done(
         override val protocolVersion: Int = SyncPayloadCodec.Version
     ) : SyncMessage
 
@@ -170,10 +188,14 @@ internal suspend fun runSyncSession(
 
         if (request != null) {
             link.send(request)
-            return when (link.read()) {
+            // The answer waits on a person on the other device, so it gets the approval budget rather
+            // than the short deadline that applies to chunks arriving during a transfer.
+            return when (link.read(timeoutMillis = ApprovalTimeoutMillis)) {
                 is SyncMessage.Accept -> {
                     link.sendRaw(SyncPayloadCodec.seal(secret, snapshot))
-                    SyncSessionResult.Completed(peerDevice, link.openSnapshot(secret))
+                    val peerSnapshot = link.openSnapshot(secret)
+                    link.completeExchange()
+                    SyncSessionResult.Completed(peerDevice, peerSnapshot)
                 }
 
                 is SyncMessage.Reject -> SyncSessionResult.Declined
@@ -182,14 +204,23 @@ internal suspend fun runSyncSession(
         }
 
         val peerRequest = link.read() as? SyncMessage.Request ?: throw SyncProtocolException.Unauthenticated
-        val accepted = onRequest(
-            IncomingSyncRequest(device = peerRequest.device, transactionCount = peerRequest.transactionCount)
-        )
+        // A request nobody answers must not hold the link (or the initiator) open forever. Timing out
+        // is the same as declining: nothing has crossed the link at this point.
+        val accepted = withTimeoutOrNull(ApprovalTimeoutMillis) {
+            onRequest(
+                IncomingSyncRequest(
+                    device = peerRequest.device,
+                    transactionCount = peerRequest.transactionCount
+                )
+            )
+        } ?: false
         link.send(if (accepted) SyncMessage.Accept() else SyncMessage.Reject())
         if (!accepted) return SyncSessionResult.Declined
 
         link.sendRaw(SyncPayloadCodec.seal(secret, snapshot))
-        return SyncSessionResult.Completed(peerDevice, link.openSnapshot(secret))
+        val peerSnapshot = link.openSnapshot(secret)
+        link.completeExchange()
+        return SyncSessionResult.Completed(peerDevice, peerSnapshot)
     } finally {
         transport.close()
     }
@@ -211,15 +242,54 @@ internal class FramedLink(private val transport: SyncTransport) {
 
     suspend fun sendRaw(text: String) {
         text.encodeToByteArray()
-            .toChunks(maxChunkSize = transport.maxChunkSize)
+            .toChunks(maxFrameSize = transport.maxFrameSize)
             .forEach { transport.write(it) }
     }
 
-    suspend fun read(): SyncMessage = SyncMessageCodec.read(readRaw())
+    suspend fun read(timeoutMillis: Long = ChunkTimeoutMillis): SyncMessage =
+        SyncMessageCodec.read(readRaw(timeoutMillis))
 
-    suspend fun readRaw(): String {
+    /**
+     * Reads one complete message, failing when the peer goes quiet for longer than [timeoutMillis].
+     *
+     * The timeout applies per chunk rather than to the whole message: a large snapshot is many chunks
+     * and a fixed deadline on the message would reject a transfer that is still making progress. A
+     * silent gap, on the other hand, means the peer dropped the link, which used to leave the screen
+     * on its progress state forever.
+     */
+    suspend fun readRaw(timeoutMillis: Long = ChunkTimeoutMillis): String {
         while (true) {
-            assembler.accept(transport.read())?.let { return it.decodeToString() }
+            val chunk = withTimeoutOrNull(timeoutMillis) { transport.read() }
+                ?: throw SyncTransportException.Disconnected("the peer stopped sending data")
+            assembler.accept(chunk)?.let { return it.decodeToString() }
+        }
+    }
+
+    /**
+     * Tells the peer this side has read its snapshot, and waits for the peer to say the same.
+     *
+     * Best effort by design: both snapshots have already been exchanged when this runs, so a peer
+     * that closes without answering (an older build) must not turn a completed sync into a failure.
+     * A peer that does answer proves it consumed everything, which is what keeps a fast sender from
+     * tearing the link down while its last chunks are still in flight.
+     */
+    suspend fun completeExchange() {
+        try {
+            send(SyncMessage.Done())
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Throwable) {
+            return
+        }
+
+        withTimeoutOrNull(FinalAcknowledgementTimeoutMillis) {
+            try {
+                read()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Throwable) {
+                // The peer closed after a successful swap; the data is already safely received.
+            }
         }
     }
 
@@ -243,7 +313,11 @@ internal class FramedLink(private val transport: SyncTransport) {
 internal suspend fun SyncTransport.readMessageText(): String {
     val assembler = MessageAssembler()
     while (true) {
-        assembler.accept(read())?.let { return it.decodeToString() }
+        // Same guard as a session read: a peer that connects and then goes silent must release the
+        // receive loop instead of leaving it parked for the life of the link.
+        val chunk = withTimeoutOrNull(ChunkTimeoutMillis) { read() }
+            ?: throw SyncTransportException.Disconnected("the peer stopped sending data")
+        assembler.accept(chunk)?.let { return it.decodeToString() }
     }
 }
 
@@ -260,3 +334,18 @@ internal suspend fun verify(secret: ByteArray, hello: SyncMessage.Hello): Boolea
     proof(secret, hello.device.deviceId).encodeToByteArray(),
     hello.proof.encodeToByteArray()
 )
+
+/**
+ * How long one chunk may take to arrive before the peer is treated as gone.
+ *
+ * A chunk is queued immediately, so this is not a transfer deadline: it only catches a link that has
+ * died without reporting a disconnect. Without it a dropped notification leaves both devices on the
+ * progress screen indefinitely.
+ */
+internal const val ChunkTimeoutMillis: Long = 20_000L
+
+/** How long the receiving user has to answer a sync request before it is declined. */
+internal const val ApprovalTimeoutMillis: Long = 60_000L
+
+/** How long to wait for the peer's final acknowledgement after the snapshots have been exchanged. */
+internal const val FinalAcknowledgementTimeoutMillis: Long = 5_000L

@@ -44,8 +44,6 @@ class HomeManager(
 
     init {
         scope.launch {
-            val device = HomeState.Device(deviceId = sdk.deviceId())
-
             sdk.transactions.collect { transactions ->
 
                 val transactionsByYearMonth = transactions
@@ -87,11 +85,9 @@ class HomeManager(
                     when (it) {
                         HomeState.InitialState -> HomeState.Loaded(
                             selectedDate = it.selectedDate,
-                            device = device,
                             balances = balances
                         )
                         is HomeState.Loaded -> it.copy(
-                            device = device,
                             balances = balances
                         )
                     }
