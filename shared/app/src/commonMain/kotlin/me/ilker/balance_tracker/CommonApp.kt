@@ -14,7 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -26,6 +29,7 @@ import androidx.navigation.toRoute
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.datetime.yearMonth
+import me.ilker.balance_tracker.preferences.AppPreferences
 import me.ilker.balance_tracker.sdk.BalanceTrackerSDK
 import me.ilker.balance_tracker.theme.AppTheme
 import me.ilker.data.DataManager
@@ -70,7 +74,10 @@ import org.koin.compose.koinInject
 @ExperimentalMaterial3Api
 @Composable
 fun CommonApp() {
-    AppTheme {
+    val appPreferences: AppPreferences = koinInject()
+    var themePreference by remember { mutableStateOf(appPreferences.themePreference()) }
+
+    AppTheme(themePreference = themePreference) {
         val navController: NavHostController = rememberNavController()
         val sdk: BalanceTrackerSDK = koinInject()
         val managerStore: ManagerStore = remember { mutableMapOf() }
@@ -133,6 +140,11 @@ fun CommonApp() {
 
                 composable<Settings> {
                     SettingsScreen(
+                        themePreference = themePreference,
+                        onThemePreferenceChange = { preference ->
+                            themePreference = preference
+                            appPreferences.setThemePreference(preference)
+                        },
                         onSync = { navController.navigate(Sync) },
                         onData = { navController.navigate(DataTransfer) },
                         onBack = { navController.popBackStack() }

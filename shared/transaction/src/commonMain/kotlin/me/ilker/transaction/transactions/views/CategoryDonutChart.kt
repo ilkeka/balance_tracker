@@ -1,7 +1,6 @@
 package me.ilker.transaction.transactions.views
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -10,9 +9,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlin.math.PI
@@ -21,6 +24,7 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import me.ilker.balance_tracker.sdk.TransactionCategory
 import me.ilker.balance_tracker.sdk.getIcon
+import me.ilker.balance_tracker.theme.LocalIsDarkTheme
 import me.ilker.transaction.transactions.TransactionState
 
 private val LightCategoryChartColors = listOf(
@@ -53,13 +57,14 @@ private val DarkCategoryChartColors = listOf(
     Color(0xFF4DB6AC)
 )
 
+private val DonutStrokeWidth = 30.dp
 private val IconSize = 16.dp
-private const val MinimumIconSweepAngle = 30f
+private const val MinimumIconSweepAngle = 24f
 private const val DegreesToRadians = PI / 180.0
 
 @Composable
 internal fun TransactionCategory.chartColor(): Color {
-    val isDark = isSystemInDarkTheme()
+    val isDark = LocalIsDarkTheme.current
 
     return when (this) {
         is TransactionCategory.Predefined -> {
@@ -81,10 +86,15 @@ internal fun TransactionCategory.chartColor(): Color {
     }
 }
 
+/**
+ * Ring chart for a category breakdown. Each slice carries its category icon so the chart can be
+ * read on its own, and [centerContent] is free for the caller to show a total or an entry count.
+ */
 @Composable
-internal fun CategoryPieChart(
+internal fun CategoryDonutChart(
     categoryTotals: List<TransactionState.Loaded.CategoryTotalUiModel>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    centerContent: @Composable () -> Unit = {}
 ) {
     val total = categoryTotals.sumOf { categoryTotal -> categoryTotal.amount }
         .takeIf { value -> value > 0.0 }
@@ -93,7 +103,7 @@ internal fun CategoryPieChart(
     var startAngle = -90f
     val slices = categoryTotals.map { categoryTotal ->
         val sweepAngle = (categoryTotal.amount / total).toFloat() * 360f
-        val slice = PieSlice(
+        val slice = DonutSlice(
             category = categoryTotal.category,
             color = categoryTotal.category.chartColor(),
             startAngle = startAngle,
@@ -110,18 +120,29 @@ internal fun CategoryPieChart(
         contentAlignment = Alignment.Center
     ) {
         val chartSizePx = minOf(constraints.maxWidth, constraints.maxHeight).toFloat()
-        val iconRadiusPx = chartSizePx * 0.29f
+        val strokeWidthPx = with(LocalDensity.current) { DonutStrokeWidth.toPx() }
+        val ringRadiusPx = (chartSizePx - strokeWidthPx) / 2f
+        val chartOffsetX = (constraints.maxWidth - chartSizePx) / 2f
+        val chartOffsetY = (constraints.maxHeight - chartSizePx) / 2f
 
         Canvas(modifier = Modifier.fillMaxSize()) {
             slices.forEach { slice ->
-                val gapAngle = if (slices.size > 1 && slice.sweepAngle > 4f) 1.2f else 0f
+                val gapAngle = if (slices.size > 1 && slice.sweepAngle > 4f) 2f else 0f
 
                 drawArc(
                     color = slice.color,
                     startAngle = slice.startAngle + gapAngle / 2f,
                     sweepAngle = slice.sweepAngle - gapAngle,
-                    useCenter = true,
-                    size = Size(size.width, size.height)
+                    useCenter = false,
+                    topLeft = Offset(
+                        x = chartOffsetX + strokeWidthPx / 2f,
+                        y = chartOffsetY + strokeWidthPx / 2f
+                    ),
+                    size = Size(
+                        width = chartSizePx - strokeWidthPx,
+                        height = chartSizePx - strokeWidthPx
+                    ),
+                    style = Stroke(width = strokeWidthPx, cap = StrokeCap.Butt)
                 )
             }
         }
@@ -130,8 +151,8 @@ internal fun CategoryPieChart(
             if (slice.sweepAngle < MinimumIconSweepAngle) return@forEach
 
             val angle = (slice.startAngle + slice.sweepAngle / 2f) * DegreesToRadians
-            val x = (cos(angle) * iconRadiusPx).roundToInt()
-            val y = (sin(angle) * iconRadiusPx).roundToInt()
+            val x = (cos(angle) * ringRadiusPx).roundToInt()
+            val y = (sin(angle) * ringRadiusPx).roundToInt()
 
             Icon(
                 imageVector = slice.category.getIcon(),
@@ -142,10 +163,12 @@ internal fun CategoryPieChart(
                     .size(IconSize)
             )
         }
+
+        centerContent()
     }
 }
 
-private data class PieSlice(
+private data class DonutSlice(
     val category: TransactionCategory,
     val color: Color,
     val startAngle: Float,
